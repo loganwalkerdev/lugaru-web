@@ -513,110 +513,116 @@ If automatic first-run account creation is needed only for Web builds, isolate t
 
 ## B-12 — WebAssembly Runtime Crash: Memory Access Out of Bounds
 
-**Status:** Open
+**Status:** Fixed
 **Priority:** High
-**Evidence:** Runtime observation
+**Evidence:** Runtime debugging and source inspection
 
 ### Location
 
-Areas likely relevant to investigation include:
-
 ```text
-Source/Objects/Person.cpp
-Source/GameTick.cpp
-Source/GameDraw.cpp
-Source/Input.cpp
-general WebAssembly runtime / animation / gameplay code paths
+Source/Graphic/Sprite.cpp
+Sprite::Draw()
+Sprite::DeleteSprite(int)
 ```
-
-The exact failing source location is not yet known.
 
 ### Environment
 
 ```text
 Google Chrome 153.0.8010.47
 Windows 11 25H2
+Emscripten 6.0.9
 Lugaru Web baseline b340204
 ```
 
-The same crash was observed both:
-
-* on the inherited baseline build using unchecked `[]` accessors, and
-* after restoring checked `.at()` accessors for B-4.
-
-This indicates the crash is **not introduced by B-4**.
+The crash was reproduced both on the inherited baseline build and after the B-4 animation bounds-check restoration, confirming that B-4 did not introduce the defect.
 
 ### Observed Behavior
 
-During gameplay, the browser eventually crashes with:
+During normal gameplay, particularly after several maps and combat encounters, the WebAssembly build would eventually terminate with:
 
 ```text
 Uncaught RuntimeError: memory access out of bounds
 ```
 
-Observed console traces include WebAssembly frames such as:
+A debug WebAssembly build using `-g3`, `-O0`, Emscripten assertions, and GL assertions produced a useful symbolic stack trace. The first meaningful game-side failure was:
 
 ```text
-lugaru.wasm:0x53fc4
-lugaru.wasm:0xb10af
-lugaru.wasm:0xe722d
-lugaru.wasm:0x148f4a
+std::unique_ptr<Sprite>::release(...)
+std::unique_ptr<Sprite>::operator=(...)
+std::vector<std::unique_ptr<Sprite>>::erase(...)
+Sprite::DeleteSprite(int)
+Sprite::Draw()
 ```
 
-Additional traces observed during later crashes included functions such as:
+Later SDL event errors and stack-overflow messages occurred after the initial failure and were treated as secondary effects rather than the root cause.
+
+### Root Cause
+
+`Sprite::Draw()` iterates forward through the global sprite vector.
+
+Several blood-sprite collision paths called:
+
+```cpp
+DeleteSprite(i);
+```
+
+while execution was still inside the current sprite's update logic.
+
+`DeleteSprite()` performs:
+
+```cpp
+sprites.erase(sprites.begin() + i);
+```
+
+Erasing the element shifts subsequent vector elements and invalidates the current element. Some control paths then continued using `sprites[i]`, resulting in invalid or unintended sprite access after the erase.
+
+Source-history inspection showed that this deletion pattern predates the WebAssembly port and is inherited from earlier Lugaru code rather than being introduced by the browser port.
+
+### Resolution
+
+Blood-sprite collision paths now record the collision through `spritehit` without immediately erasing the sprite.
+
+Deletion is deferred until the blood-sprite collision logic has finished:
+
+```cpp
+if (spritehit) {
+    DeleteSprite(i);
+    continue;
+}
+```
+
+The `continue` prevents any further access to the erased sprite.
+
+The original forward-loop iteration behavior was otherwise preserved.
+
+An earlier experimental fix changed the loop to manually manage its index after deletion. Although it prevented the original memory trap, it caused reproducible gameplay freezes after map loading. That broader behavioral change was rejected in favor of the narrower fix.
+
+### Validation
+
+The fix was tested in a debug WebAssembly build that previously reproduced the crash consistently.
+
+After the change:
+
+- multiple maps and combat encounters completed without reproducing the memory-access trap,
+- the earlier experimental freeze was no longer present,
+- the normal Release WebAssembly build completed successfully,
+- extended gameplay in the Release build also failed to reproduce the crash.
+
+The Release build used the project's normal optimization configuration, including `-Oz`, LTO, Closure compilation, and disabled Emscripten assertions.
+
+A native build sanity check was also attempted. Native compilation was blocked before reaching `Sprite.cpp` by a pre-existing Linux SDL2 CMake include-path problem:
 
 ```text
-$func789
-$func532
-$func650
+fatal error: SDL.h: No such file or directory
 ```
 
-The crash occurs inside the WebAssembly module rather than as a surfaced C++ `std::out_of_range` exception.
+That native-build issue is separate from B-12 and does not affect the successful WebAssembly validation.
 
 ### Impact
 
-This is a high-severity runtime stability issue in the project's target platform.
+The previously reproducible WebAssembly gameplay crash is no longer observed in either Debug or Release browser builds.
 
-Because it reproduces during real gameplay and terminates execution, it blocks confidence in browser playability even when normal startup, rendering, and early gameplay appear to work.
-
-### Reproduction Steps
-
-1. Build and serve the WebAssembly version normally.
-2. Open the game in Chrome.
-3. Start or load gameplay.
-4. Play for a period of time, including normal movement, combat, and gameplay actions.
-5. Observe whether the browser console eventually reports:
-
-```text
-Uncaught RuntimeError: memory access out of bounds
-```
-
-If reproduced again, record:
-
-* what level or mode was active,
-* what actions were being performed immediately before the crash,
-* whether it occurred during combat, animation transitions, loading, or interaction,
-* the full browser console trace.
-
-### Current Interpretation
-
-This appears to be a pre-existing WebAssembly/runtime bug rather than a regression caused by the B-4 bounds-check restoration.
-
-The fact that the same memory trap occurs on the untouched baseline suggests an invalid memory access elsewhere in the codebase.
-
-### Expected Direction
-
-Investigate this as an independent runtime defect.
-
-Useful next steps may include:
-
-* reproducing it from a fresh load with a narrower scenario,
-* determining whether it correlates with specific combat or animation states,
-* comparing behavior before and after suspicious gameplay actions,
-* using browser devtools and debug-friendly builds to narrow the failing code path,
-* checking whether a native build can reproduce related instability.
-
-Do not treat this issue as resolved by reverting B-4 unless direct evidence shows the restored bounds checks are responsible.
+B-12 is considered fixed based on the identified unsafe erase pattern, the matching debug stack trace, and successful repeated runtime validation.
 
 ---
 

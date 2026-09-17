@@ -373,7 +373,6 @@ void Sprite::Draw()
                         if (whichtri != -1) {
                             spritehit = 1;
                             Person::players[j]->DoBloodBigWhere(0, 160, sprites[i]->oldposition);
-                            DeleteSprite(i);
                         }
                     }
                 }
@@ -391,7 +390,6 @@ void Sprite::Draw()
                                     if (detail == 2 || (detail == 1 && abs(Random() % 4) == 0) || (detail == 0 && abs(Random() % 8) == 0)) {
                                         Object::objects[k]->model.MakeDecal(blooddecalfast, DoRotation(colpoint - Object::objects[k]->position, 0, -Object::objects[k]->yaw, 0), sprites[i]->size * 1.6, .5, Random() % 360);
                                     }
-                                    DeleteSprite(i);
                                     spritehit = 1;
                                 }
                             }
@@ -401,11 +399,17 @@ void Sprite::Draw()
                 if (!spritehit) {
                     if (sprites[i]->position.y < terrain.getHeight(sprites[i]->position.x, sprites[i]->position.z)) {
                         terrain.MakeDecal(blooddecalfast, sprites[i]->position, sprites[i]->size * 1.6, .6, Random() % 360);
-                        DeleteSprite(i);
+                        spritehit = 1;
                     }
                 }
             }
+
+            if (spritehit) {
+                DeleteSprite(i);
+                continue;
+            }
         }
+
         if (sprites[i]->type == splintersprite) {
             sprites[i]->rotation += sprites[i]->rotatespeed * spriteDt;
             sprites[i]->opacity -= spriteDt / 2;
@@ -452,6 +456,7 @@ void Sprite::Draw()
             DeleteSprite(i);
         }
     }
+
     if (check) {
         for (int i = sprites.size() - 1; i >= 0; i--) {
             sprites[i]->oldposition = sprites[i]->position;
