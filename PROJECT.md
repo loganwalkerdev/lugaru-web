@@ -140,7 +140,7 @@ This file tracks only the current high-level state.
 | B-1  | Web settings overridden after configuration load                                  | Open   | High     |
 | B-2  | Browser main loop uses timeout scheduling as a consequence of B-1                 | Open   | High     |
 | B-3  | Browser persistence uses localStorage; validation failure silently discards saves | Open   | High     |
-| B-4  | Animation bounds checking removed in shared code                                  | Open   | High     |
+| B-4  | Animation bounds checking removed in shared code                                  | Fixed  | High     |
 | B-5  | Asset filename case fallback is incomplete                                        | Open   | Medium   |
 | B-6  | Unsupported motion blur option remains visible                                    | Open   | Low      |
 | B-7  | Browser key rebinding relies on unavailable threading behavior                    | Open   | Medium   |
@@ -148,8 +148,7 @@ This file tracks only the current high-level state.
 | B-9  | Web build is optimized primarily for binary size                                  | Open   | Low      |
 | B-10 | Synchronous level loading can block the browser main thread                       | Open   | Low      |
 | B-11 | Account creation behavior was changed globally rather than only for Web builds    | Open   | Medium   |
-| B-12 | Input state may not recover after browser focus changes                           | Open   | Medium   |
-
+| B-12 | WebAssembly runtime crash: memory access out of bounds                            | Open   | High     |
 
 ---
 
