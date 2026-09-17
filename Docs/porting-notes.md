@@ -190,46 +190,28 @@ Before replacing the persistence system, document the current data format, sanit
 
 ---
 
-## B-4 — Animation Bounds Checking Removed in Shared Code
+## B-4 — Animation access lost bounds checking
 
-**Status:** Open
+**Status:** Fixed
 **Priority:** High
-**Evidence:** Source inspection
+**Evidence:** Source inspection + native build + WebAssembly build + browser runtime comparison
+
+**Location:** `Source/Objects/Person.hpp`
+
+**Behavior:**
+The inherited WebAssembly commit replaced checked `std::vector::at()` access with unchecked `operator[]` access in `currentFrame()` and `targetFrame()`.
+
+**Resolution:**
+Restored `.at()` for both animation and frame lookup, matching upstream checked-access semantics.
+
+**Verification:**
+- Native Release build completed successfully with GCC 15.2.0.
+- WebAssembly Release build completed successfully with Emscripten 6.0.9.
+- Browser gameplay remained functional with the change applied.
+- A later `RuntimeError: memory access out of bounds` was reproduced on the untouched baseline with this patch stashed, confirming that crash is not introduced by B-4.
+- Native runtime interaction could not be fully smoke-tested because the WSLg window would not accept input/focus.
+
 **Introduced by:** inherited WebAssembly commit `b340204`
-
-### Location
-
-```text
-Source/Objects/Person.hpp
-currentFrame()
-targetFrame()
-```
-
-### Current Behavior
-
-Inherited changes replaced checked vector access:
-
-```cpp
-.at(...)
-```
-
-with unchecked indexing:
-
-```cpp
-[...]
-```
-
-This change is not WebAssembly-specific and therefore affects native builds as well.
-
-### Impact
-
-Invalid animation or frame indices can become undefined behavior rather than producing a detectable bounds error.
-
-### Expected Direction
-
-Restore the original checked `.at()` behavior unless a demonstrated compatibility or performance requirement justifies otherwise.
-
-This should be one of the first source-level corrections because it is small, understandable, and affects shared behavior.
 
 ---
 
@@ -529,25 +511,25 @@ If automatic first-run account creation is needed only for Web builds, isolate t
 
 ---
 
-## B-12 — Gameplay Input May Fail After Browser Focus Changes
+## B-12 — WebAssembly Runtime Crash: Memory Access Out of Bounds
 
 **Status:** Open
 **Priority:** High
 **Evidence:** Runtime observation
-**First observed:** 2026-09-17
 
 ### Location
 
 Areas likely relevant to investigation include:
 
 ```text
+Source/Objects/Person.cpp
+Source/GameTick.cpp
+Source/GameDraw.cpp
 Source/Input.cpp
-Source/main.cpp
-SDL focus-event handling
-keyboard and mouse state handling
+general WebAssembly runtime / animation / gameplay code paths
 ```
 
-The exact failing code path has not yet been identified.
+The exact failing source location is not yet known.
 
 ### Environment
 
@@ -557,57 +539,84 @@ Windows 11 25H2
 Lugaru Web baseline b340204
 ```
 
+The same crash was observed both:
+
+* on the inherited baseline build using unchecked `[]` accessors, and
+* after restoring checked `.at()` accessors for B-4.
+
+This indicates the crash is **not introduced by B-4**.
+
 ### Observed Behavior
 
-After leaving the game tab and later returning to it:
+During gameplay, the browser eventually crashes with:
 
-* basic movement continued to respond,
-* attack did not respond,
-* weapon draw/use input did not respond,
-* throwing did not respond,
-* the `E` key did not respond.
+```text
+Uncaught RuntimeError: memory access out of bounds
+```
 
-The game itself remained active and movement still worked.
+Observed console traces include WebAssembly frames such as:
 
-The initial observation occurred after the build had already loaded successfully in the browser.
+```text
+lugaru.wasm:0x53fc4
+lugaru.wasm:0xb10af
+lugaru.wasm:0xe722d
+lugaru.wasm:0x148f4a
+```
+
+Additional traces observed during later crashes included functions such as:
+
+```text
+$func789
+$func532
+$func650
+```
+
+The crash occurs inside the WebAssembly module rather than as a surfaced C++ `std::out_of_range` exception.
 
 ### Impact
 
-If reproducible from a clean session, this prevents normal combat and interaction after a browser focus change.
+This is a high-severity runtime stability issue in the project's target platform.
 
-Because combat is core gameplay and the behavior was directly observed in the project's target environment, this is treated as a high-priority issue until better understood.
-
-### Current Interpretation
-
-The exact cause is not yet known.
-
-Possible areas to investigate include:
-
-* SDL window focus events,
-* browser `blur` / `focus` handling,
-* keyboard state reset,
-* mouse state or capture,
-* pointer lock,
-* `keyDown[]` / `keyPressed[]` state handling,
-* differences between continuous movement input and edge-triggered gameplay actions.
+Because it reproduces during real gameplay and terminates execution, it blocks confidence in browser playability even when normal startup, rendering, and early gameplay appear to work.
 
 ### Reproduction Steps
 
-1. Start from a fresh page load.
-2. Confirm movement and combat inputs work.
-3. Switch to another browser tab or application.
-4. Return to Lugaru.
-5. Click the game canvas if necessary.
-6. Test movement.
-7. Test attack.
-8. Test weapon draw/use.
-9. Test throw.
-10. Test `E`.
-11. Record whether fullscreen changes the result.
-12. Record whether opening and closing the game menu restores input.
-13. Record whether reloading the page restores input.
+1. Build and serve the WebAssembly version normally.
+2. Open the game in Chrome.
+3. Start or load gameplay.
+4. Play for a period of time, including normal movement, combat, and gameplay actions.
+5. Observe whether the browser console eventually reports:
 
-Do not consider full combat/input behavior verified until this test is complete.
+```text
+Uncaught RuntimeError: memory access out of bounds
+```
+
+If reproduced again, record:
+
+* what level or mode was active,
+* what actions were being performed immediately before the crash,
+* whether it occurred during combat, animation transitions, loading, or interaction,
+* the full browser console trace.
+
+### Current Interpretation
+
+This appears to be a pre-existing WebAssembly/runtime bug rather than a regression caused by the B-4 bounds-check restoration.
+
+The fact that the same memory trap occurs on the untouched baseline suggests an invalid memory access elsewhere in the codebase.
+
+### Expected Direction
+
+Investigate this as an independent runtime defect.
+
+Useful next steps may include:
+
+* reproducing it from a fresh load with a narrower scenario,
+* determining whether it correlates with specific combat or animation states,
+* comparing behavior before and after suspicious gameplay actions,
+* using browser devtools and debug-friendly builds to narrow the failing code path,
+* checking whether a native build can reproduce related instability.
+
+Do not treat this issue as resolved by reverting B-4 unless direct evidence shows the restored bounds checks are responsible.
 
 ---
 
