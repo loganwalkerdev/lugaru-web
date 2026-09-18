@@ -149,6 +149,7 @@ This file tracks only the current high-level state.
 | B-10 | Synchronous level loading can block the browser main thread                       | Open   | Low      |
 | B-11 | Account creation behavior was changed globally rather than only for Web builds    | Open   | Medium   |
 | B-12 | WebAssembly runtime crash: memory access out of bounds                            | Fixed  | High     |
+| B-13 | Player direction changes snap instead of rotating                                 | Open   | Medium   |
 
 ---
 

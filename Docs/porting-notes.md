@@ -724,6 +724,48 @@ B-12 is considered fixed based on the identified unsafe erase pattern, the match
 
 ---
 
+## B-13 — Player Direction Changes Snap Instead of Rotating
+
+**Status:** Open
+**Priority:** Medium
+**Evidence:** External user report against the inherited Web fork; not yet independently reproduced
+
+### Reported Behavior
+
+A user of the inherited Web version reported that reversing the player's movement direction causes the character to snap immediately to the opposite facing direction.
+
+The reported comparison with the original game was:
+
+```text
+Original: moving left and then right causes the character to rotate between directions.
+Web fork: moving left and then right causes the character to snap immediately to the opposite direction.
+```
+
+The reporter also specifically noted playing at refresh rates above 100 Hz.
+
+### Impact
+
+The behavior removes or bypasses a visible part of the original character movement animation and makes direction changes appear abrupt.
+
+If the report is reproducible, this represents a behavioral regression from the original game.
+
+### Investigation Direction
+
+Reproduce the behavior in the current Web build and compare it against a native/original build before assigning a cause.
+
+Relevant areas to investigate include:
+
+- player facing and rotation interpolation,
+- movement-direction changes,
+- frame-time-dependent rotation logic,
+- differences between Wolfire upstream, Loupgarenne main, and the inherited WebAssembly branch.
+
+The reported high-refresh-rate environment should also be tested to determine whether the behavior is frame-rate dependent.
+
+Do not assume the issue is WebAssembly-specific until the behavior and source divergence have been identified.
+
+---
+
 ## CI-1 — macOS CI Fails During Dependency Setup
 
 **Status:** Open
