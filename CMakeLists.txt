@@ -303,11 +303,14 @@ if(EMSCRIPTEN)
         "SHELL:-s ASSERTIONS=0"
         "SHELL:-s GL_ASSERTIONS=0"
         "SHELL:-s ENVIRONMENT=web"
+        "SHELL:-s DEFAULT_LIBRARY_FUNCS_TO_INCLUDE=$addRunDependency"
         "SHELL:--closure 1"
+        -lidbfs.js
         -Oz
         -flto
         -fexceptions
         "SHELL:--preload-file ${CMAKE_SOURCE_DIR}/Data@/Data"
+        "SHELL:--pre-js ${CMAKE_SOURCE_DIR}/Misc/web-persistence.js"
         "SHELL:--shell-file ${CMAKE_SOURCE_DIR}/Misc/shell.html"
         ${DATA_CDN_FLAG}
     )
@@ -394,6 +397,15 @@ set(LUGARU_LIBS ${OPENAL_LIBRARY} ${PNG_LIBRARY} ${JPEG_LIBRARY} ${SDL2_LIBRARIE
 ### Definitions
 
 add_executable(lugaru ${LUGARU_SRCS} ${LUGARU_H} ${LUGARU_OBJS})
+
+if(EMSCRIPTEN)
+    set_property(
+        TARGET lugaru
+        APPEND PROPERTY LINK_DEPENDS
+        "${CMAKE_SOURCE_DIR}/Misc/web-persistence.js"
+    )
+endif()
+
 target_link_libraries(lugaru ${LUGARU_LIBS})
 
 if(EMSCRIPTEN)

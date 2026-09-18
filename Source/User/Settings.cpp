@@ -186,10 +186,6 @@ void SaveSettings() {
     opstream << disablevsync;
     opstream << "\n";
     opstream.close();
-
-#ifdef __EMSCRIPTEN__
-    Folders::syncPersistentStorage();
-#endif
 }
 
 bool LoadSettings() {

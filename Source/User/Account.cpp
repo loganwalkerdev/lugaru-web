@@ -291,13 +291,7 @@ void Account::saveFile(string filename)
             printf("writing account %d/%d (%s)\n", i + 1, getNbAccounts(), accounts[i].getName().c_str());
             accounts[i].save(tfile);
         }
-
         fclose(tfile);
-
-#ifdef __EMSCRIPTEN__
-        // Sync to browser storage
-        Folders::syncPersistentStorage();
-#endif
     } else {
         perror(("Couldn't save users in " + filename).c_str());
     }

@@ -248,15 +248,15 @@ Source/User/Account.cpp
 Source/User/Settings.cpp
 ```
 
-Relevant browser storage behavior includes the `localStorage` save/restore glue, account save operations, and settings save operations.
+Relevant browser storage behavior includes the IDBFS persistence layer and legacy `localStorage` migration path.
 
 ### Current Behavior
 
-Browser persistence currently uses JavaScript `localStorage`.
+Browser persistence uses Emscripten IDBFS backed by IndexedDB.
 
-Binary account data is Base64 encoded before storage.
+The IDBFS filesystem is mounted at `/home/web_user` and loaded before the game starts. Files written beneath that mount are persisted automatically.
 
-The restore path performs a sanity check on the stored account data. When that validation fails, the `lugaru_users` entry can be removed from `localStorage`.
+Legacy browser saves stored in `localStorage` are migrated to IDBFS only when no IndexedDB save already exists. Legacy account data is Base64 decoded during migration, and invalid legacy data is left untouched rather than deleted.
 
 Persistence is primarily triggered through:
 
