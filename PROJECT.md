@@ -139,7 +139,7 @@ This file tracks only the current high-level state.
 | ---- | --------------------------------------------------------------------------------- | ------ | -------- |
 | B-1  | Web settings overridden after configuration load                                  | Fixed  | High     |
 | B-2  | Browser main loop uses timeout scheduling as a consequence of B-1                 | Fixed  | High     |
-| B-3  | Browser persistence uses localStorage; validation failure silently discards saves | Open   | High     |
+| B-3  | Browser persistence migrated from localStorage to IDBFS with safe legacy migration| Fixed  | High     |
 | B-4  | Animation bounds checking removed in shared code                                  | Fixed  | High     |
 | B-5  | Asset filename case fallback is incomplete                                        | Open   | Medium   |
 | B-6  | Unsupported motion blur option remains visible                                    | Open   | Low      |

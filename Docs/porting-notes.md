@@ -234,16 +234,16 @@ Browser frame scheduling now follows the user's VSync preference, with animation
 
 ## B-3 — Browser Save Persistence Can Silently Discard Progress
 
-**Status:** Open
+**Status:** Fixed
 **Priority:** High
-**Evidence:** Source inspection
+**Evidence:** Source inspection and browser runtime testing
 
 ### Location
 
 Primary browser-persistence code is located in:
 
 ```text
-Source/Utils/Folders.cpp
+Misc/web-persistence.js
 Source/User/Account.cpp
 Source/User/Settings.cpp
 ```
@@ -258,33 +258,22 @@ The IDBFS filesystem is mounted at `/home/web_user` and loaded before the game s
 
 Legacy browser saves stored in `localStorage` are migrated to IDBFS only when no IndexedDB save already exists. Legacy account data is Base64 decoded during migration, and invalid legacy data is left untouched rather than deleted.
 
-Persistence is primarily triggered through:
+Existing IndexedDB data takes precedence over legacy `localStorage` data.
 
-```text
-Account::saveFile()
-SaveSettings()
-```
+### Resolution
 
-### Impact
+The previous `localStorage` save/restore implementation was removed.
 
-A failed validation can silently destroy the browser's stored progress without presenting an error or recovery option.
+The replacement persistence layer:
 
-Additional limitations include:
+- mounts IDBFS before game startup,
+- waits for the initial IndexedDB sync before allowing the game to run,
+- automatically persists filesystem writes,
+- migrates existing legacy config and account data when appropriate,
+- preserves malformed legacy data instead of silently deleting it,
+- avoids overwriting an existing IndexedDB save during migration.
 
-* browser storage limits,
-* Base64 storage overhead,
-* synchronous storage access,
-* persistence tied to specific save calls,
-* loss of changes if the browser closes before a relevant save operation,
-* limited scalability if additional browser content is introduced.
-
-### Expected Direction
-
-Investigate migration to a browser-backed filesystem such as Emscripten IDBFS or another suitable persistent-storage approach.
-
-Existing browser saves should be preserved or migrated where practical.
-
-Before replacing the persistence system, document the current data format, sanity checks, save triggers, and failure conditions.
+Runtime testing confirmed that account progress persists across page reloads and that legacy `localStorage` saves migrate successfully to IndexedDB.
 
 ---
 
