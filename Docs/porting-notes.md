@@ -275,6 +275,39 @@ The replacement persistence layer:
 
 Runtime testing confirmed that account progress persists across page reloads and that legacy `localStorage` saves migrate successfully to IndexedDB.
 
+### Implementation Notes
+
+Several details of the Web persistence implementation are intentional and should be preserved unless the surrounding build configuration is changed.
+
+- `Module['preRun']` uses bracket notation intentionally. With the current `--closure 1` build, using `Module.preRun` allowed Closure Compiler to rename the property while the Emscripten runtime continued looking for `preRun`, preventing the persistence startup hook from running.
+- `Misc/web-persistence.js` is registered as a `LINK_DEPENDS` dependency of the `lugaru` target. Without this dependency, editing the pre-JS file did not reliably cause CMake to relink the generated Web application.
+- The initial `FS.syncfs(true)` is protected by an Emscripten run dependency. This ensures that IndexedDB contents are loaded into the mounted filesystem before the C++ game startup code accesses configuration or account files.
+- Existing IndexedDB files take precedence over legacy `localStorage` data. Migration only occurs when the corresponding IDBFS file does not already exist.
+- Invalid or malformed legacy account data is intentionally left untouched. The previous implementation could delete the stored value after failed validation, which made recovery impossible.
+
+### Validation
+
+The replacement persistence system was manually tested using isolated browser origins.
+
+Testing confirmed that:
+
+- account progress stored through IDBFS survives a page reload,
+- an existing IndexedDB save is not overwritten by legacy `localStorage`,
+- a valid legacy `localStorage` save migrates successfully when no IndexedDB save exists,
+- migrated account data loads normally after migration,
+- malformed legacy data is not silently deleted,
+- the persistence initialization completes before normal game startup.
+
+Disposable localhost ports were used during migration testing so the primary development origin and its existing browser data were not modified.
+
+### Future Save UX
+
+B-3 addresses the browser persistence backend and destructive legacy-save behavior. It does not change the game's higher-level save cadence.
+
+Account state is still written according to the game's existing save triggers rather than after every relevant player action. During testing, creating an account alone was not sufficient to persist it; normal gameplay later triggered `Account::saveFile()`.
+
+This behavior is currently acceptable, but save timing should be revisited during a future browser UI/UX pass. Possible improvements include saving at additional safe transition points or exposing clearer save-state feedback without changing the underlying IDBFS persistence model.
+
 ---
 
 ## B-4 — Animation access lost bounds checking
