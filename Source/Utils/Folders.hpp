@@ -78,14 +78,6 @@ public:
 
     static bool makeDirectory(const std::string& path);
 
-#ifdef __EMSCRIPTEN__
-    /** Initialize IDBFS for persistent browser storage */
-    static void initPersistentStorage();
-
-    /** Sync filesystem changes to IndexedDB */
-    static void syncPersistentStorage();
-#endif
-
 private:
     static const char* getHomeDirectory();
     static std::string getGenericDirectory(const char* ENVVAR, const std::string& fallback);

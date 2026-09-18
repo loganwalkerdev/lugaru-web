@@ -840,11 +840,6 @@ int main(int argc, char** argv)
     try {
 #endif
         {
-#ifdef __EMSCRIPTEN__
-            // Initialize persistent storage before loading settings
-            Folders::initPersistentStorage();
-#endif
-
             newGame();
 
             if (!SetUp()) {

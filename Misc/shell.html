@@ -153,21 +153,6 @@
         }
         return path;
       },
-      preRun: [function() {
-        // Set up virtual filesystem directories for config and save data
-        try {
-          FS.mkdir('/home');
-          FS.mkdir('/home/web_user');
-          FS.mkdir('/home/web_user/.config');
-          FS.mkdir('/home/web_user/.config/lugaru');
-          FS.mkdir('/home/web_user/.local');
-          FS.mkdir('/home/web_user/.local/share');
-          FS.mkdir('/home/web_user/.local/share/lugaru');
-          console.log('Virtual filesystem directories created successfully');
-        } catch (e) {
-          console.log('Directory setup: ' + e.message);
-        }
-      }],
       canvas: document.getElementById('canvas'),
       print: function(text) {
         if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
