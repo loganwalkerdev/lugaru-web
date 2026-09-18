@@ -62,6 +62,11 @@ bool g_emscriptenMainLoopRunning = false;
 
 static void emscripten_main_loop()
 {
+    if (!g_emscriptenMainLoopRunning) {
+        g_emscriptenMainLoopRunning = true;
+        set_vsync(!disablevsync);
+    }
+
     if (emscripten_gameDone || tryquit) {
         emscripten_cancel_main_loop();
         deleteGame();
@@ -299,19 +304,30 @@ bool SetUp()
         return false;
     }
 
+#ifdef __EMSCRIPTEN__
+    // Emscripten exposes only the current canvas size as a display mode.
+    // Provide a small set of 16:9 internal render resolutions instead.
+    resolutions.insert(make_pair(1280, 720));
+    resolutions.insert(make_pair(1600, 900));
+    resolutions.insert(make_pair(1920, 1080));
+    resolutions.insert(make_pair(2560, 1440));
+#else
     for (int displayIdx = 0; displayIdx < SDL_GetNumVideoDisplays(); ++displayIdx) {
         for (int i = 0; i < SDL_GetNumDisplayModes(displayIdx); ++i) {
             SDL_DisplayMode mode;
             if (SDL_GetDisplayMode(displayIdx, i, &mode) == -1) {
                 continue;
             }
+
             if ((mode.w < 640) || (mode.h < 480)) {
                 continue; // sane lower limit.
             }
+
             pair<int, int> resolution(mode.w, mode.h);
             resolutions.insert(resolution);
         }
     }
+#endif
 
     if (resolutions.empty()) {
         const std::string error = "No suitable video resolutions found.";
@@ -853,8 +869,6 @@ int main(int argc, char** argv)
             }
 
 #ifdef __EMSCRIPTEN__
-            g_emscriptenMainLoopRunning = true;
-            set_vsync(!disablevsync);
             emscripten_set_main_loop(emscripten_main_loop, 0, 1);
 #else
             bool gameDone = false;

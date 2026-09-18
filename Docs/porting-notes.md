@@ -35,22 +35,25 @@ Source-derived issues should not be described as runtime-confirmed until they ha
 
 ## B-1 — Web Settings Overridden After Configuration Load
 
-**Status:** Open
+**Status:** Fixed
 **Priority:** High
-**Evidence:** Source inspection
+**Evidence:** Source inspection + browser runtime validation
 
 ### Location
 
 ```text
 Source/User/Settings.cpp
+Source/main.cpp
 LoadSettings()
+DefaultSettings()
+Web resolution enumeration
 ```
 
-### Current Behavior
+### Previous Behavior
 
-The WebAssembly build applies browser-specific settings after normal configuration loading.
+The inherited WebAssembly build applied browser-specific settings after normal configuration loading.
 
-The inherited block includes behavior equivalent to:
+The Web-only block in `LoadSettings()` forced behavior equivalent to:
 
 ```cpp
 #ifdef __EMSCRIPTEN__
@@ -65,72 +68,167 @@ The inherited block includes behavior equivalent to:
 #endif
 ```
 
-Because this occurs after configuration parsing, previously saved values can be overwritten every time settings are loaded.
+Because this occurred after configuration parsing, previously saved VSync and resolution values were overwritten every time settings were loaded.
+
+The Web build also received only one resolution from SDL/Emscripten display-mode enumeration:
+
+```text
+1920 x 1080
+```
+
+As a result, the resolution option appeared in the menu but could not cycle to another value.
+
+### Resolution
+
+The Web-specific post-load overrides for VSync and resolution were removed.
+
+The Web build still disables motion blur after configuration loading because that rendering feature is unsupported on Web:
+
+```cpp
+#ifdef __EMSCRIPTEN__
+    // Motion blur is unsupported in the Web build.
+    ismotionblur = 0;
+    alwaysblur = 0;
+#endif
+```
+
+Browser-specific values are now treated as defaults rather than forced settings.
+
+`DefaultSettings()` continues to use:
+
+```text
+1920 x 1080
+```
+
+as the default Web render resolution, but a saved user-selected resolution is no longer overwritten during configuration loading.
+
+In the tested Web build, SDL/Emscripten exposed only the current canvas size through display-mode enumeration, so the Web build now provides a small set of internal 16:9 render resolutions:
+
+```text
+1280 x 720
+1600 x 900
+1920 x 1080
+2560 x 1440
+```
+
+Native builds continue to populate the resolution list from SDL display modes.
+
+### Validation
+
+Browser runtime testing confirmed:
+
+- VSync can be changed between On and Off,
+- the selected VSync setting survives a reload,
+- the Resolution option cycles through all four Web render resolutions,
+- the selected resolution survives a reload,
+- selecting `2560 x 1440` results in a canvas drawing buffer of `2560 x 1440`,
+- selecting `1280 x 720` results in a canvas drawing buffer of `1280 x 720`,
+- the visible canvas continues filling the browser viewport because `shell.html` scales it independently through CSS.
+
+The Web build therefore retains 1920×1080 as its default while allowing users to choose and persist another supported internal render resolution.
 
 ### Impact
 
-Potential effects include:
+Browser configuration now behaves like normal user configuration rather than being silently overwritten during every load.
 
-* saved VSync preferences being ignored,
-* saved resolution being ignored,
-* a hardcoded 1920×1080 resolution being applied regardless of browser canvas or display,
-* browser-specific defaults behaving as forced settings rather than initial defaults.
-
-`DefaultSettings()` also sets `disablevsync = 0`, which conflicts with the later Web-specific override.
-
-### Expected Direction
-
-Browser-specific values should be established as defaults where necessary, not reapplied after user configuration has been loaded.
-
-B-1 and B-2 are directly related and should likely be resolved together.
+Saved VSync and resolution preferences are respected, while unsupported motion blur remains disabled intentionally.
 
 ---
 
 ## B-2 — Browser Main Loop Uses Timeout Scheduling Instead of Animation Frames
 
-**Status:** Open
+**Status:** Fixed
 **Priority:** High
-**Evidence:** Source inspection
+**Evidence:** Source inspection + browser runtime validation
 **Related:** B-1
 
 ### Location
 
 ```text
+Source/Game.hpp
 Source/main.cpp
 set_vsync()
-WebAssembly main-loop timing configuration
+emscripten_main_loop()
 ```
 
-### Current Behavior
+### Previous Behavior
 
-B-1 forces:
+The inherited Web build forced:
 
 ```text
 disablevsync = 1
 ```
 
-which results in:
+through B-1, causing:
 
-```text
-set_vsync(0)
+```cpp
+set_vsync(false);
 ```
 
-and ultimately causes Emscripten to use zero-delay timeout scheduling rather than browser animation-frame scheduling.
+to select Emscripten zero-delay timeout scheduling rather than browser animation-frame scheduling.
+
+An additional initialization-order bug caused the Web startup path to execute:
+
+```cpp
+g_emscriptenMainLoopRunning = true;
+set_vsync(!disablevsync);
+emscripten_set_main_loop(emscripten_main_loop, 0, 1);
+```
+
+This marked the loop as running and attempted to change its timing before `emscripten_set_main_loop()` had actually created the loop.
+
+Chrome consequently reported:
+
+```text
+emscripten_set_main_loop_timing: Cannot set timing mode for main loop since a main loop does not exist! Call emscripten_set_main_loop first to set one up.
+```
+
+### Resolution
+
+The Emscripten main loop is now registered without attempting to configure its timing first:
+
+```cpp
+emscripten_set_main_loop(emscripten_main_loop, 0, 1);
+```
+
+Timing initialization is deferred until the first actual execution of `emscripten_main_loop()`:
+
+```cpp
+if (!g_emscriptenMainLoopRunning) {
+    g_emscriptenMainLoopRunning = true;
+    set_vsync(!disablevsync);
+}
+```
+
+At that point the Emscripten loop exists, so `set_vsync()` can safely configure its timing.
+
+B-1 was fixed at the same time so the browser no longer forces VSync off after loading configuration.
+
+With VSync enabled, the Web build now uses:
+
+```text
+EM_TIMING_RAF
+```
+
+and follows the browser's animation-frame scheduling.
+
+If the user explicitly disables VSync, the existing timeout-based scheduling behavior remains available intentionally.
+
+### Validation
+
+After the initialization-order change:
+
+- the previous `emscripten_set_main_loop_timing` startup warning no longer appears,
+- the game starts and runs normally,
+- VSync can be changed from the settings menu,
+- the VSync preference survives browser reloads,
+- the default Web configuration can use browser animation-frame scheduling instead of being forced to timeout scheduling.
 
 ### Impact
 
-Possible effects include:
+The Web build no longer attempts to configure main-loop timing before the loop exists and is no longer forced into timeout scheduling by its settings loader.
 
-* unnecessary CPU usage,
-* increased battery consumption,
-* poor frame pacing,
-* timing behavior that does not follow the browser's refresh cycle.
-
-### Expected Direction
-
-Use Emscripten animation-frame scheduling where appropriate.
-
-Settings handling must be corrected at the same time so the main-loop fix is not immediately overridden by `LoadSettings()`.
+Browser frame scheduling now follows the user's VSync preference, with animation-frame scheduling available as the normal default behavior.
 
 ---
 
