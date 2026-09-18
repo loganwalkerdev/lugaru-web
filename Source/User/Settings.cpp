@@ -352,16 +352,9 @@ bool LoadSettings() {
     newdetail = detail;
 
 #ifdef __EMSCRIPTEN__
-    // Force settings for web builds (performance)
+    // Motion blur is unsupported in the Web build.
     ismotionblur = 0;
     alwaysblur = 0;
-    disablevsync = 1;
-    set_vsync(0);
-    // Force 1080p resolution
-    kContextWidth = 1920;
-    kContextHeight = 1080;
-    newscreenwidth = 1920;
-    newscreenheight = 1080;
 #endif
 
     return true;
