@@ -96,7 +96,7 @@ A CMake/Emscripten shared-library warning remains a baseline/toolchain-version c
 - B-4 animation bounds checking restored — fixed.
 - B-5 case-insensitive asset fallback incomplete — open.
 - B-6 motion blur option exposed but unsupported/forced off on Web — investigate.
-- B-7 key rebinding likely problematic under Web due thread usage — QA/investigate.
+- B-7 key rebinding was suspected to fail under Web due thread usage — fixed and Chrome-verified on 2026-09-24; see section V below.
 - B-8 no controller support — open; action input layer is likely solution.
 - B-9 size-optimized build flags may be worth benchmarking against speed optimization.
 - B-10 no ASYNCIFY, so synchronous level loads may block the tab.
@@ -1385,3 +1385,19 @@ Do not pull AI perception out of rendering until the `occluded` coupling has bee
 - `https://wiki.wolfire.com/Lugaru_Walkthrough` — challenge strategies and historical award descriptions.
 
 As before, surviving Wiki material is historical evidence, not automatically the source of truth for the modern OSS/Loupgarenne/Lugaru-Web tree. Exact current behavior above was taken from source/data first and compared against the historical documentation second.
+
+---
+
+# V. 2026-09-24 — Web key rebinding fixed (B-7)
+
+**VERIFIED SOURCE FINDING:** `Menu::setKeySelected()` depended on `SDL_CreateThread()`, but the current Emscripten SDL2 port selects a non-threaded backend that rejects thread creation. The failure path cleared `waiting` without clearing `keyselect`, leaving the selected binding displayed as `_` without an active capture worker.
+
+**HISTORICAL EVIDENCE:** Côme BERNIGAUD's June 2010 commit `5e808c5` explicitly describes introducing threaded key configuration; follow-up `e31b703` contains the implementation. This path predates Loupgarenne and the WASM port.
+
+**VERIFIED SOURCE FINDING:** Commit `a7bfd51` adds Web-only `pollKeyCapture()` / `Menu::isKeyCaptureActive()` integration with the menu, `Game::ProcessInput()`, and Emscripten main loop. Capture uses nonblocking SDL polling, preserves control ordering and keyboard scancode/mouse-button encoding, discards queued selection presses, cancels on Escape, and clears `waiting` and `keyselect`. The captured press is consumed through release to avoid menu/hotkey reuse. No pthreads, Asyncify, broader input refactor, settings-format change, or save-cadence change was introduced. Native threaded capture was intentionally left unchanged.
+
+**Build validation:** `cmake --build build-web -j2` completed successfully. An initial linker attempt was blocked by sandbox access to an Emscripten cache lock; the retry with cache access succeeded without compiler/linker warnings in its log. An isolated harness exercised capture-state behavior, but does not substitute for browser testing.
+
+**RUNTIME-VERIFIED (Chrome, 2026-09-24):** Before the fix, selecting a control displayed `_` and logged `Unable to create thread: Threads are not supported on this platform`; replacement keys did nothing and another control could not be selected. Escape behaved normally, and refreshing restored the original display. After the fix, capture starts normally without that error; keyboard and mouse rebinding work, Escape cancels cleanly, another control can be selected, rebound actions work in gameplay, and leaving Options saves bindings that reload successfully through existing persistence.
+
+**OPEN QUESTION:** Native worker-thread `SDL_WaitEvent()` usage conflicts with SDL's documented video-thread requirement and remains a separate portability investigation (backlog A4a). The Chrome verification does not establish native behavior or exhaustive coverage of held hotkeys, focus transitions, or browser-reserved shortcuts.

@@ -74,6 +74,14 @@ static void emscripten_main_loop()
         return;
     }
 
+    // Rebinding owns the event queue, including while focus is changing.
+    if (Menu::isKeyCaptureActive()) {
+        deltah = 0;
+        deltav = 0;
+        DoUpdate();
+        return;
+    }
+
     if (IsFocused()) {
         emscripten_gameFocused = true;
 

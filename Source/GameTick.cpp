@@ -1203,6 +1203,12 @@ void Game::ProcessInput()
     /* Pump SDL input events */
     Input::Tick();
 
+#ifdef __EMSCRIPTEN__
+    if (Menu::isKeyCaptureActive()) {
+        return;
+    }
+#endif
+
     /* Menu handling (main menu, leave game) */
     if (Input::isKeyPressed(SDL_SCANCODE_ESCAPE) &&
         (gameon || mainmenu == 0)) {

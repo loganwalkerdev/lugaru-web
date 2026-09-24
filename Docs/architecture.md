@@ -91,7 +91,7 @@ This flow should become the basis of a durable architecture map rather than a gi
 
 The current SDL event/input layer is small and still exposes low-level state such as `keyDown` / `keyPressed`. There are signs in gameplay code that input abstraction was already recognized as desirable.
 
-Key rebinding on Web is currently suspicious because menu key-selection code uses `SDL_CreateThread`, while the browser build is not currently configured around pthreads.
+Web key rebinding now uses nonblocking SDL event capture (`pollKeyCapture()` in `Menu.cpp`), verified in Chrome on 2026-09-24. Native capture still uses `SDL_CreateThread`; its separate thread-affinity/portability question remains open (research backlog A4a).
 
 Controller support is also absent in the current browser experience.
 
