@@ -74,6 +74,9 @@ public:
     static void updateStereoConfigMenu();
     static void updateControlsMenu();
     static void setKeySelected();
+#ifdef __EMSCRIPTEN__
+    static bool isKeyCaptureActive();
+#endif
     static void startChallengeLevel(int selected);
 
 private:

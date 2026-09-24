@@ -525,7 +525,63 @@ void Menu::startChallengeLevel(int selected) {
     pause_sound(stream_menutheme);
 }
 
+#ifdef __EMSCRIPTEN__
+namespace {
+int capturedKey = -1;
+
+void pollKeyCapture()
+{
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        int scancode = -1;
+        if (event.type == SDL_KEYDOWN) {
+            scancode = event.key.keysym.scancode;
+        } else if (event.type == SDL_MOUSEBUTTONDOWN) {
+            scancode = SDL_NUM_SCANCODES + event.button.button;
+        } else if (!sdlEventProc(event)) {
+            tryquit = 1;
+            keyselect = -1;
+            waiting = false;
+            capturedKey = -1;
+            return;
+        }
+
+        if (scancode != -1 && waiting && keyselect != -1) {
+            unsigned short* bindings[] = {
+                &forwardkey, &backkey, &leftkey, &rightkey, &crouchkey,
+                &jumpkey, &drawkey, &throwkey, &attackkey, &consolekey
+            };
+            if (scancode != SDL_SCANCODE_ESCAPE) {
+                fireSound();
+                *bindings[keyselect] = scancode;
+            }
+            keyselect = -1;
+            waiting = false;
+            capturedKey = scancode;
+            Menu::Load();
+        }
+    }
+
+    // Swallow the captured press (including repeats) until it is released.
+    if (capturedKey != -1 && !Input::isKeyDown(capturedKey)) {
+        capturedKey = -1;
+    }
+}
+}
+
+bool Menu::isKeyCaptureActive()
+{
+    return mainmenu == 4 && ((waiting && keyselect != -1) || capturedKey != -1);
+}
+#endif
+
 void Menu::Tick() {
+#ifdef __EMSCRIPTEN__
+    if (isKeyCaptureActive()) {
+        pollKeyCapture();
+        return;
+    }
+#endif
     //escape key pressed
     if (Input::isKeyPressed(SDL_SCANCODE_ESCAPE) &&
         (mainmenu >= 3) && (mainmenu != 8) && !((mainmenu == 7) && entername)) {
@@ -1001,6 +1057,11 @@ int setKeySelected_thread(void*) {
 
 void Menu::setKeySelected() {
     waiting = true;
+#ifdef __EMSCRIPTEN__
+    // Discard events already queued by the click that selected this control.
+    SDL_FlushEvent(SDL_KEYDOWN);
+    SDL_FlushEvent(SDL_MOUSEBUTTONDOWN);
+#else
     printf("launch thread\n");
     SDL_Thread* thread = SDL_CreateThread(setKeySelected_thread, NULL, NULL);
     if (thread == NULL) {
@@ -1008,4 +1069,5 @@ void Menu::setKeySelected() {
         waiting = false;
         return;
     }
+#endif
 }
