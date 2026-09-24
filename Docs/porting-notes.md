@@ -1,6 +1,6 @@
 # WebAssembly Porting Notes
 
-**Last updated:** 2026-09-17
+**Last updated:** 2026-09-24
 
 This document tracks WebAssembly-specific defects, inherited behavior changes, browser compatibility issues, and related implementation notes for Lugaru Web.
 
@@ -426,47 +426,29 @@ If the option is confirmed to be nonfunctional on Web, either support it or hide
 
 ---
 
-## B-7 — Browser Key Rebinding Relies on SDL Thread Creation
+## B-7 — Browser Key Rebinding Failed at SDL Thread Creation
 
-**Status:** Open
+**Status:** Fixed
 **Priority:** Medium
-**Evidence:** Source inspection
+**Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (Chrome, 2026-09-24)
+**Fix:** `a7bfd51` — `fix: restore web key rebinding`
+**Verified:** 2026-09-24
 
-### Location
+### Root Cause and Previous Behavior
 
-```text
-Source/Menu/Menu.cpp
-setKeySelected()
-setKeySelected_thread()
-```
+`Source/Menu/Menu.cpp::setKeySelected()` attempted `SDL_CreateThread()` with the Web build's non-threaded SDL backend. Chrome reproduced the error `Unable to create thread: Threads are not supported on this platform`. Failure cleared `waiting` but left `keyselect` set: the control displayed `_`, replacement keys did nothing, and another control could not be selected. Escape behaved normally; refreshing restored the original binding display, so the failed capture state was not persisted.
 
-### Current Behavior
+### Resolution
 
-Key rebinding uses an SDL thread to wait for the next selected input.
+Web-only nonblocking SDL capture replaces thread creation, with menu/input/main-loop guards against reusing captured input for navigation or hotkeys. Keyboard scancodes, mouse-button encoding, control ordering, Escape cancellation, and settings/save behavior are preserved. Capture clears both `waiting` and `keyselect`; native threaded capture is intentionally unchanged. Pthreads and Asyncify remain disabled.
 
-The WebAssembly build does not currently enable pthread support.
+### Validation
 
-If thread creation fails, the waiting state is cleared and the binding operation can silently end without useful feedback.
+The Web target built successfully after retrying an Emscripten cache-lock sandbox failure with cache access; the successful build log contained no compiler/linker warnings.
 
-This failure mode has not yet been deliberately reproduced in browser QA.
+Chrome runtime testing confirmed normal capture, disappearance of the thread error, keyboard and mouse rebinding, clean Escape cancellation, subsequent control selection, rebound actions in gameplay, and persistence after leaving Options and reloading. Held-hotkey, focus-transition, and browser-reserved-key coverage remains unverified.
 
-### Impact
-
-Key rebinding may appear to do nothing in the browser.
-
-### Reproduction Steps
-
-1. Attempt to rebind a keyboard control.
-2. Record whether the UI enters a waiting state.
-3. Press a replacement key.
-4. Determine whether the new key is captured.
-5. Determine whether the binding persists.
-6. Repeat with several controls.
-7. Record whether failure produces any visible error.
-
-### Expected Direction
-
-Replace thread-based waiting with an event-driven input state suitable for both browser and native builds where practical.
+Native SDL event-thread portability remains a separate open question in research backlog A4a. Historical origin and investigation details are recorded in research-session section V.
 
 ---
 

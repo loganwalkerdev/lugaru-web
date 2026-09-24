@@ -143,7 +143,7 @@ This file tracks only the current high-level state.
 | B-4  | Animation bounds checking removed in shared code                                  | Fixed  | High     |
 | B-5  | Asset filename case fallback is incomplete                                        | Open   | Medium   |
 | B-6  | Unsupported motion blur option remains visible                                    | Open   | Low      |
-| B-7  | Browser key rebinding relies on unavailable threading behavior                    | Open   | Medium   |
+| B-7  | Browser key rebinding replaced with Web-only nonblocking capture                  | Fixed  | Medium   |
 | B-8  | Controller input is not currently initialized or implemented                      | Open   | Medium   |
 | B-9  | Web build is optimized primarily for binary size                                  | Open   | Low      |
 | B-10 | Synchronous level loading can block the browser main thread                       | Open   | Low      |
@@ -213,7 +213,7 @@ Current priorities are approximately:
 3. Restore inherited shared-code behavior that was unintentionally changed, including animation bounds checking and account creation behavior.
 4. Correct browser settings handling and frame scheduling together.
 5. Investigate and harden browser persistence.
-6. Verify and repair browser key rebinding.
+6. Verify and repair browser key rebinding — completed and Chrome-verified on 2026-09-24.
 7. Investigate asset filename case mismatches.
 8. Add or integrate controller support.
 9. Benchmark WebAssembly optimization settings.

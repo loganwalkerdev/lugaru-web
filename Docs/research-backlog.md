@@ -50,11 +50,13 @@ Read the known relevant regions of `GameDraw.cpp`, settings/menu code, framebuff
 
 Goal: either restore it correctly or hide/disable the option honestly on Web.
 
-### A4. Key rebinding and threads
+### A4. Web key rebinding — fixed (2026-09-24)
 
-Confirm whether Web key rebinding fails because `Menu.cpp::setKeySelected()` uses `SDL_CreateThread` without pthread-enabled Emscripten.
+**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** B-7 was caused by `Menu::setKeySelected()` attempting `SDL_CreateThread()` with the Web build's non-threaded SDL backend. Failure cleared `waiting` but left `keyselect` set. Commit `a7bfd51` adds Web-only nonblocking capture; Chrome testing confirmed keyboard/mouse rebinding, Escape cancellation, subsequent selection, gameplay use, and save/reload persistence.
 
-This should inform the action-based input refactor.
+### A4a. Native rebinding thread affinity / portability
+
+**OPEN QUESTION:** The native `setKeySelected_thread()` still calls `SDL_WaitEvent()` from a worker, although SDL documents that this function must run on the thread that initialized video. It also mutates shared menu state. Native behavior was intentionally left unchanged by B-7. Determine the practical impact across supported native platforms before proposing a separate fix; no native runtime failure has been established by this investigation.
 
 ### A5. Native build health
 
