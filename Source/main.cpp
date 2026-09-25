@@ -27,6 +27,7 @@ along with Lugaru.  If not, see <http://www.gnu.org/licenses/>.
 #include "Platform/Platform.hpp"
 #include "User/Settings.hpp"
 #include "Utils/Folders.hpp"
+#include "Utils/Input.hpp"
 #include "Version.hpp"
 
 #include <fstream>
@@ -431,6 +432,7 @@ bool SetUp()
     }
 
     InitGame();
+    Input::InitController();
 
     return true;
 }
@@ -528,6 +530,8 @@ static void resetPhysicsAccumulator()
 
 void DoUpdate()
 {
+    Input::UpdateController();
+
     // Fixed timestep at 1000Hz - matches physics constants tuned for high FPS
     const float PHYSICS_DT = 0.001f;
     static float physicsAccumulator = 0.f;
@@ -655,6 +659,7 @@ void CleanUp(void)
 
     delete[] commandLineOptionsBuffer;
 
+    Input::ShutdownController();
     SDL_Quit();
 }
 

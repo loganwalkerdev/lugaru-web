@@ -37,6 +37,14 @@ along with Lugaru.  If not, see <http://www.gnu.org/licenses/>.
 class Input
 {
 public:
+    static void InitController();
+    static void ShutdownController();
+    static void UpdateController();
+    static bool hasController();
+    // Raw standardized SDL values; no gameplay deadzone or bindings applied.
+    static Sint16 controllerAxis(SDL_GameControllerAxis axis);
+    static bool controllerButtonDown(SDL_GameControllerButton button);
+
     static void Tick();
     static bool isKeyDown(int k);
     static bool isKeyPressed(int k);
