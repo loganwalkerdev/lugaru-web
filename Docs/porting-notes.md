@@ -452,9 +452,9 @@ Native SDL event-thread portability remains a separate open question in research
 
 ---
 
-## B-8 — Controller Input Foundation Implemented; Gameplay Mapping Open
+## B-8 — Controller Gameplay and Look Implemented; Menu/UI Open
 
-**Status:** Milestone 1 implemented, Web-built, and physically runtime-verified (Firefox + wired DualSense); gameplay/menu support remains open
+**Status:** Milestones 1–4 implemented, Web-built, and physically runtime-verified (Firefox + wired DualSense); menu/UI support remains open
 **Priority:** Medium
 **Evidence:** Committed source, reported build/check results, isolated native SDL harness, and manual physical-controller runtime testing
 
@@ -469,15 +469,15 @@ Native SDL event-thread portability remains a separate open question in research
 - `Input::hasController()`, `Input::controllerAxis()`, and `Input::controllerButtonDown()` expose standardized SDL axes/buttons through the existing input area. Raw controller state remains separate from `keyDown`, `keyPressed`, and keyboard/mouse bindings.
 - `SetUp()`, `DoUpdate()`, and `CleanUp()` own the lifecycle calls. No additional SDL event-queue consumer was introduced.
 
-No controller gameplay, camera, menu, or rebinding behavior is mapped yet. Existing keyboard/mouse paths are unchanged. This is deliberately narrower than a generalized input-system rewrite.
+At milestone 1, no controller gameplay, camera, menu, or rebinding behavior was mapped. Milestones 2–4 below add gameplay and look while preserving keyboard/mouse input; this remains narrower than a generalized input-system rewrite.
 
-### Build and isolated harness validation
+### Milestone 1 build and isolated harness validation
 
 **Build validation (reported for the source milestone):** `cmake --build build-web -j2` succeeded, and `git diff --check` passed before the source commit.
 
 **RUNTIME-VERIFIED — isolated native SDL virtual-controller harness:** no-controller startup, startup discovery, hot-plug, button/axis state reads, device-index changes, disconnect/reset, reconnect, and shutdown. This was not a full native Lugaru gameplay test.
 
-### Physical runtime verification
+### Milestone 1 physical runtime verification
 
 **RUNTIME-VERIFIED — manual test:** Sony DualSense / PS5 controller, Windows host, Firefox, Lugaru-Web served from localhost, DS4Windows disabled, wired USB connection. Lugaru logged:
 
@@ -486,12 +486,68 @@ Controller: detected device 0 (Standard Gamepad)
 Controller: opened instance 0 (Standard Gamepad)
 ```
 
-- Left-stick analog values were received across the SDL signed axis range, including intermediate values and small near-center values. The observed center noise confirms the need for a future gameplay deadzone.
+- Left-stick analog values were received across the SDL signed axis range, including intermediate values and small near-center values. The observed center noise informed the movement and look deadzones added below.
 - Right-stick `rightx` and `righty` produced analog values in both positive and negative ranges.
 - `lefttrigger` and `righttrigger` were observed as binary Web-axis values (`0` and `32767`), consistent with the previously identified bundled SDL Emscripten backend behavior; analog trigger precision is not established by this test.
 - Shoulder and stick-click buttons produced clean down/up events. Additional controller buttons were exercised, without claiming exhaustive button coverage.
 - Physical disconnect and reconnect were detected; the controller reopened and resumed reporting input. No stuck controller state was observed.
-- Existing mouse controls still worked. Controller input remained intentionally unmapped to gameplay/menu behavior.
+- Existing mouse controls still worked. At milestone 1, controller input remained intentionally unmapped to gameplay/menu behavior.
+
+### Milestone 2 — Digital Classic movement (`4b8af1d`)
+
+**VERIFIED SOURCE FINDING:** `Input::controllerMovement()` in `Source/Utils/Input.cpp` exposes left-stick directions using independent axis hysteresis: activate at magnitude `10000`, release at `7000`. `clearControllerState()` clears the direction latches on disconnect/reset. In `Game::Tick()` (`Source/GameTick.cpp`), controller directions are ORed with keyboard bindings into `Person::players[0]->forwardkeydown`, `backkeydown`, `leftkeydown`, and `rightkeydown`, under existing gameplay/dialogue guards.
+
+Existing Classic speed, facing, animation, and diagonal logic remain authoritative. There is no proportional analog movement: the stick selects the existing digital/eight-direction combinations. Snapping movement/facing into those combinations is expected, not a milestone 2 defect. True analog movement/arbitrary facing is separate future work because it affects animation, facing, combat, and timing.
+
+**Build validation:** `cmake --build build-web -j2` and `git diff --check` passed.
+
+**RUNTIME-VERIFIED — isolated native SDL harness:** thresholds, hysteresis, diagonals, reversals, keyboard-state preservation, disconnect/reconnect, and lifecycle handling passed. This is not full native Lugaru gameplay validation.
+
+**RUNTIME-VERIFIED — physical manual test:** wired DualSense, Firefox, DS4Windows disabled. Movement worked correctly: center noise caused no unintended movement; threshold/hysteresis start and stop behavior and diagonals worked; keyboard/controller movement coexisted; disconnect/reconnect left no stale movement. Mouse controls remained functional.
+
+### Milestone 3 — Core gameplay actions (`2387ebf`)
+
+**VERIFIED SOURCE FINDING:** fixed mappings in `Source/Utils/Input.cpp`:
+
+| Physical control | SDL GameController button | Existing action |
+| --- | --- | --- |
+| Cross / bottom face | `SDL_CONTROLLER_BUTTON_A` | Jump |
+| Circle / right face | `SDL_CONTROLLER_BUTTON_B` | Crouch |
+| Square / left face | `SDL_CONTROLLER_BUTTON_X` | Draw / sheath |
+| L1 | `SDL_CONTROLLER_BUTTON_LEFTSHOULDER` | Throw / pickup / contextual weapon interaction |
+| R1 | `SDL_CONTROLLER_BUTTON_RIGHTSHOULDER` | Attack |
+
+`isJumpDown()`, `isCrouchDown()`, `isDrawDown()`, `isThrowDown()`, and `isAttackDown()` combine controller and existing keyboard/mouse held state. Releasing either source does not release an action still held by the other. Existing jump/crouch transitions and draw/throw toggle logic remain authoritative, including contextual sneak/roll/reversal and weapon behavior.
+
+`doAttacks()` consumes combined held attack while retaining `oldattackkey` logic. `Input::Tick()` derives `isAttackPressed()` from the combined transition for one input/physics tick. Both `Dialog::tick()` in `Source/Level/Dialog.cpp` (initiation) and `Game::Tick()` (advancement) consume this press edge, rather than relying only on `Person::attackkeydown`. Jump-based respawn uses combined jump input. Disconnect removes controller-derived action state without clearing keyboard/mouse state; combined attack history stays separate from controller lifecycle so a keyboard-held attack does not acquire a false new edge. Raw developer/text/key handling remains separate. Developer dialogue-camera controls and challenge-completion jump/Space confirmation remain keyboard-only.
+
+**Build validation:** Web build and `git diff --check` passed.
+
+**RUNTIME-VERIFIED — isolated SDL harness:** all five mappings, keyboard/controller handoffs, one-tick attack edges, raw-input isolation, unmapped controls, and disconnect/reconnect passed.
+
+**RUNTIME-VERIFIED — physical Firefox/DualSense test:** all five mappings worked: Cross jump, Circle crouch and related existing contexts, Square draw/sheath, L1 throw/pickup, R1 combat and dialogue interaction/advancement. Held attack did not cause unintended repeated dialogue advancement. Keyboard/mouse and controller actions coexisted, and disconnect/reconnect left no stale action state.
+
+At this milestone, right stick, Triangle, triggers, Options/Start, D-pad, and other unused controls remained unmapped. Milestone 4 subsequently adds right-stick look only. The face-button layout is intentional and does not copy the historical Switch layout.
+
+### Milestone 4 — Right-stick camera/look (`ab46b53`)
+
+**VERIFIED SOURCE FINDING:** `Input::controllerLook()` uses `controllerLookAxis()` with an axial deadzone of `8000` (approximately 24%). Remaining travel is continuously rescaled from zero to full response, avoiding a speed jump at the boundary. `Game::TickOnce()` adds the resulting angular rate alongside mouse input, outside menus and dialogue/directing, before the existing pitch clamp:
+
+- Maximum yaw rate: `120°/s`; maximum pitch rate: `90°/s`.
+- Right increases yaw; down increases pitch, matching non-inverted mouse behavior.
+- Pitch limits remain `[-70°, 90°]`.
+- Controller scaling is independent of mouse sensitivity and inversion. Mouse and stick look combine without exclusive device selection.
+- Attachment-checked axis reads remove controller-derived look on disconnect; centered reconnect has no retained look state. Triggers are not used for camera rotation.
+
+**VERIFIED SOURCE FINDING — timing:** stick input represents angular velocity, not mouse displacement. The implementation integrates `look rate × realmultiplier` once per outer frame in `TickOnce()`, before physics substeps. `DoUpdate()` in `Source/main.cpp` sets `realmultiplier` from elapsed frame seconds before game-speed, difficulty, loading, and slow-motion modifiers. Sustained deflection therefore yields approximately the same angular rotation per real-world second across render rates. The existing 250 ms stall cap still applies; long stalls are not integrated as unrestricted elapsed time. A fixed increment per rendered frame would be refresh-rate dependent in this loop.
+
+**Build validation:** Web build and `git diff --check` passed. The Web milestones required Emscripten cache access for linking; existing unused-variable warnings in `main.cpp` and `GameDraw.cpp` were not controller failures.
+
+**RUNTIME-VERIFIED — isolated timing/camera harness:** 30, 60, 120, 144, and 240 Hz plus irregular timing; deadzone, signs, pitch limits, mouse combination/inversion, camera guards, disconnect/reconnect, and unmapped triggers passed. Milestone 3 action harness regression checks also passed. These are isolated checks, not physical browser measurements across those refresh rates or full native gameplay tests.
+
+**RUNTIME-VERIFIED — physical Firefox/DualSense test:** camera control worked and felt mechanically correct. Centered stick and inside-deadzone movement caused no drift; horizontal/vertical look and diagonal/circular motion were smooth; pitch limits held. Mouse look remained functional and coexisted with controller look. Disconnect/reconnect left no stale camera movement. Left-stick movement and all milestone 3 buttons still worked; triggers and other intentionally unmapped controls had no gameplay effect.
+
+**OPEN QUESTION — tuning:** physical testing found camera sensitivity somewhat slow for preference, not mechanically incorrect. Values remain `120°/s` yaw and `90°/s` pitch. Future tuning and controller-specific sensitivity configuration remain open.
 
 ### Browser observations and limits
 
@@ -503,11 +559,13 @@ Controller: opened instance 0 (Standard Gamepad)
 
 ### Historical context and next milestone
 
-**HISTORICAL EVIDENCE — prior research:** the original/local Lugaru ancestry search did not reveal inherited controller support. The 2019 `usineur/lugaru` Switch fork (reference commit `9af3344`) remains the concrete historical controller implementation worth referencing. Its SDL GameController approach informed this work, but its startup-only assumptions were not copied blindly.
+**HISTORICAL EVIDENCE — prior research:** original/local Lugaru ancestry did not reveal inherited controller support. The 2019 `usineur/lugaru` Switch implementation (reference commit `9af3344`) remains useful historical reference. Its SDL GameController and left-stick digital movement approaches informed the preservation-safe direction; startup-only assumptions, its exact face-button mapping, and trigger-assisted camera rotation were not copied. Its fixed per-frame camera increments are unsuitable for the current Web loop's frame-rate-independent stick integration.
 
-**Decision:** the next planned implementation slice is `left stick -> deadzone/threshold logic -> existing Lugaru digital movement booleans`. Preserve Classic movement semantics; this does not introduce proportional analog movement.
+**RUNTIME-VERIFIED — menu observation:** during manual testing, changing campaigns worked by clicking the existing campaign selection UI. This does not establish controller campaign navigation.
 
-**OPEN QUESTION / remaining work:** gameplay movement mapping; left-stick deadzone and activation/release thresholds; gameplay action buttons; right-stick camera/look; menu navigation/cursor behavior; pause/confirm/back behavior; controller rebinding; controller-specific configuration; simultaneous input semantics where gameplay mappings overlap; Bluetooth DualSense verification; Chrome Gamepad API behavior; multiple-controller/player ownership; true analog movement; rumble and advanced DualSense features.
+**Decision:** next investigate menu/UI support: Options/Start pause, controller-driven menu interaction, confirm/back, and the existing clickable UI including campaign selection where appropriate. Trace current menu/cursor semantics before editing and reuse them where practical rather than creating a separate controller-only UI system. The observed campaign click path may be useful for this work.
+
+**OPEN QUESTION / remaining work:** pause via Options/Start; menu navigation and cursor/selection behavior; confirm/back; campaign-selection navigation; D-pad behavior; controller rebinding; controller settings/UI; sensitivity configuration; separate controller inversion; glyphs/prompts; Bluetooth DualSense verification; Chrome Gamepad API behavior on the development machine; true analog movement/arbitrary facing; multiple-controller/player ownership; rumble/advanced DualSense features. Triangle, triggers, Options/Start, D-pad, and other unused controls remain unmapped.
 
 ---
 

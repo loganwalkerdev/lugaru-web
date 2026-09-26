@@ -97,7 +97,7 @@ A CMake/Emscripten shared-library warning remains a baseline/toolchain-version c
 - B-5 case-insensitive asset fallback incomplete — open.
 - B-6 motion blur option exposed but unsupported/forced off on Web — investigate.
 - B-7 key rebinding was suspected to fail under Web due thread usage — fixed and Chrome-verified on 2026-09-24; see section V below.
-- B-8 no controller support — open at this session; foundation milestone subsequently completed in `e5939fe` (section W). Gameplay mapping remains open.
+- B-8 no controller support — open at this session; foundation milestone subsequently completed in `e5939fe` (section W), followed by gameplay and look (section X). Menu/UI support remains open.
 - B-9 size-optimized build flags may be worth benchmarking against speed optimization.
 - B-10 no ASYNCIFY, so synchronous level loads may block the tab.
 - B-11 `Account::active()` auto-creates `Player` globally — investigate/history compare.
@@ -1419,4 +1419,27 @@ As before, surviving Wiki material is historical evidence, not automatically the
 
 **OPEN QUESTION:** raw Bluetooth DualSense support was not successfully established in the final test. Chrome continued returning null `navigator.getGamepads()` entries on this development machine, even after renderer focus and fullscreen testing; this is a separate browser/controller compatibility investigation, not an established SDL foundation failure. No WebHID or Chrome-specific workaround was added.
 
-**Decision:** next implement `left stick -> deadzone/threshold logic -> existing Lugaru digital movement booleans`, preserving Classic movement semantics rather than proportional analog movement. [Backlog A6](research-backlog.md#a6-controller-foundation-complete-gameplay-and-compatibility-questions-open) retains all remaining gameplay, configuration, ownership, browser, and advanced-feature work; [porting notes B-8](porting-notes.md#b-8--controller-input-foundation-implemented-gameplay-mapping-open) records the detailed milestone evidence.
+**Decision at milestone 1 (subsequently completed; see section X):** next implement `left stick -> deadzone/threshold logic -> existing Lugaru digital movement booleans`, preserving Classic movement semantics rather than proportional analog movement. [Backlog A6](research-backlog.md#a6-controller-gameplay-and-look-complete-menuui-and-compatibility-open) retains all remaining gameplay, configuration, ownership, browser, and advanced-feature work; [porting notes B-8](porting-notes.md#b-8--controller-gameplay-and-look-implemented-menuui-open) records the detailed milestone evidence.
+
+
+---
+
+# X. 2026-09-25 — Controller movement, gameplay actions, and look completed
+
+**VERIFIED SOURCE FINDING:** branch `investigate/controller-support` records the progression after foundation `e5939fe`:
+
+| Milestone | Commit | Integration |
+| --- | --- | --- |
+| 2 — movement | `4b8af1d` | Left-stick hysteresis (`10000` activate / `7000` release) ORed into existing `Person` movement booleans |
+| 3 — gameplay actions | `2387ebf` | Combined keyboard/mouse/controller held actions, attack press edges for combat/dialogue consumers, and jump-based respawn |
+| 4 — camera look | `ab46b53` | Right-stick continuous response after `8000` axial deadzone; `120°/s` yaw / `90°/s` pitch integrated with `realmultiplier` once per outer frame |
+
+**HISTORICAL EVIDENCE / decision:** the earlier ancestry search did not find inherited controller support; the 2019 `usineur/lugaru` reference informed SDL GameController use and digital movement. Lugaru-Web deliberately uses Cross jump, Circle crouch, Square draw/sheath, L1 throw/pickup, and R1 attack instead of copying its face-button layout. Trigger-assisted camera rotation was not copied. Fixed per-frame camera increments would depend on refresh rate in the current Web loop; the new look path uses elapsed time before gameplay modifiers and physics substeps, retaining the 250 ms stall cap.
+
+**Build validation:** each milestone passed the Web build and `git diff --check`. **RUNTIME-VERIFIED — isolated harnesses:** movement thresholds/lifecycle; action mappings/handoffs/press edges; camera response/timing at 30/60/120/144/240 Hz and irregular intervals, plus action regression checks. These do not replace full native gameplay or physical browser refresh-rate tests.
+
+**RUNTIME-VERIFIED — supplied physical test results:** wired DualSense in Firefox, DS4Windows disabled. Movement, all five gameplay actions, attack-driven dialogue without unintended held-repeat advancement, and camera look worked. Center noise/deadzones, diagonals, look pitch limits, simultaneous keyboard/mouse usage, and disconnect/reconnect without stale movement/action/look were verified. Later tests retained earlier milestone behavior. The right stick became mapped in milestone 4; triggers, Triangle, Options/Start, D-pad, and other unused inputs remain unmapped.
+
+**Interpretation / open work:** eight-direction movement/facing snapping is expected for Classic digital movement; true analog movement/arbitrary facing remains a separate design problem. Camera look felt mechanically correct but somewhat slow for preference; current speeds are unchanged and sensitivity tuning/configuration remains open. Bluetooth and Chrome exposure remain unverified/unresolved as recorded in section W.
+
+**RUNTIME-VERIFIED — UI observation:** clicking the existing campaign selection UI changed campaigns. **Decision:** the next milestone is menu/UI support, likely pause, confirm/back, and navigation of existing clickable UI. Investigate current cursor/menu behavior before implementation; controller campaign navigation does not yet exist. Detailed evidence is consolidated in [B-8](porting-notes.md#b-8--controller-gameplay-and-look-implemented-menuui-open); remaining work is in [A6](research-backlog.md#a6-controller-gameplay-and-look-complete-menuui-and-compatibility-open).

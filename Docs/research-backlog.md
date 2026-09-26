@@ -62,20 +62,21 @@ Goal: either restore it correctly or hide/disable the option honestly on Web.
 
 Resolve/understand the current native Linux SDL2 include-path/build issue so behavior can be compared against browser builds more easily.
 
-### A6. Controller foundation complete; gameplay and compatibility questions open
+### A6. Controller gameplay and look complete; menu/UI and compatibility open
 
-**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** milestone 1 (`e5939fe`) initializes SDL GameController input, discovers startup/hot-plug devices, tracks one active handle/instance, exposes separate raw axes/buttons, and resets state on disconnect. The Web build passed; an isolated native SDL virtual-controller harness covered lifecycle/state handling. Physical Windows/Firefox testing with wired DualSense (DS4Windows disabled) verified input and reconnect without stuck state, plus continued mouse control. Fullscreen is not required once the device is exposed. These results do not establish full native Lugaru gameplay support. Detailed evidence is in [porting notes B-8](porting-notes.md#b-8--controller-input-foundation-implemented-gameplay-mapping-open).
+**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** foundation `e5939fe`, digital movement `4b8af1d`, core gameplay actions `2387ebf`, and camera look `ab46b53` are implemented, Web-built, and verified with wired DualSense in Firefox (DS4Windows disabled). Physical checks cover movement/deadzones, five action mappings, attack-driven dialogue, camera look, simultaneous keyboard/mouse use, and disconnect/reconnect without stale state. Isolated SDL/timing harnesses supplement these checks; they do not establish full native gameplay or physical multi-refresh-rate coverage. See [B-8](porting-notes.md#b-8--controller-gameplay-and-look-implemented-menuui-open).
 
-**Decision:** next implement `left stick -> deadzone/threshold logic -> existing Lugaru digital movement booleans`, preserving Classic movement semantics. No gameplay/menu mappings exist yet.
+**Decision — next milestone:** investigate menu/UI support before editing: Options/Start pause, controller-driven menu interaction, confirm/back, and campaign selection where appropriate. Manual clicking already changes campaigns through the existing UI; examine reuse of cursor/click semantics rather than immediately introducing a separate controller UI.
 
 **OPEN QUESTION / remaining work:**
 
-- Gameplay movement mapping, left-stick deadzone and activation/release thresholds; observed near-center stick noise must be handled.
-- Gameplay action buttons, right-stick camera/look, menu navigation/cursor behavior, and pause/confirm/back behavior.
-- Controller rebinding, controller-specific configuration, and simultaneous input semantics where gameplay mappings overlap.
-- Raw Bluetooth DualSense verification; final runtime testing did not successfully establish consistent exposure.
+- Pause via Options/Start; menu navigation, cursor/selection, confirm/back, campaign-selection navigation, and D-pad behavior.
+- Controller rebinding, settings/UI, sensitivity configuration, separate controller inversion, and glyphs/prompts.
+- Look-speed tuning: current `120°/s` yaw and `90°/s` pitch felt slow for preference but mechanically correct. Keep this separate from correctness failures.
+- Raw Bluetooth DualSense verification; consistent exposure was not established in the final foundation test.
 - Chrome Gamepad API behavior: null `navigator.getGamepads()` entries persisted on the development machine after renderer focus/fullscreen tests. Investigate separately from the SDL foundation; no WebHID or Chrome-specific workaround exists.
-- Multiple-controller/player ownership, true analog movement, rumble, and advanced DualSense features.
+- True analog player movement/arbitrary facing: current eight-direction snapping is expected Classic digital behavior, not a movement bug. Investigate animation, facing, combat, and timing implications separately.
+- Multiple-controller/player ownership, rumble, and advanced DualSense features.
 
 ---
 
