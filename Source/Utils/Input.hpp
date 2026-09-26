@@ -45,6 +45,15 @@ public:
     static Sint16 controllerAxis(SDL_GameControllerAxis axis);
     static bool controllerButtonDown(SDL_GameControllerButton button);
 
+    struct ControllerMovement {
+        bool forward;
+        bool back;
+        bool left;
+        bool right;
+    };
+    // Digital left-stick directions, separate from keyboard/mouse bindings.
+    static ControllerMovement controllerMovement();
+
     static void Tick();
     static bool isKeyDown(int k);
     static bool isKeyPressed(int k);

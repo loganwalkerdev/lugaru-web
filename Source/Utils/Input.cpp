@@ -32,9 +32,33 @@ Uint32 nextControllerScan = 0;
 Sint16 controllerAxes[SDL_CONTROLLER_AXIS_MAX] = {};
 bool controllerButtons[SDL_CONTROLLER_BUTTON_MAX] = {};
 int loggedAxes[SDL_CONTROLLER_AXIS_MAX] = {};
+int controllerMoveX = 0;
+int controllerMoveY = 0;
+
+int digitalMovementAxis(Sint16 value, int previous)
+{
+    // Independent axis hysteresis permits diagonals without proportional speed.
+    constexpr int activate = 10000;
+    constexpr int release = 7000;
+    if (value <= -activate) {
+        return -1;
+    }
+    if (value >= activate) {
+        return 1;
+    }
+    if (previous < 0 && value < -release) {
+        return -1;
+    }
+    if (previous > 0 && value > release) {
+        return 1;
+    }
+    return 0;
+}
 
 void clearControllerState()
 {
+    controllerMoveX = 0;
+    controllerMoveY = 0;
     for (int i = 0; i < SDL_CONTROLLER_AXIS_MAX; ++i) {
         controllerAxes[i] = 0;
         loggedAxes[i] = 0;
@@ -124,6 +148,8 @@ void Input::UpdateController()
                     int(controllerAxes[i]));
         }
     }
+    controllerMoveX = digitalMovementAxis(controllerAxes[SDL_CONTROLLER_AXIS_LEFTX], controllerMoveX);
+    controllerMoveY = digitalMovementAxis(controllerAxes[SDL_CONTROLLER_AXIS_LEFTY], controllerMoveY);
     for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; ++i) {
         const bool down = SDL_GameControllerGetButton(controller, SDL_GameControllerButton(i)) != 0;
         if (down != controllerButtons[i]) {
@@ -147,6 +173,14 @@ Sint16 Input::controllerAxis(SDL_GameControllerAxis axis)
 bool Input::controllerButtonDown(SDL_GameControllerButton button)
 {
     return hasController() && button >= 0 && button < SDL_CONTROLLER_BUTTON_MAX && controllerButtons[button];
+}
+
+Input::ControllerMovement Input::controllerMovement()
+{
+    if (!hasController()) {
+        return {};
+    }
+    return {controllerMoveY < 0, controllerMoveY > 0, controllerMoveX < 0, controllerMoveX > 0};
 }
 
 void Input::Tick()

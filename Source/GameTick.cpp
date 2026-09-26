@@ -3424,10 +3424,11 @@ void Game::Tick()
 
             // control keys
             if (!Dialog::inDialog()) {
-                Person::players[0]->forwardkeydown = Input::isKeyDown(forwardkey);
-                Person::players[0]->leftkeydown = Input::isKeyDown(leftkey);
-                Person::players[0]->backkeydown = Input::isKeyDown(backkey);
-                Person::players[0]->rightkeydown = Input::isKeyDown(rightkey);
+                const auto movement = Input::controllerMovement();
+                Person::players[0]->forwardkeydown = Input::isKeyDown(forwardkey) || movement.forward;
+                Person::players[0]->leftkeydown = Input::isKeyDown(leftkey) || movement.left;
+                Person::players[0]->backkeydown = Input::isKeyDown(backkey) || movement.back;
+                Person::players[0]->rightkeydown = Input::isKeyDown(rightkey) || movement.right;
                 Person::players[0]->jumpkeydown = Input::isKeyDown(jumpkey);
                 Person::players[0]->crouchkeydown = Input::isKeyDown(crouchkey);
                 Person::players[0]->drawkeydown = Input::isKeyDown(drawkey);
