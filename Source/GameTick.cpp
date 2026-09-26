@@ -1211,7 +1211,7 @@ void Game::ProcessInput()
 #endif
 
     /* Menu handling (main menu, leave game) */
-    if (Input::isKeyPressed(SDL_SCANCODE_ESCAPE) &&
+    if ((Input::isKeyPressed(SDL_SCANCODE_ESCAPE) || Input::controllerPausePressed()) &&
         (gameon || mainmenu == 0)) {
         selected = -1;
         if (mainmenu == 0 && !winfreeze) {
@@ -1234,13 +1234,13 @@ void Game::ProcessInput()
 
     /* Challenge mode */
     if (!campaign && !mainmenu) {
-        if ((Input::isKeyPressed(jumpkey) || Input::isKeyPressed(SDL_SCANCODE_SPACE))) {
+        if ((Input::isKeyPressed(jumpkey) || Input::isKeyPressed(SDL_SCANCODE_SPACE) || Input::controllerMenuConfirmPressed())) {
             if (winfreeze) {
                 winfreeze = 0;
             }
         }
 
-        if ((Input::isKeyDown(SDL_SCANCODE_ESCAPE)) && gameon) {
+        if ((Input::isKeyDown(SDL_SCANCODE_ESCAPE) || Input::controllerMenuBackPressed()) && gameon) {
             if (console) {
                 console = false;
                 freeze = 0;

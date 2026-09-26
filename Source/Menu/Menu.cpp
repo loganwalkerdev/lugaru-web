@@ -575,13 +575,50 @@ bool Menu::isKeyCaptureActive()
 }
 #endif
 
+namespace {
+// These are the existing clickable Back/No/Resume item IDs, not focus indices.
+int controllerBackItem()
+{
+    switch (mainmenu) {
+        case 2: return gameon ? 1 : -1;
+        case 3: return 8;
+        case 4: return devtools ? 10 : 9;
+        case 5: return 4;
+        case 6: return 2;
+        case 7: return Account::getNbAccounts() + 1;
+        case 9: return numchallengelevels;
+        case 10: return 3;
+        case 18: return 3;
+        default: return -1; // Root and difficulty have no controller Back.
+    }
+}
+}
+
 void Menu::Tick() {
 #ifdef __EMSCRIPTEN__
     if (isKeyCaptureActive()) {
-        pollKeyCapture();
+        if (waiting && keyselect != -1 && Input::controllerMenuBackPressed()) {
+            // Cancel only the Web capture; native threaded capture is unchanged.
+            keyselect = -1;
+            waiting = false;
+            capturedKey = -1;
+            Load();
+        } else {
+            pollKeyCapture();
+        }
         return;
     }
 #endif
+    if (mainmenu == 7 && entername && Input::controllerMenuBackPressed()) {
+        // Same cancellation as Escape in inputText(), without a synthetic event.
+        newusername.clear();
+        newuserselected = 0;
+        waiting = false;
+        entername = 0;
+        SDL_StopTextInput();
+        Load();
+        return;
+    }
     //escape key pressed
     if (Input::isKeyPressed(SDL_SCANCODE_ESCAPE) &&
         (mainmenu >= 3) && (mainmenu != 8) && !((mainmenu == 7) && entername)) {
@@ -632,12 +669,17 @@ void Menu::Tick() {
 
     static int oldmainmenu = mainmenu;
 
-    if (Input::MouseClicked() && (selected >= 0)) { // handling of the left mouse clic in menus
+    const int backItem = !waiting && !entername && Input::controllerMenuBackPressed() ? controllerBackItem() : -1;
+    // Controller confirm never starts keyboard/mouse rebinding or text submission.
+    const bool controllerConfirm = !waiting && !entername &&
+        (mainmenu != 4 || selected == (devtools ? 10 : 9)) && Input::controllerMenuConfirmPressed();
+    const int activation = backItem >= 0 ? backItem : selected;
+    if ((Input::MouseClicked() || controllerConfirm || backItem >= 0) && activation >= 0) {
         set<pair<int, int>>::iterator newscreenresolution;
         switch (mainmenu) {
             case 1:
             case 2:
-                switch (selected) {
+                switch (activation) {
                     case 1:
                         if (gameon) { //resume
                             mainmenu = 0;
@@ -688,7 +730,7 @@ void Menu::Tick() {
                 break;
             case 3:
                 fireSound();
-                switch (selected) {
+                switch (activation) {
                     case 0:
                         newscreenresolution = resolutions.find(make_pair(newscreenwidth, newscreenheight));
                         /* Next one (end() + 1 is also end() so the ++ is safe even if it was not found) */
@@ -785,13 +827,13 @@ void Menu::Tick() {
             case 4:
                 if (!waiting) {
                     fireSound();
-                    if (selected < (devtools ? 10 : 9) && keyselect == -1) {
-                        keyselect = selected;
+                    if (activation < (devtools ? 10 : 9) && keyselect == -1) {
+                        keyselect = activation;
                     }
                     if (keyselect != -1) {
                         setKeySelected();
                     }
-                    if (selected == (devtools ? 10 : 9)) {
+                    if (activation == (devtools ? 10 : 9)) {
                         flash();
                         mainmenu = 3;
                     }
@@ -801,7 +843,7 @@ void Menu::Tick() {
             case 5:
                 fireSound();
                 flash();
-                if ((selected - NB_CAMPAIGN_MENU_ITEM >= Account::active().getCampaignChoicesMade())) {
+                if ((activation - NB_CAMPAIGN_MENU_ITEM >= Account::active().getCampaignChoicesMade())) {
                     startbonustotal = 0;
 
                     loading = 2;
@@ -812,7 +854,7 @@ void Menu::Tick() {
                     } else {
                         LoadStuff();
                     }
-                    whichchoice = selected - NB_CAMPAIGN_MENU_ITEM - Account::active().getCampaignChoicesMade();
+                    whichchoice = activation - NB_CAMPAIGN_MENU_ITEM - Account::active().getCampaignChoicesMade();
                     actuallevel = (Account::active().getCampaignChoicesMade() > 0 ? campaignlevels[Account::active().getCampaignChoicesMade() - 1].nextlevel[whichchoice] : 0);
                     visibleloading = true;
                     stillloading = 1;
@@ -822,7 +864,7 @@ void Menu::Tick() {
                     gameon = 1;
                     pause_sound(stream_menutheme);
                 }
-                switch (selected) {
+                switch (activation) {
                     case 1:
                         startbonustotal = 0;
 
@@ -872,24 +914,24 @@ void Menu::Tick() {
                 break;
             case 6:
                 fireSound();
-                if (selected == 1) {
+                if (activation == 1) {
                     flash();
                     Account::destroyActive();
                     mainmenu = 7;
-                } else if (selected == 2) {
+                } else if (activation == 2) {
                     flash();
                     mainmenu = 5;
                 }
                 break;
             case 7:
                 fireSound();
-                if (selected == 0 && Account::getNbAccounts() < 8) {
+                if (activation == 0 && Account::getNbAccounts() < 8) {
                     entername = 1;
-                } else if (selected < Account::getNbAccounts() + 1) {
+                } else if (activation < Account::getNbAccounts() + 1) {
                     flash();
                     mainmenu = 5;
-                    Account::setActive(selected - 1);
-                } else if (selected == Account::getNbAccounts() + 1) {
+                    Account::setActive(activation - 1);
+                } else if (activation == Account::getNbAccounts() + 1) {
                     flash();
                     if (Account::hasActive()) {
                         mainmenu = 5;
@@ -904,34 +946,34 @@ void Menu::Tick() {
             case 8:
                 fireSound();
                 flash();
-                if (selected <= 2) {
-                    Account::active().setDifficulty(selected);
+                if (activation <= 2) {
+                    Account::active().setDifficulty(activation);
                 }
                 mainmenu = 5;
                 break;
             case 9:
-                if (selected < numchallengelevels && selected <= Account::active().getProgress()) {
-                    startChallengeLevel(selected);
+                if (activation < numchallengelevels && activation <= Account::active().getProgress()) {
+                    startChallengeLevel(activation);
                 }
-                if (selected == numchallengelevels) {
+                if (activation == numchallengelevels) {
                     fireSound();
                     flash();
                     mainmenu = 5;
                 }
                 break;
             case 10:
-                if (selected == 3) {
+                if (activation == 3) {
                     fireSound();
                     flash();
                     mainmenu = 5;
                 }
                 break;
             case 18:
-                if (selected == 1) {
+                if (activation == 1) {
                     stereoseparation += 0.001;
                 } else {
                     fireSound();
-                    if (selected == 0) {
+                    if (activation == 0) {
                         newstereomode = (StereoMode)(newstereomode + 1);
                         while (!CanInitStereo(newstereomode)) {
                             printf("Failed to initialize mode %s (%i)\n", StereoModeName(newstereomode).c_str(), newstereomode);
@@ -940,9 +982,9 @@ void Menu::Tick() {
                                 newstereomode = stereoNone;
                             }
                         }
-                    } else if (selected == 2) {
+                    } else if (activation == 2) {
                         stereoreverse = !stereoreverse;
-                    } else if (selected == 3) {
+                    } else if (activation == 3) {
                         flash();
                         mainmenu = 3;
 

@@ -61,6 +61,12 @@ public:
     // Right-stick rate fractions in [-1, 1], after an axial deadzone.
     static ControllerLook controllerLook();
 
+    // UI edges are separate from raw mouse/keyboard input.
+    static bool controllerMenuConfirmPressed();
+    static bool controllerMenuBackPressed();
+    static bool controllerPausePressed();
+    static void MoveControllerMenuCursor(float seconds);
+
     // Fixed gameplay buttons combined with the existing keyboard/mouse bindings.
     static bool isJumpDown();
     static bool isCrouchDown();

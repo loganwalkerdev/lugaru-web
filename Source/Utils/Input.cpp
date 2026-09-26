@@ -20,6 +20,15 @@ along with Lugaru.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "Utils/Input.hpp"
+#include "Level/Campaign.hpp"
+
+#include <algorithm>
+#include <cmath>
+
+extern int mainmenu;
+extern int entername;
+extern bool winfreeze;
+extern float screenwidth, screenheight;
 
 bool keyDown[SDL_NUM_SCANCODES + 6];
 bool keyPressed[SDL_NUM_SCANCODES + 6];
@@ -38,6 +47,49 @@ int controllerMoveY = 0;
 // disconnecting must not invent a new press while keyboard/mouse is still held.
 bool previousAttackDown = false;
 bool attackPressed = false;
+bool controllerPreviousButtons[SDL_CONTROLLER_BUTTON_MAX] = {};
+bool controllerUIPressed[SDL_CONTROLLER_BUTTON_MAX] = {};
+bool controllerBlockedButtons[SDL_CONTROLLER_BUTTON_MAX] = {};
+int controllerMenuContext = -1;
+bool controllerResultContext = false;
+bool controllerModalContext = false;
+float cursorRemainderX = 0.f;
+float cursorRemainderY = 0.f;
+
+bool controllerResultScreen()
+{
+    return !mainmenu && !campaign && winfreeze;
+}
+
+void syncControllerContext()
+{
+    const bool result = controllerResultScreen();
+    const bool modal = Game::waiting || entername || Game::console;
+    if (controllerMenuContext != mainmenu || controllerResultContext != result || controllerModalContext != modal) {
+        // Also called by queries: a menu may resume gameplay in this same tick.
+        for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; ++i) {
+            controllerBlockedButtons[i] = controllerBlockedButtons[i] || Input::controllerButtonDown(SDL_GameControllerButton(i));
+            controllerUIPressed[i] = false;
+        }
+        controllerMenuContext = mainmenu;
+        controllerResultContext = result;
+        controllerModalContext = modal;
+        cursorRemainderX = cursorRemainderY = 0.f;
+    }
+}
+
+bool controllerGameplayButtonDown(SDL_GameControllerButton button)
+{
+    syncControllerContext();
+    return !mainmenu && !controllerResultContext && !controllerModalContext &&
+           !controllerBlockedButtons[button] && Input::controllerButtonDown(button);
+}
+
+bool controllerUIPress(SDL_GameControllerButton button)
+{
+    syncControllerContext();
+    return !controllerBlockedButtons[button] && controllerUIPressed[button] && Input::controllerButtonDown(button);
+}
 
 int digitalMovementAxis(Sint16 value, int previous)
 {
@@ -77,12 +129,17 @@ void clearControllerState()
 {
     controllerMoveX = 0;
     controllerMoveY = 0;
+    controllerMenuContext = -1;
+    cursorRemainderX = cursorRemainderY = 0.f;
     for (int i = 0; i < SDL_CONTROLLER_AXIS_MAX; ++i) {
         controllerAxes[i] = 0;
         loggedAxes[i] = 0;
     }
     for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; ++i) {
         controllerButtons[i] = false;
+        controllerPreviousButtons[i] = false;
+        controllerUIPressed[i] = false;
+        controllerBlockedButtons[i] = false;
     }
 }
 }
@@ -175,6 +232,9 @@ void Input::UpdateController()
                     down ? "down" : "up");
         }
         controllerButtons[i] = down;
+        if (!down) {
+            controllerBlockedButtons[i] = false;
+        }
     }
 }
 
@@ -209,32 +269,98 @@ Input::ControllerLook Input::controllerLook()
 
 bool Input::isJumpDown()
 {
-    return isKeyDown(Game::jumpkey) || controllerButtonDown(SDL_CONTROLLER_BUTTON_A);
+    return isKeyDown(Game::jumpkey) || controllerGameplayButtonDown(SDL_CONTROLLER_BUTTON_A);
 }
 
 bool Input::isCrouchDown()
 {
-    return isKeyDown(Game::crouchkey) || controllerButtonDown(SDL_CONTROLLER_BUTTON_B);
+    return isKeyDown(Game::crouchkey) || controllerGameplayButtonDown(SDL_CONTROLLER_BUTTON_B);
 }
 
 bool Input::isDrawDown()
 {
-    return isKeyDown(Game::drawkey) || controllerButtonDown(SDL_CONTROLLER_BUTTON_X);
+    return isKeyDown(Game::drawkey) || controllerGameplayButtonDown(SDL_CONTROLLER_BUTTON_X);
 }
 
 bool Input::isThrowDown()
 {
-    return isKeyDown(Game::throwkey) || controllerButtonDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+    return isKeyDown(Game::throwkey) || controllerGameplayButtonDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
 }
 
 bool Input::isAttackDown()
 {
-    return isKeyDown(Game::attackkey) || controllerButtonDown(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+    return isKeyDown(Game::attackkey) || controllerGameplayButtonDown(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
 }
 
 bool Input::isAttackPressed()
 {
     return attackPressed && isAttackDown();
+}
+
+bool Input::controllerMenuConfirmPressed()
+{
+    return (mainmenu || controllerResultScreen()) && controllerUIPress(SDL_CONTROLLER_BUTTON_A);
+}
+
+bool Input::controllerMenuBackPressed()
+{
+    return (mainmenu || controllerResultScreen()) && controllerUIPress(SDL_CONTROLLER_BUTTON_B);
+}
+
+bool Input::controllerPausePressed()
+{
+    return Game::gameon && !Game::waiting && !Game::console &&
+           ((mainmenu == 0 && !winfreeze) || mainmenu == 2) &&
+           controllerUIPress(SDL_CONTROLLER_BUTTON_START);
+}
+
+void Input::MoveControllerMenuCursor(float seconds)
+{
+    syncControllerContext();
+    if (!mainmenu || Game::waiting || entername || !hasController() || screenwidth <= 0 || screenheight <= 0) {
+        cursorRemainderX = cursorRemainderY = 0.f;
+        return;
+    }
+
+    // Reuse the continuous 8000-axis deadzone response, on the LEFT stick.
+    float x = controllerLookAxis(controllerAxis(SDL_CONTROLLER_AXIS_LEFTX));
+    float y = controllerLookAxis(controllerAxis(SDL_CONTROLLER_AXIS_LEFTY));
+    constexpr float cursorPixelsPerSecond = 320.f; // Logical 640x480 UI pixels.
+    constexpr float finePixelsPerSecond = 80.f;
+    float speed = cursorPixelsPerSecond;
+    const bool dpad = controllerButtonDown(SDL_CONTROLLER_BUTTON_DPAD_LEFT) ||
+                      controllerButtonDown(SDL_CONTROLLER_BUTTON_DPAD_RIGHT) ||
+                      controllerButtonDown(SDL_CONTROLLER_BUTTON_DPAD_UP) ||
+                      controllerButtonDown(SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+    if (dpad) {
+        // D-pad takes precedence so stick noise cannot spoil precision motion.
+        x = int(controllerButtonDown(SDL_CONTROLLER_BUTTON_DPAD_RIGHT)) - int(controllerButtonDown(SDL_CONTROLLER_BUTTON_DPAD_LEFT));
+        y = int(controllerButtonDown(SDL_CONTROLLER_BUTTON_DPAD_DOWN)) - int(controllerButtonDown(SDL_CONTROLLER_BUTTON_DPAD_UP));
+        speed = finePixelsPerSecond;
+    }
+    const float length = std::sqrt(x * x + y * y);
+    if (length > 1.f) {
+        x /= length;
+        y /= length;
+    }
+    if (x == 0.f) cursorRemainderX = 0.f;
+    if (y == 0.f) cursorRemainderY = 0.f;
+    cursorRemainderX += x * speed * seconds * screenwidth / 640.f;
+    cursorRemainderY += y * speed * seconds * screenheight / 480.f;
+    const int dx = int(cursorRemainderX);
+    const int dy = int(cursorRemainderY);
+    cursorRemainderX -= dx;
+    cursorRemainderY -= dy;
+    const int maxX = int(screenwidth) - 1;
+    const int maxY = int(screenheight) - 1;
+    Game::mousecoordh = std::max(0, std::min(maxX, Game::mousecoordh + dx));
+    Game::mousecoordv = std::max(0, std::min(maxY, Game::mousecoordv + dy));
+    // Discard only outward motion: slow inward motion still needs to accumulate
+    // a whole pixel before the shared integer cursor can leave a boundary.
+    if ((Game::mousecoordh == 0 && cursorRemainderX < 0.f) ||
+        (Game::mousecoordh == maxX && cursorRemainderX > 0.f)) cursorRemainderX = 0.f;
+    if ((Game::mousecoordv == 0 && cursorRemainderY < 0.f) ||
+        (Game::mousecoordv == maxY && cursorRemainderY > 0.f)) cursorRemainderY = 0.f;
 }
 
 void Input::Tick()
@@ -250,6 +376,12 @@ void Input::Tick()
     for (int i = 1; i < 6; i++) {
         keyPressed[SDL_NUM_SCANCODES + i] = !keyDown[SDL_NUM_SCANCODES + i] && (mb & SDL_BUTTON(i));
         keyDown[SDL_NUM_SCANCODES + i] = (mb & SDL_BUTTON(i));
+    }
+    syncControllerContext();
+    for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; ++i) {
+        const bool down = controllerButtonDown(SDL_GameControllerButton(i));
+        controllerUIPressed[i] = down && !controllerPreviousButtons[i] && !controllerBlockedButtons[i];
+        controllerPreviousButtons[i] = down;
     }
     // Like keyboard presses, expose the edge for one input/physics tick.
     const bool attackDown = isAttackDown();

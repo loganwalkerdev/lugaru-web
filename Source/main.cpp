@@ -586,6 +586,7 @@ void DoUpdate()
     }
 
     DoMouse();
+    Input::MoveControllerMenuCursor(realmultiplier);
 
     TickOnce();
 
