@@ -452,9 +452,9 @@ Native SDL event-thread portability remains a separate open question in research
 
 ---
 
-## B-8 — Controller Gameplay and Look Implemented; Menu/UI Open
+## B-8 — Controller Gameplay, Menu/UI, and Tutorial Support
 
-**Status:** Milestones 1–4 implemented, Web-built, and physically runtime-verified (Firefox + wired DualSense); menu/UI support remains open
+**Status:** Milestones 1–5 implemented, Web-built, and physically runtime-verified (Firefox + wired DualSense, DS4Windows disabled). Tutorial additions are source/automated-validated; physical verification is pending. Compatibility, tuning, and scope exclusions remain open.
 **Priority:** Medium
 **Evidence:** Committed source, reported build/check results, isolated native SDL harness, and manual physical-controller runtime testing
 
@@ -469,7 +469,7 @@ Native SDL event-thread portability remains a separate open question in research
 - `Input::hasController()`, `Input::controllerAxis()`, and `Input::controllerButtonDown()` expose standardized SDL axes/buttons through the existing input area. Raw controller state remains separate from `keyDown`, `keyPressed`, and keyboard/mouse bindings.
 - `SetUp()`, `DoUpdate()`, and `CleanUp()` own the lifecycle calls. No additional SDL event-queue consumer was introduced.
 
-At milestone 1, no controller gameplay, camera, menu, or rebinding behavior was mapped. Milestones 2–4 below add gameplay and look while preserving keyboard/mouse input; this remains narrower than a generalized input-system rewrite.
+At milestone 1, no controller gameplay, camera, menu, or rebinding behavior was mapped. Subsequent milestones below add gameplay, look, UI, and tutorial support while preserving keyboard/mouse input; this remains narrower than a generalized input-system rewrite.
 
 ### Milestone 1 build and isolated harness validation
 
@@ -519,7 +519,7 @@ Existing Classic speed, facing, animation, and diagonal logic remain authoritati
 
 `isJumpDown()`, `isCrouchDown()`, `isDrawDown()`, `isThrowDown()`, and `isAttackDown()` combine controller and existing keyboard/mouse held state. Releasing either source does not release an action still held by the other. Existing jump/crouch transitions and draw/throw toggle logic remain authoritative, including contextual sneak/roll/reversal and weapon behavior.
 
-`doAttacks()` consumes combined held attack while retaining `oldattackkey` logic. `Input::Tick()` derives `isAttackPressed()` from the combined transition for one input/physics tick. Both `Dialog::tick()` in `Source/Level/Dialog.cpp` (initiation) and `Game::Tick()` (advancement) consume this press edge, rather than relying only on `Person::attackkeydown`. Jump-based respawn uses combined jump input. Disconnect removes controller-derived action state without clearing keyboard/mouse state; combined attack history stays separate from controller lifecycle so a keyboard-held attack does not acquire a false new edge. Raw developer/text/key handling remains separate. Developer dialogue-camera controls and challenge-completion jump/Space confirmation remain keyboard-only.
+`doAttacks()` consumes combined held attack while retaining `oldattackkey` logic. `Input::Tick()` derives `isAttackPressed()` from the combined transition for one input/physics tick. Both `Dialog::tick()` in `Source/Level/Dialog.cpp` (initiation) and `Game::Tick()` (advancement) consume this press edge, rather than relying only on `Person::attackkeydown`. Jump-based respawn uses combined jump input. Disconnect removes controller-derived action state without clearing keyboard/mouse state; combined attack history stays separate from controller lifecycle so a keyboard-held attack does not acquire a false new edge. Raw developer/text/key handling remains separate. Developer dialogue-camera controls remain keyboard-only. Challenge-completion confirmation was keyboard-only at milestone 3; milestone 5 adds controller continue/back through the existing result handlers.
 
 **Build validation:** Web build and `git diff --check` passed.
 
@@ -527,7 +527,7 @@ Existing Classic speed, facing, animation, and diagonal logic remain authoritati
 
 **RUNTIME-VERIFIED — physical Firefox/DualSense test:** all five mappings worked: Cross jump, Circle crouch and related existing contexts, Square draw/sheath, L1 throw/pickup, R1 combat and dialogue interaction/advancement. Held attack did not cause unintended repeated dialogue advancement. Keyboard/mouse and controller actions coexisted, and disconnect/reconnect left no stale action state.
 
-At this milestone, right stick, Triangle, triggers, Options/Start, D-pad, and other unused controls remained unmapped. Milestone 4 subsequently adds right-stick look only. The face-button layout is intentional and does not copy the historical Switch layout.
+At milestone 3, right stick, Triangle, triggers, Options/Start, D-pad, and other unused controls remained unmapped. Milestone 4 adds right-stick look; milestone 5 adds Start/D-pad UI behavior; the tutorial follow-up maps Triangle only to tutorial advance. Triggers remain unmapped. The face-button layout is intentional and does not copy the historical Switch layout.
 
 ### Milestone 4 — Right-stick camera/look (`ab46b53`)
 
@@ -549,6 +549,34 @@ At this milestone, right stick, Triangle, triggers, Options/Start, D-pad, and ot
 
 **OPEN QUESTION — tuning:** physical testing found camera sensitivity somewhat slow for preference, not mechanically incorrect. Values remain `120°/s` yaw and `90°/s` pitch. Future tuning and controller-specific sensitivity configuration remain open.
 
+### Milestone 5 — Pause and virtual-cursor UI (`8d549e4`)
+
+**VERIFIED SOURCE FINDING:** controller UI reuses the existing pointer-oriented menu in `Source/Menu/Menu.cpp`, with no discrete-focus system or controller-specific campaign navigation:
+
+- Options / `SDL_CONTROLLER_BUTTON_START` joins the existing pause/resume transitions in `Game::ProcessInput()`, including music/audio behavior. It opens Pause from gameplay and resumes from the actual pause menu (`mainmenu == 2`); it is not a universal Back button in nested menus.
+- Cross / SDL A confirms the item selected by existing cursor hit-testing. The menu-local press joins the left-click activation dispatcher without changing `Input::MouseClicked()`, synthesizing SDL mouse events, or overwriting raw mouse buttons.
+- Circle / SDL B chooses the existing contextual Back/Cancel/No/Resume action: Pause resumes; Options saves on Back; Controls returns to Options; Stereo applies its pending mode on Back; Delete chooses No; Accounts, Challenges, and campaign ending use their existing destinations. Circle does nothing at the root without an active game or on Difficulty (screen 8).
+- Campaign cycling and world-map marker activation retain existing availability/progress checks and loading behavior. Challenge results separately accept Cross for existing continue and Circle for existing back behavior, preserving bookkeeping and destination handling.
+- Square, Triangle, shoulders, triggers, and right stick have no menu action. Stereo decrement remains mouse-only. Controller confirm cannot start key rebinding. Account names require keyboard text entry; Circle can cancel the existing name-entry path and Web key capture. Native threaded key capture is unchanged.
+
+`Input::MoveControllerMenuCursor(realmultiplier)` runs in `DoUpdate()` after `DoMouse()`, once per outer frame rather than once per `Menu::Tick()`. It uses the existing continuous `8000` axial-deadzone response on the left stick, with maximum speed **320 logical pixels/second**. D-pad takes precedence for precision motion at **80 logical pixels/second**; diagonals have bounded speed. The logical **640×480** motion is scaled into the existing shared `mousecoordh`/`mousecoordv`, retaining fractional motion and clamping to screen bounds. Mouse and controller therefore move the same visible cursor. Elapsed-time integration provides approximately consistent speed across render rates, subject to the existing stall cap.
+
+Controller press edges and `syncControllerContext()` consume held buttons through release across menu/gameplay/modal transitions. Cross used for Resume cannot immediately Jump, Circle cannot become Crouch, and held gameplay buttons cannot activate a newly entered UI context. Disconnect clears cached controller input, pending UI presses, suppression state, and cursor remainder without clearing keyboard/mouse state; centered/released reconnect has no stale movement or activation.
+
+**Build validation:** Web build and `git diff --check` passed.
+
+**RUNTIME-VERIFIED — isolated SDL/input harnesses:** cursor scaling, deadzone, 30/60/120/144/240 Hz and irregular timing, D-pad precision/diagonals, boundary clamping and slow movement away from edges; confirm edges; contextual Back destinations; pause/audio transitions; challenge results; modal cancellation; release suppression; raw-input isolation; disconnect/reconnect. Gameplay-action handoff and held-button regression checks also passed. These are not full native gameplay tests or physical browser measurements at those refresh rates.
+
+**RUNTIME-VERIFIED — supplied physical QA:** Firefox, wired DualSense, DS4Windows disabled. Milestone 5 QA passed: pause/resume, virtual cursor, confirmation/contextual Back, campaign switching, world-map interaction, and challenge/menu flows. Earlier movement, actions/dialogue, camera, simultaneous keyboard/mouse use, and disconnect/reconnect remain physically verified. This report does not extend physical verification to the subsequent tutorial changes.
+
+### Tutorial compatibility — source and automated validation; physical QA pending
+
+**VERIFIED SOURCE FINDING:** `bd7b207` (`feat: add controller tutorial advance`) adds `Input::controllerTutorialAdvancePressed()` for Triangle / `SDL_CONTROLLER_BUTTON_Y`. It reuses controller press edges, transition suppression, and lifecycle reset, restricted to active tutorial gameplay outside menus, modal/text capture, console, freeze, and results. It joins the existing Tab handler in `Game::ProcessInput()` without global Tab emulation: if stage is not `51`, set `Tutorial::stagetime = Tutorial::maxtime`; preserve the existing sound. Stage 51 remains unskippable, and keyboard Tab semantics are unchanged.
+
+**VERIFIED SOURCE FINDING:** `f00ec72` (`fix: recognize controller look in tutorial`) changes only stage-3 recognition in `Source/Tutorial.cpp`. The existing `deltah || deltav` mouse criterion is ORed with meaningful X or Y from `Input::controllerLook()`, the same post-deadzone signal used by the gameplay camera. There is no new Input helper, second deadzone calculation, synthetic mouse input, or write to mouse deltas. Existing tutorial-call guards exclude menus/pause, console freeze, and results; controller recognition additionally requires active gameplay, no input waiting, and no dialogue/directing. Stage timing, success accumulation, setup, and camera tuning are unchanged.
+
+**Build validation / RUNTIME-VERIFIED — isolated harnesses only:** both changes passed the Web build and `git diff --check`. Triangle tests cover press/hold/release, stage 51 and sound, context guards, held entry/pause/resume, disconnect/reconnect, unchanged Tab and simultaneous input. Stage-3 tests cover mouse, horizontal/vertical stick input, deadzone boundaries, context exclusions, and clean reconnect. Camera timing/response and Triangle/menu regression checks passed. **OPEN QUESTION — physical verification:** neither tutorial addition has yet been reported as physically verified in Firefox/DualSense. Tutorial prompts remain keyboard-oriented.
+
 ### Browser observations and limits
 
 **RUNTIME-VERIFIED:** Firefox exposed the wired DualSense through the standard Gamepad API; Emscripten/SDL exposed it to Lugaru as `Standard Gamepad`. Fullscreen is not required for controller input once the browser has exposed the device to the page.
@@ -557,15 +585,15 @@ At this milestone, right stick, Triangle, triggers, Options/Start, D-pad, and ot
 
 **OPEN QUESTION — Chrome:** on this development machine, `navigator.getGamepads()` continued returning null entries, including after focusing the renderer and testing fullscreen. This remains a separate browser/controller compatibility investigation, not evidence of a failure in Lugaru's SDL controller foundation. No WebHID or Chrome-specific workaround was added.
 
-### Historical context and next milestone
+### Historical context and remaining scope
 
 **HISTORICAL EVIDENCE — prior research:** original/local Lugaru ancestry did not reveal inherited controller support. The 2019 `usineur/lugaru` Switch implementation (reference commit `9af3344`) remains useful historical reference. Its SDL GameController and left-stick digital movement approaches informed the preservation-safe direction; startup-only assumptions, its exact face-button mapping, and trigger-assisted camera rotation were not copied. Its fixed per-frame camera increments are unsuitable for the current Web loop's frame-rate-independent stick integration.
 
-**RUNTIME-VERIFIED — menu observation:** during manual testing, changing campaigns worked by clicking the existing campaign selection UI. This does not establish controller campaign navigation.
+**HISTORICAL EVIDENCE — prior menu investigation:** the 2019 fork's `9af3344` added controller Start to pause handling; `7b81f2f` used cursor emulation and an A-as-mouse-click hack. Its fixed-per-frame cursor/camera increments and trigger-assisted motion are historical behavior, not the timing or binding contract for Lugaru-Web. Current UI reuses the pointer model but uses elapsed-time cursor integration, menu-local confirm, and contextual Back. The inspected historical tutorial handler remained Tab-only. The old face-button layout is reference material, not a requirement for the current mappings.
 
-**Decision:** next investigate menu/UI support: Options/Start pause, controller-driven menu interaction, confirm/back, and the existing clickable UI including campaign selection where appropriate. Trace current menu/cursor semantics before editing and reuse them where practical rather than creating a separate controller-only UI system. The observed campaign click path may be useful for this work.
+**RUNTIME-VERIFIED — progression:** the earlier observation that mouse clicking changes campaigns motivated pointer-path reuse. Milestone 5 physical QA now verifies controller campaign switching and world-map interaction through that same UI.
 
-**OPEN QUESTION / remaining work:** pause via Options/Start; menu navigation and cursor/selection behavior; confirm/back; campaign-selection navigation; D-pad behavior; controller rebinding; controller settings/UI; sensitivity configuration; separate controller inversion; glyphs/prompts; Bluetooth DualSense verification; Chrome Gamepad API behavior on the development machine; true analog movement/arbitrary facing; multiple-controller/player ownership; rumble/advanced DualSense features. Triangle, triggers, Options/Start, D-pad, and other unused controls remain unmapped.
+**OPEN QUESTION / remaining work:** physical tutorial QA; Chrome/Bluetooth compatibility; camera sensitivity and movement-threshold feel tuning; controller settings/inversion and glyphs/prompts; keyboard-only account naming and controller rebinding. True analog locomotion is a separate design problem; multiple-controller ownership, rumble/advanced DualSense features, trigger mappings, stereo decrement from controller, and WebHID remain outside implemented scope. The supplied observation that enemy/NPC movement also appears quantized has no source diagnosis yet. See [backlog A6](research-backlog.md#a6-controller-support-completed-scope-and-remaining-work) for classification and follow-up priorities.
 
 ---
 
@@ -810,6 +838,8 @@ B-12 is considered fixed based on the identified unsafe erase pattern, the match
 **Status:** Open
 **Priority:** Medium
 **Evidence:** External user report against the inherited Web fork; not yet independently reproduced
+
+**Scope distinction (controller follow-up):** B-8 establishes that current controller movement uses Classic digital/eight-direction combinations. That does not establish or resolve this older report about rotation between facing directions. The newer observation that NPC movement also appears quantized likewise has no source diagnosis yet. Keep these questions separate from controller threshold tuning and from a future true-analog locomotion design.
 
 ### Reported Behavior
 

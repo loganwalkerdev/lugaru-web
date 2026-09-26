@@ -62,21 +62,32 @@ Goal: either restore it correctly or hide/disable the option honestly on Web.
 
 Resolve/understand the current native Linux SDL2 include-path/build issue so behavior can be compared against browser builds more easily.
 
-### A6. Controller gameplay and look complete; menu/UI and compatibility open
+### A6. Controller support: completed scope and remaining work
 
-**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** foundation `e5939fe`, digital movement `4b8af1d`, core gameplay actions `2387ebf`, and camera look `ab46b53` are implemented, Web-built, and verified with wired DualSense in Firefox (DS4Windows disabled). Physical checks cover movement/deadzones, five action mappings, attack-driven dialogue, camera look, simultaneous keyboard/mouse use, and disconnect/reconnect without stale state. Isolated SDL/timing harnesses supplement these checks; they do not establish full native gameplay or physical multi-refresh-rate coverage. See [B-8](porting-notes.md#b-8--controller-gameplay-and-look-implemented-menuui-open).
+**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED — completed physical scope:** foundation `e5939fe`, digital movement `4b8af1d`, core gameplay actions `2387ebf`, camera look `ab46b53`, and pause/menu UI `8d549e4` are implemented, Web-built, and verified with wired DualSense in Firefox (DS4Windows disabled). Physical checks cover discovery/lifecycle, movement/deadzones, five action mappings, attack-driven dialogue, look, pause/resume, virtual cursor and fine D-pad movement, confirm/contextual Back, campaign/world-map and challenge/menu flows, and simultaneous keyboard/mouse use. Isolated SDL/input/timing harnesses supplement these checks; they do not establish full native gameplay or physical multi-refresh-rate coverage. See [B-8](porting-notes.md#b-8--controller-gameplay-menuui-and-tutorial-support).
 
-**Decision — next milestone:** investigate menu/UI support before editing: Options/Start pause, controller-driven menu interaction, confirm/back, and campaign selection where appropriate. Manual clicking already changes campaigns through the existing UI; examine reuse of cursor/click semantics rather than immediately introducing a separate controller UI.
+**VERIFIED SOURCE FINDING / automated validation:** Triangle tutorial advance (`bd7b207`) and stage-3 controller-look recognition (`f00ec72`) are implemented and passed Web builds and focused harness/regression checks. **Physical QA is pending for both.** The menu investigation is complete: the implementation reuses existing pointer/click semantics, not discrete focus or a separate campaign UI.
 
-**OPEN QUESTION / remaining work:**
+**OPEN QUESTION — validation and compatibility:**
 
-- Pause via Options/Start; menu navigation, cursor/selection, confirm/back, campaign-selection navigation, and D-pad behavior.
-- Controller rebinding, settings/UI, sensitivity configuration, separate controller inversion, and glyphs/prompts.
-- Look-speed tuning: current `120°/s` yaw and `90°/s` pitch felt slow for preference but mechanically correct. Keep this separate from correctness failures.
+- Physically verify Triangle tap/hold, stage 51, transition suppression, and tutorial stage 3 with horizontal/vertical look and centered noise.
 - Raw Bluetooth DualSense verification; consistent exposure was not established in the final foundation test.
 - Chrome Gamepad API behavior: null `navigator.getGamepads()` entries persisted on the development machine after renderer focus/fullscreen tests. Investigate separately from the SDL foundation; no WebHID or Chrome-specific workaround exists.
-- True analog player movement/arbitrary facing: current eight-direction snapping is expected Classic digital behavior, not a movement bug. Investigate animation, facing, combat, and timing implications separately.
-- Multiple-controller/player ownership, rumble, and advanced DualSense features.
+
+**OPEN QUESTION — polish and feel:**
+
+- Camera sensitivity: `120°/s` yaw and `90°/s` pitch work but felt slow for preference. Controller sensitivity/inversion settings UI and separate inversion are not implemented.
+- Left-stick activation `10000` / release `7000` hysteresis works correctly; extended playtesting may motivate feel tuning. This is distinct from changing Classic locomotion.
+- No controller glyph/prompt system; tutorial text still presents keyboard-oriented instructions.
+
+**Intentional scope exclusions / future design:**
+
+- Controller rebinding is absent; account/profile text entry still needs a keyboard. Existing cancellation does not provide controller-only text entry.
+- True analog player movement/arbitrary facing: current discrete/approximately eight-direction movement is expected Classic behavior, not a controller defect. Investigate animation, facing, combat, and timing implications separately.
+- **Supplied runtime observation / OPEN QUESTION:** enemy/NPC movement has also appeared similarly quantized. Source investigation is pending; do not infer a shared mechanism or a Web/controller regression. Keep this distinct from the older unconfirmed facing-transition report in porting note B-13.
+- Multiple-controller/player ownership, rumble/advanced DualSense features, trigger mappings, and controller stereo decrement remain unimplemented. Stereo decrement is mouse-only; no WebHID fallback exists.
+
+**Next priority:** complete physical tutorial QA, then use extended playtesting to prioritize compatibility and tuning; do not treat every scope exclusion as a bug or a scheduled feature.
 
 ---
 

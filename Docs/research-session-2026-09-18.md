@@ -97,7 +97,7 @@ A CMake/Emscripten shared-library warning remains a baseline/toolchain-version c
 - B-5 case-insensitive asset fallback incomplete — open.
 - B-6 motion blur option exposed but unsupported/forced off on Web — investigate.
 - B-7 key rebinding was suspected to fail under Web due thread usage — fixed and Chrome-verified on 2026-09-24; see section V below.
-- B-8 no controller support — open at this session; foundation milestone subsequently completed in `e5939fe` (section W), followed by gameplay and look (section X). Menu/UI support remains open.
+- B-8 no controller support — open at this session; subsequently implemented through foundation (section W), gameplay/look (section X), and menu/UI plus tutorial follow-ups (section Y). Physical tutorial QA remains pending; menu/UI physical QA passed.
 - B-9 size-optimized build flags may be worth benchmarking against speed optimization.
 - B-10 no ASYNCIFY, so synchronous level loads may block the tab.
 - B-11 `Account::active()` auto-creates `Player` globally — investigate/history compare.
@@ -1419,7 +1419,7 @@ As before, surviving Wiki material is historical evidence, not automatically the
 
 **OPEN QUESTION:** raw Bluetooth DualSense support was not successfully established in the final test. Chrome continued returning null `navigator.getGamepads()` entries on this development machine, even after renderer focus and fullscreen testing; this is a separate browser/controller compatibility investigation, not an established SDL foundation failure. No WebHID or Chrome-specific workaround was added.
 
-**Decision at milestone 1 (subsequently completed; see section X):** next implement `left stick -> deadzone/threshold logic -> existing Lugaru digital movement booleans`, preserving Classic movement semantics rather than proportional analog movement. [Backlog A6](research-backlog.md#a6-controller-gameplay-and-look-complete-menuui-and-compatibility-open) retains all remaining gameplay, configuration, ownership, browser, and advanced-feature work; [porting notes B-8](porting-notes.md#b-8--controller-gameplay-and-look-implemented-menuui-open) records the detailed milestone evidence.
+**Decision at milestone 1 (subsequently completed; see section X):** next implement `left stick -> deadzone/threshold logic -> existing Lugaru digital movement booleans`, preserving Classic movement semantics rather than proportional analog movement. [Backlog A6](research-backlog.md#a6-controller-support-completed-scope-and-remaining-work) tracks the current validation, compatibility, tuning, configuration, ownership, and advanced-feature work; [porting notes B-8](porting-notes.md#b-8--controller-gameplay-menuui-and-tutorial-support) records the detailed milestone evidence.
 
 
 ---
@@ -1438,8 +1438,32 @@ As before, surviving Wiki material is historical evidence, not automatically the
 
 **Build validation:** each milestone passed the Web build and `git diff --check`. **RUNTIME-VERIFIED — isolated harnesses:** movement thresholds/lifecycle; action mappings/handoffs/press edges; camera response/timing at 30/60/120/144/240 Hz and irregular intervals, plus action regression checks. These do not replace full native gameplay or physical browser refresh-rate tests.
 
-**RUNTIME-VERIFIED — supplied physical test results:** wired DualSense in Firefox, DS4Windows disabled. Movement, all five gameplay actions, attack-driven dialogue without unintended held-repeat advancement, and camera look worked. Center noise/deadzones, diagonals, look pitch limits, simultaneous keyboard/mouse usage, and disconnect/reconnect without stale movement/action/look were verified. Later tests retained earlier milestone behavior. The right stick became mapped in milestone 4; triggers, Triangle, Options/Start, D-pad, and other unused inputs remain unmapped.
+**RUNTIME-VERIFIED — supplied physical test results:** wired DualSense in Firefox, DS4Windows disabled. Movement, all five gameplay actions, attack-driven dialogue without unintended held-repeat advancement, and camera look worked. Center noise/deadzones, diagonals, look pitch limits, simultaneous keyboard/mouse usage, and disconnect/reconnect without stale movement/action/look were verified. Later tests retained earlier milestone behavior. At milestone 4, triggers, Triangle, Options/Start, D-pad, and other unused inputs remained unmapped; section Y records the subsequent Start/D-pad and tutorial Triangle additions.
 
 **Interpretation / open work:** eight-direction movement/facing snapping is expected for Classic digital movement; true analog movement/arbitrary facing remains a separate design problem. Camera look felt mechanically correct but somewhat slow for preference; current speeds are unchanged and sensitivity tuning/configuration remains open. Bluetooth and Chrome exposure remain unverified/unresolved as recorded in section W.
 
-**RUNTIME-VERIFIED — UI observation:** clicking the existing campaign selection UI changed campaigns. **Decision:** the next milestone is menu/UI support, likely pause, confirm/back, and navigation of existing clickable UI. Investigate current cursor/menu behavior before implementation; controller campaign navigation does not yet exist. Detailed evidence is consolidated in [B-8](porting-notes.md#b-8--controller-gameplay-and-look-implemented-menuui-open); remaining work is in [A6](research-backlog.md#a6-controller-gameplay-and-look-complete-menuui-and-compatibility-open).
+**RUNTIME-VERIFIED — UI observation at milestone 4:** clicking the existing campaign selection UI changed campaigns. **Decision at that milestone (subsequently completed in section Y):** investigate and reuse the existing clickable UI for controller pause, confirm/back, and menu navigation. Controller campaign navigation was not yet implemented at that point. Detailed evidence is consolidated in [B-8](porting-notes.md#b-8--controller-gameplay-menuui-and-tutorial-support); current remaining work is in [A6](research-backlog.md#a6-controller-support-completed-scope-and-remaining-work).
+
+---
+
+# Y. 2026-09-26 — Controller menu/UI and tutorial compatibility completed
+
+**VERIFIED SOURCE FINDING:** `git log` on `investigate/controller-support` records:
+
+| Change | Commit | Integration |
+| --- | --- | --- |
+| Milestone 5 — pause/menu UI | `8d549e4` | Shared virtual cursor and existing pointer activation; Start pause/resume, Cross confirm, contextual Circle Back, challenge-result continue/back |
+| Tutorial advance | `bd7b207` | Triangle press edge joins the existing tutorial Tab handler, with gameplay guards and release suppression; stage 51 remains unskippable |
+| Tutorial camera objective | `f00ec72` | Stage 3 accepts mouse input or meaningful `Input::controllerLook()` X/Y, preserving the existing success/timing logic |
+
+The menu investigation selected virtual cursor reuse rather than discrete focus or a hybrid UI. Left stick and fine D-pad motion share the mouse cursor and existing logical 640×480 hit-testing. Integration is once per outer frame using elapsed real time, not once per menu/physics tick. Start is restricted to gameplay/pause; Circle invokes existing contextual actions rather than global Escape. Campaign switching/world-map activation retain existing progress checks. Held controller presses are consumed through release across UI/gameplay/modal transitions. Name entry remains keyboard-based; controller rebinding and stereo secondary-click were not added.
+
+**HISTORICAL EVIDENCE — prior investigation:** the 2019 `usineur/lugaru` fork provides digital stick movement, Start pause (`9af3344`), and cursor emulation/A-as-click (`7b81f2f`) precedent. Lugaru-Web did not copy its face-button layout, trigger-assisted camera behavior, or fixed-per-frame camera/cursor increments. The latter would be refresh-rate dependent in the current Web loop. The inspected historical tutorial shortcut remained Tab-only; current Triangle support is a narrow semantic addition, not inherited Tab emulation.
+
+**Build validation / RUNTIME-VERIFIED — isolated harnesses:** all three changes passed Web builds and `git diff --check`. Tests covered cursor timing/scaling/deadzone/precision/bounds at multiple regular and irregular render rates; confirm edges, contextual destinations, pause/audio and challenge-result transitions; release suppression and lifecycle reset; tutorial advance/sound/stage 51/unchanged Tab; stage-3 mouse and horizontal/vertical stick recognition with shared deadzone/context checks. Camera, gameplay-action, menu, and Triangle regression checks passed as applicable. These checks do not establish full native gameplay or physical multi-refresh-rate behavior.
+
+**RUNTIME-VERIFIED — supplied physical QA:** Firefox, wired DualSense, DS4Windows disabled. Milestone 5 passed pause/resume, shared virtual cursor, menu confirm/contextual Back, campaign switching, world-map interaction, and challenge/menu flows. Earlier controller detection, analog-axis readings, disconnect/reconnect, digital movement, all five gameplay actions, dialogue attack, camera look, and mixed keyboard/mouse input remain physically verified.
+
+**OPEN QUESTION — tutorial physical QA:** no physical verification has yet been supplied for `bd7b207` or `f00ec72`. Their implementation and automated checks are established, but neither should be described as physically runtime-verified. Triangle keeps Tab semantics/stage 51 intact; stage 3 reuses the existing post-deadzone signal without synthetic mouse input or duplicated math. Tutorial text remains keyboard-oriented.
+
+**Supplied runtime observation / OPEN QUESTION:** player movement retains Classic approximately eight-direction locomotion; enemy/NPC movement has also appeared quantized, but its source mechanism is uninvestigated. Do not infer a controller or Web regression from that observation. Current movement thresholds work; camera sensitivity and movement feel may receive later tuning. True analog locomotion remains a separate animation/facing/combat/timing design problem. Browser compatibility and other deliberate scope exclusions remain in backlog A6; the next validation priority is physical tutorial QA.

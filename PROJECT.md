@@ -144,7 +144,7 @@ This file tracks only the current high-level state.
 | B-5  | Asset filename case fallback is incomplete                                        | Open   | Medium   |
 | B-6  | Unsupported motion blur option remains visible                                    | Open   | Low      |
 | B-7  | Browser key rebinding replaced with Web-only nonblocking capture                  | Fixed  | Medium   |
-| B-8  | Controller movement, actions, and look Firefox/wired DualSense verified; menu/UI open | Partial | Medium |
+| B-8  | Controller gameplay/menu UI Firefox/wired DualSense verified; tutorial physical QA and compatibility/tuning open | Partial | Medium |
 | B-9  | Web build is optimized primarily for binary size                                  | Open   | Low      |
 | B-10 | Synchronous level loading can block the browser main thread                       | Open   | Low      |
 | B-11 | Account creation behavior was changed globally rather than only for Web builds    | Open   | Medium   |
@@ -215,7 +215,7 @@ Current priorities are approximately:
 5. Investigate and harden browser persistence.
 6. Verify and repair browser key rebinding — completed and Chrome-verified on 2026-09-24.
 7. Investigate asset filename case mismatches.
-8. Controller foundation (`e5939fe`), digital movement (`4b8af1d`), gameplay actions (`2387ebf`), and camera look (`ab46b53`) completed: Web builds, isolated harness checks, and physical wired DualSense/Firefox verification passed. Next: investigate menu/UI support using existing cursor/click semantics, including Options/Start pause, confirm/back, and campaign selection where appropriate. Browser compatibility and controller configuration/tuning remain open (see [B-8](Docs/porting-notes.md#b-8--controller-gameplay-and-look-implemented-menuui-open)).
+8. Controller foundation (`e5939fe`), Classic digital movement (`4b8af1d`), gameplay actions (`2387ebf`), camera look (`ab46b53`), and pause/menu UI (`8d549e4`) completed: Web builds, isolated harness checks, and physical wired DualSense/Firefox verification passed with DS4Windows disabled, including campaign/world-map and challenge/menu flows. Triangle tutorial advance (`bd7b207`) and stage-3 right-stick recognition (`f00ec72`) are source/automated-validated; physical QA is next. Chrome/Bluetooth compatibility, controller configuration/prompts, and camera/movement feel tuning remain open. True analog locomotion is not implemented; current player movement remains approximately eight-direction Classic behavior, while similar reported NPC quantization still needs source investigation. See [B-8](Docs/porting-notes.md#b-8--controller-gameplay-menuui-and-tutorial-support) and [backlog A6](Docs/research-backlog.md#a6-controller-support-completed-scope-and-remaining-work) for evidence and scope exclusions.
 9. Benchmark WebAssembly optimization settings.
 10. Improve browser loading behavior if testing shows it is necessary.
 11. Restore useful native CI coverage where practical.
