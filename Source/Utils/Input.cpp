@@ -59,6 +59,20 @@ int digitalMovementAxis(Sint16 value, int previous)
     return 0;
 }
 
+float controllerLookAxis(Sint16 value)
+{
+    // Rescale continuously from zero outside the center-noise deadzone.
+    // Separate signed endpoints keep full deflection symmetric.
+    constexpr int deadzone = 8000;
+    if (value > deadzone) {
+        return float(value - deadzone) / (32767 - deadzone);
+    }
+    if (value < -deadzone) {
+        return float(value + deadzone) / (32768 - deadzone);
+    }
+    return 0.f;
+}
+
 void clearControllerState()
 {
     controllerMoveX = 0;
@@ -185,6 +199,12 @@ Input::ControllerMovement Input::controllerMovement()
         return {};
     }
     return {controllerMoveY < 0, controllerMoveY > 0, controllerMoveX < 0, controllerMoveX > 0};
+}
+
+Input::ControllerLook Input::controllerLook()
+{
+    return {controllerLookAxis(controllerAxis(SDL_CONTROLLER_AXIS_RIGHTX)),
+            controllerLookAxis(controllerAxis(SDL_CONTROLLER_AXIS_RIGHTY))};
 }
 
 bool Input::isJumpDown()

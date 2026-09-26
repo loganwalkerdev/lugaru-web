@@ -66,6 +66,7 @@ using namespace Game;
 #endif
 
 extern float multiplier;
+extern float realmultiplier; // Elapsed frame seconds before gameplay time modifiers (stall-capped).
 extern float frameDeltaTime;  // Full frame time with modifiers, for non-physics damping
 extern bool isFirstPhysicsTickOfFrame;  // True only on first Tick() call per frame
 extern bool physicsRanThisFrame;  // True if at least one physics tick ran this frame
@@ -4749,6 +4750,16 @@ void Game::TickOnce()
             pitch -= deltav * .7;
         } else {
             pitch += deltav * .7;
+        }
+        if (!Dialog::inDialog() && !Dialog::directing) {
+            // TickOnce runs once per outer frame, independent of physics substeps.
+            // Stick input is an angular rate; mouse deltas above remain unchanged.
+            constexpr float controllerYawDegreesPerSecond = 120.f;
+            constexpr float controllerPitchDegreesPerSecond = 90.f;
+            const auto look = Input::controllerLook();
+            yaw += look.x * controllerYawDegreesPerSecond * realmultiplier;
+            // Positive SDL Y looks down, like non-inverted mouse input.
+            pitch += look.y * controllerPitchDegreesPerSecond * realmultiplier;
         }
         if (pitch > 90) {
             pitch = 90;

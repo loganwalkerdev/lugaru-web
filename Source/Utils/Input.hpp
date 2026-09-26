@@ -54,6 +54,13 @@ public:
     // Digital left-stick directions, separate from keyboard/mouse bindings.
     static ControllerMovement controllerMovement();
 
+    struct ControllerLook {
+        float x;
+        float y;
+    };
+    // Right-stick rate fractions in [-1, 1], after an axial deadzone.
+    static ControllerLook controllerLook();
+
     // Fixed gameplay buttons combined with the existing keyboard/mouse bindings.
     static bool isJumpDown();
     static bool isCrouchDown();
