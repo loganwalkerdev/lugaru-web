@@ -1254,7 +1254,7 @@ void Game::ProcessInput()
     /* Tutorial mode hotkeys */
     if (Tutorial::active) {
         // Skip current tutorial stage
-        if (Input::isKeyPressed(SDL_SCANCODE_TAB)) {
+        if (Input::isKeyPressed(SDL_SCANCODE_TAB) || Input::controllerTutorialAdvancePressed()) {
             if (Tutorial::stage != 51) {
                 Tutorial::stagetime = Tutorial::maxtime;
             }

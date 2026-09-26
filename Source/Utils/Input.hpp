@@ -67,6 +67,9 @@ public:
     static bool controllerPausePressed();
     static void MoveControllerMenuCursor(float seconds);
 
+    // Triangle advances only during active tutorial gameplay, once per press.
+    static bool controllerTutorialAdvancePressed();
+
     // Fixed gameplay buttons combined with the existing keyboard/mouse bindings.
     static bool isJumpDown();
     static bool isCrouchDown();

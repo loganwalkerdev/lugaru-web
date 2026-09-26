@@ -21,6 +21,7 @@ along with Lugaru.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Utils/Input.hpp"
 #include "Level/Campaign.hpp"
+#include "Tutorial.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -28,6 +29,7 @@ along with Lugaru.  If not, see <http://www.gnu.org/licenses/>.
 extern int mainmenu;
 extern int entername;
 extern bool winfreeze;
+extern bool freeze;
 extern float screenwidth, screenheight;
 
 bool keyDown[SDL_NUM_SCANCODES + 6];
@@ -312,6 +314,14 @@ bool Input::controllerPausePressed()
     return Game::gameon && !Game::waiting && !Game::console &&
            ((mainmenu == 0 && !winfreeze) || mainmenu == 2) &&
            controllerUIPress(SDL_CONTROLLER_BUTTON_START);
+}
+
+bool Input::controllerTutorialAdvancePressed()
+{
+    // Reuse the sampled press edge and release guards without synthesizing Tab.
+    return Tutorial::active && Game::gameon && !freeze && !winfreeze &&
+           controllerGameplayButtonDown(SDL_CONTROLLER_BUTTON_Y) &&
+           controllerUIPress(SDL_CONTROLLER_BUTTON_Y);
 }
 
 void Input::MoveControllerMenuCursor(float seconds)
