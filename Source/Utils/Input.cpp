@@ -34,6 +34,10 @@ bool controllerButtons[SDL_CONTROLLER_BUTTON_MAX] = {};
 int loggedAxes[SDL_CONTROLLER_AXIS_MAX] = {};
 int controllerMoveX = 0;
 int controllerMoveY = 0;
+// Combined action history belongs to the input tick, not controller lifecycle:
+// disconnecting must not invent a new press while keyboard/mouse is still held.
+bool previousAttackDown = false;
+bool attackPressed = false;
 
 int digitalMovementAxis(Sint16 value, int previous)
 {
@@ -183,6 +187,36 @@ Input::ControllerMovement Input::controllerMovement()
     return {controllerMoveY < 0, controllerMoveY > 0, controllerMoveX < 0, controllerMoveX > 0};
 }
 
+bool Input::isJumpDown()
+{
+    return isKeyDown(Game::jumpkey) || controllerButtonDown(SDL_CONTROLLER_BUTTON_A);
+}
+
+bool Input::isCrouchDown()
+{
+    return isKeyDown(Game::crouchkey) || controllerButtonDown(SDL_CONTROLLER_BUTTON_B);
+}
+
+bool Input::isDrawDown()
+{
+    return isKeyDown(Game::drawkey) || controllerButtonDown(SDL_CONTROLLER_BUTTON_X);
+}
+
+bool Input::isThrowDown()
+{
+    return isKeyDown(Game::throwkey) || controllerButtonDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+}
+
+bool Input::isAttackDown()
+{
+    return isKeyDown(Game::attackkey) || controllerButtonDown(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+}
+
+bool Input::isAttackPressed()
+{
+    return attackPressed && isAttackDown();
+}
+
 void Input::Tick()
 {
     SDL_PumpEvents();
@@ -197,6 +231,10 @@ void Input::Tick()
         keyPressed[SDL_NUM_SCANCODES + i] = !keyDown[SDL_NUM_SCANCODES + i] && (mb & SDL_BUTTON(i));
         keyDown[SDL_NUM_SCANCODES + i] = (mb & SDL_BUTTON(i));
     }
+    // Like keyboard presses, expose the edge for one input/physics tick.
+    const bool attackDown = isAttackDown();
+    attackPressed = attackDown && !previousAttackDown;
+    previousAttackDown = attackDown;
 }
 
 bool Input::isKeyDown(int k)

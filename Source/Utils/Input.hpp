@@ -54,6 +54,14 @@ public:
     // Digital left-stick directions, separate from keyboard/mouse bindings.
     static ControllerMovement controllerMovement();
 
+    // Fixed gameplay buttons combined with the existing keyboard/mouse bindings.
+    static bool isJumpDown();
+    static bool isCrouchDown();
+    static bool isDrawDown();
+    static bool isThrowDown();
+    static bool isAttackDown();
+    static bool isAttackPressed();
+
     static void Tick();
     static bool isKeyDown(int k);
     static bool isKeyPressed(int k);

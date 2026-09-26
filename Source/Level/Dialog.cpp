@@ -204,7 +204,7 @@ void Dialog::tick(int id)
         (playerId < Person::players.size()) &&
         (playerId > 0) &&
         ((gonethrough == 0) || !special) &&
-        (special || Input::isKeyPressed(Game::attackkey))) {
+        (special || Input::isAttackPressed())) {
         if ((distsq(&Person::players[0]->coords, &Person::players[playerId]->coords) < 6) ||
             (Person::players[playerId]->howactive >= typedead1) ||
             (type > 40) && (type < 50)) {

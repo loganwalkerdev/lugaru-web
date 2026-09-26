@@ -2420,7 +2420,7 @@ void doAttacks()
     static int randattack;
     static bool playerrealattackkeydown = 0;
 
-    if (!Input::isKeyDown(attackkey)) {
+    if (!Input::isAttackDown()) {
         oldattackkey = 0;
     }
     if (oldattackkey) {
@@ -2430,7 +2430,7 @@ void doAttacks()
         playerrealattackkeydown = 0;
     }
     if (!oldattackkey) {
-        playerrealattackkeydown = Input::isKeyDown(attackkey);
+        playerrealattackkeydown = Input::isAttackDown();
     }
     if ((Person::players[0]->parriedrecently <= 0 ||
          !Person::players[0]->hasWeapon()) &&
@@ -2440,9 +2440,9 @@ void doAttacks()
           Person::players[0]->lastattack != knifeslashstartanim &&
           Person::players[0]->lastattack != staffhitanim &&
           Person::players[0]->lastattack != staffspinhitanim))) {
-        Person::players[0]->attackkeydown = Input::isKeyDown(attackkey);
+        Person::players[0]->attackkeydown = Input::isAttackDown();
     }
-    if (Input::isKeyDown(attackkey) &&
+    if (Input::isAttackDown() &&
         !oldattackkey &&
         !Person::players[0]->backkeydown) {
         for (unsigned k = 0; k < Person::players.size(); k++) {
@@ -3429,10 +3429,10 @@ void Game::Tick()
                 Person::players[0]->leftkeydown = Input::isKeyDown(leftkey) || movement.left;
                 Person::players[0]->backkeydown = Input::isKeyDown(backkey) || movement.back;
                 Person::players[0]->rightkeydown = Input::isKeyDown(rightkey) || movement.right;
-                Person::players[0]->jumpkeydown = Input::isKeyDown(jumpkey);
-                Person::players[0]->crouchkeydown = Input::isKeyDown(crouchkey);
-                Person::players[0]->drawkeydown = Input::isKeyDown(drawkey);
-                Person::players[0]->throwkeydown = Input::isKeyDown(throwkey);
+                Person::players[0]->jumpkeydown = Input::isJumpDown();
+                Person::players[0]->crouchkeydown = Input::isCrouchDown();
+                Person::players[0]->drawkeydown = Input::isDrawDown();
+                Person::players[0]->throwkeydown = Input::isThrowDown();
             } else {
                 Person::players[0]->forwardkeydown = 0;
                 Person::players[0]->leftkeydown = 0;
@@ -3613,7 +3613,7 @@ void Game::Tick()
                     yaw = Dialog::currentScene().camerayaw;
                     pitch = Dialog::currentScene().camerapitch;
                     if (Dialog::dialoguetime > 0.5) {
-                        if (Input::isKeyPressed(attackkey)) {
+                        if (Input::isAttackPressed()) {
                             Dialog::indialogue++;
                             if (Dialog::indialogue < int(Dialog::currentDialog().scenes.size())) {
                                 if (Dialog::currentScene().sound != 0) {
@@ -3707,7 +3707,7 @@ void Game::Tick()
                      (Input::isKeyDown(SDL_SCANCODE_K) &&
                       Input::isKeyDown(SDL_SCANCODE_LALT) &&
                       devtools) ||
-                 (Input::isKeyDown(jumpkey) &&
+                 (Input::isJumpDown() &&
                   !respawnkeydown &&
                   !oldattackkey &&
                   Person::players[0]->dead))) {
@@ -3715,7 +3715,7 @@ void Game::Tick()
                 loading = 1;
                 leveltime = 5;
             }
-            respawnkeydown = Input::isKeyDown(jumpkey);
+            respawnkeydown = Input::isJumpDown();
 
             static bool movekey;
 
