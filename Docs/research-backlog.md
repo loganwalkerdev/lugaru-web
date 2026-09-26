@@ -62,6 +62,21 @@ Goal: either restore it correctly or hide/disable the option honestly on Web.
 
 Resolve/understand the current native Linux SDL2 include-path/build issue so behavior can be compared against browser builds more easily.
 
+### A6. Controller foundation complete; gameplay and compatibility questions open
+
+**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** milestone 1 (`e5939fe`) initializes SDL GameController input, discovers startup/hot-plug devices, tracks one active handle/instance, exposes separate raw axes/buttons, and resets state on disconnect. The Web build passed; an isolated native SDL virtual-controller harness covered lifecycle/state handling. Physical Windows/Firefox testing with wired DualSense (DS4Windows disabled) verified input and reconnect without stuck state, plus continued mouse control. Fullscreen is not required once the device is exposed. These results do not establish full native Lugaru gameplay support. Detailed evidence is in [porting notes B-8](porting-notes.md#b-8--controller-input-foundation-implemented-gameplay-mapping-open).
+
+**Decision:** next implement `left stick -> deadzone/threshold logic -> existing Lugaru digital movement booleans`, preserving Classic movement semantics. No gameplay/menu mappings exist yet.
+
+**OPEN QUESTION / remaining work:**
+
+- Gameplay movement mapping, left-stick deadzone and activation/release thresholds; observed near-center stick noise must be handled.
+- Gameplay action buttons, right-stick camera/look, menu navigation/cursor behavior, and pause/confirm/back behavior.
+- Controller rebinding, controller-specific configuration, and simultaneous input semantics where gameplay mappings overlap.
+- Raw Bluetooth DualSense verification; final runtime testing did not successfully establish consistent exposure.
+- Chrome Gamepad API behavior: null `navigator.getGamepads()` entries persisted on the development machine after renderer focus/fullscreen tests. Investigate separately from the SDL foundation; no WebHID or Chrome-specific workaround exists.
+- Multiple-controller/player ownership, true analog movement, rumble, and advanced DualSense features.
+
 ---
 
 ## B. Gameplay-system seams

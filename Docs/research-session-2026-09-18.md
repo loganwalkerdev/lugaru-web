@@ -97,7 +97,7 @@ A CMake/Emscripten shared-library warning remains a baseline/toolchain-version c
 - B-5 case-insensitive asset fallback incomplete — open.
 - B-6 motion blur option exposed but unsupported/forced off on Web — investigate.
 - B-7 key rebinding was suspected to fail under Web due thread usage — fixed and Chrome-verified on 2026-09-24; see section V below.
-- B-8 no controller support — open; action input layer is likely solution.
+- B-8 no controller support — open at this session; foundation milestone subsequently completed in `e5939fe` (section W). Gameplay mapping remains open.
 - B-9 size-optimized build flags may be worth benchmarking against speed optimization.
 - B-10 no ASYNCIFY, so synchronous level loads may block the tab.
 - B-11 `Account::active()` auto-creates `Player` globally — investigate/history compare.
@@ -1401,3 +1401,22 @@ As before, surviving Wiki material is historical evidence, not automatically the
 **RUNTIME-VERIFIED (Chrome, 2026-09-24):** Before the fix, selecting a control displayed `_` and logged `Unable to create thread: Threads are not supported on this platform`; replacement keys did nothing and another control could not be selected. Escape behaved normally, and refreshing restored the original display. After the fix, capture starts normally without that error; keyboard and mouse rebinding work, Escape cancels cleanly, another control can be selected, rebound actions work in gameplay, and leaving Options saves bindings that reload successfully through existing persistence.
 
 **OPEN QUESTION:** Native worker-thread `SDL_WaitEvent()` usage conflicts with SDL's documented video-thread requirement and remains a separate portability investigation (backlog A4a). The Chrome verification does not establish native behavior or exhaustive coverage of held hotkeys, focus transitions, or browser-reserved shortcuts.
+
+
+---
+
+# W. 2026-09-25 — Controller input foundation completed (B-8)
+
+**HISTORICAL EVIDENCE — prior research:** original/local Lugaru ancestry did not reveal inherited controller support. The 2019 `usineur/lugaru` Switch fork (`9af3344`) remains the concrete historical controller reference. Its SDL GameController approach informed this work; its startup-only assumptions were not copied blindly.
+
+**VERIFIED SOURCE FINDING:** `e5939fe` (`feat: add controller input foundation`) implements milestone 1 in `Source/Utils/Input.cpp`, `Source/Utils/Input.hpp`, and `Source/main.cpp`. SDL GameController initialization, startup discovery, periodic discovery while absent, one active controller, raw standardized axes/buttons, disconnect reset, and reconnect use a handle/instance identity rather than retaining a device index. Controller state stays separate from keyboard/mouse bindings, with no additional SDL event-queue consumer. No gameplay, camera, menu, or rebinding mappings were added; this remains narrower than a generalized input rewrite.
+
+**Build validation (reported):** `cmake --build build-web -j2` succeeded; `git diff --check` passed before the source commit.
+
+**RUNTIME-VERIFIED — isolated native SDL harness:** virtual-controller tests covered no-controller startup, startup discovery, hot-plug, button/axis reads, device-index changes, disconnect/reset, reconnect, and shutdown. This was not a full native Lugaru gameplay test.
+
+**RUNTIME-VERIFIED — physical manual test:** Windows, Firefox, localhost, wired Sony DualSense / PS5 controller, DS4Windows disabled. Lugaru detected device 0 and opened instance 0 as `Standard Gamepad`. Left-stick values included signed-range, intermediate, and near-center readings; both right-stick axes produced positive and negative analog values. Triggers reported `0` / `32767`, matching the previously identified bundled SDL Emscripten backend behavior. Shoulders and stick clicks produced clean down/up events; additional buttons were exercised. Physical disconnect/reconnect reopened the controller and resumed input without observed stuck state. Mouse controls still worked, and controller gameplay/menu input remained intentionally unmapped. Firefox did not require fullscreen once the Gamepad API exposed the device.
+
+**OPEN QUESTION:** raw Bluetooth DualSense support was not successfully established in the final test. Chrome continued returning null `navigator.getGamepads()` entries on this development machine, even after renderer focus and fullscreen testing; this is a separate browser/controller compatibility investigation, not an established SDL foundation failure. No WebHID or Chrome-specific workaround was added.
+
+**Decision:** next implement `left stick -> deadzone/threshold logic -> existing Lugaru digital movement booleans`, preserving Classic movement semantics rather than proportional analog movement. [Backlog A6](research-backlog.md#a6-controller-foundation-complete-gameplay-and-compatibility-questions-open) retains all remaining gameplay, configuration, ownership, browser, and advanced-feature work; [porting notes B-8](porting-notes.md#b-8--controller-input-foundation-implemented-gameplay-mapping-open) records the detailed milestone evidence.

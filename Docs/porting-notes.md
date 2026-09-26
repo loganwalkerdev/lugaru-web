@@ -452,43 +452,62 @@ Native SDL event-thread portability remains a separate open question in research
 
 ---
 
-## B-8 — Controller Support Is Not Implemented in the Current Browser Build
+## B-8 — Controller Input Foundation Implemented; Gameplay Mapping Open
 
-**Status:** Open
+**Status:** Milestone 1 implemented, Web-built, and physically runtime-verified (Firefox + wired DualSense); gameplay/menu support remains open
 **Priority:** Medium
-**Evidence:** Source inspection
+**Evidence:** Committed source, reported build/check results, isolated native SDL harness, and manual physical-controller runtime testing
 
-### Location
+### Implementation — Milestone 1 (2026-09-25)
 
-Relevant initialization and input handling include:
+**VERIFIED SOURCE FINDING:** Commit `e5939fe` (`feat: add controller input foundation`) on `investigate/controller-support` adds the foundation in `Source/Utils/Input.cpp`, `Source/Utils/Input.hpp`, and `Source/main.cpp`.
+
+- `Input::InitController()` initializes `SDL_INIT_GAMECONTROLLER` and immediately checks for recognized controllers already available at startup.
+- `Input::UpdateController()` calls `SDL_GameControllerUpdate()` and, while no controller is active, retries discovery at one-second intervals. One `SDL_GameController*` is active at a time.
+- Device indices are used during enumeration/opening only. The active device is retained by its handle and `controllerInstance` (`SDL_JoystickID`), with attachment checked through `SDL_GameControllerGetAttached()`. Reconnection enumerates again rather than relying on a stale device index.
+- Disconnect closes the handle and calls `clearControllerState()` to reset cached axes/buttons. `Input::ShutdownController()` closes the device, clears state, and releases the subsystem before `SDL_Quit()`.
+- `Input::hasController()`, `Input::controllerAxis()`, and `Input::controllerButtonDown()` expose standardized SDL axes/buttons through the existing input area. Raw controller state remains separate from `keyDown`, `keyPressed`, and keyboard/mouse bindings.
+- `SetUp()`, `DoUpdate()`, and `CleanUp()` own the lifecycle calls. No additional SDL event-queue consumer was introduced.
+
+No controller gameplay, camera, menu, or rebinding behavior is mapped yet. Existing keyboard/mouse paths are unchanged. This is deliberately narrower than a generalized input-system rewrite.
+
+### Build and isolated harness validation
+
+**Build validation (reported for the source milestone):** `cmake --build build-web -j2` succeeded, and `git diff --check` passed before the source commit.
+
+**RUNTIME-VERIFIED — isolated native SDL virtual-controller harness:** no-controller startup, startup discovery, hot-plug, button/axis state reads, device-index changes, disconnect/reset, reconnect, and shutdown. This was not a full native Lugaru gameplay test.
+
+### Physical runtime verification
+
+**RUNTIME-VERIFIED — manual test:** Sony DualSense / PS5 controller, Windows host, Firefox, Lugaru-Web served from localhost, DS4Windows disabled, wired USB connection. Lugaru logged:
 
 ```text
-Source/main.cpp
-Source/Input.cpp
+Controller: detected device 0 (Standard Gamepad)
+Controller: opened instance 0 (Standard Gamepad)
 ```
 
-The inherited build initializes SDL video but does not currently initialize or integrate SDL GameController input into the existing input system.
+- Left-stick analog values were received across the SDL signed axis range, including intermediate values and small near-center values. The observed center noise confirms the need for a future gameplay deadzone.
+- Right-stick `rightx` and `righty` produced analog values in both positive and negative ranges.
+- `lefttrigger` and `righttrigger` were observed as binary Web-axis values (`0` and `32767`), consistent with the previously identified bundled SDL Emscripten backend behavior; analog trigger precision is not established by this test.
+- Shoulder and stick-click buttons produced clean down/up events. Additional controller buttons were exercised, without claiming exhaustive button coverage.
+- Physical disconnect and reconnect were detected; the controller reopened and resumed reporting input. No stuck controller state was observed.
+- Existing mouse controls still worked. Controller input remained intentionally unmapped to gameplay/menu behavior.
 
-### Current Behavior
+### Browser observations and limits
 
-Controller/gamepad input is not currently implemented in the browser build.
+**RUNTIME-VERIFIED:** Firefox exposed the wired DualSense through the standard Gamepad API; Emscripten/SDL exposed it to Lugaru as `Standard Gamepad`. Fullscreen is not required for controller input once the browser has exposed the device to the page.
 
-### Reference
+**OPEN QUESTION — Bluetooth:** raw Bluetooth DualSense support is not verified. Exposure was inconsistent/not successfully established during the final runtime test.
 
-An existing open-source Lugaru implementation may provide a useful starting point:
+**OPEN QUESTION — Chrome:** on this development machine, `navigator.getGamepads()` continued returning null entries, including after focusing the renderer and testing fullscreen. This remains a separate browser/controller compatibility investigation, not evidence of a failure in Lugaru's SDL controller foundation. No WebHID or Chrome-specific workaround was added.
 
-```text
-usineur/lugaru
-commit 9af3344
-```
+### Historical context and next milestone
 
-That work reportedly integrates controller buttons into the existing key state arrays with a relatively small change set.
+**HISTORICAL EVIDENCE — prior research:** the original/local Lugaru ancestry search did not reveal inherited controller support. The 2019 `usineur/lugaru` Switch fork (reference commit `9af3344`) remains the concrete historical controller implementation worth referencing. Its SDL GameController approach informed this work, but its startup-only assumptions were not copied blindly.
 
-### Expected Direction
+**Decision:** the next planned implementation slice is `left stick -> deadzone/threshold logic -> existing Lugaru digital movement booleans`. Preserve Classic movement semantics; this does not introduce proportional analog movement.
 
-Review the referenced implementation rather than copying it blindly.
-
-If suitable, adapt controller support while preserving existing keyboard input behavior and test it through SDL2's browser Gamepad API mapping.
+**OPEN QUESTION / remaining work:** gameplay movement mapping; left-stick deadzone and activation/release thresholds; gameplay action buttons; right-stick camera/look; menu navigation/cursor behavior; pause/confirm/back behavior; controller rebinding; controller-specific configuration; simultaneous input semantics where gameplay mappings overlap; Bluetooth DualSense verification; Chrome Gamepad API behavior; multiple-controller/player ownership; true analog movement; rumble and advanced DualSense features.
 
 ---
 

@@ -93,7 +93,11 @@ The current SDL event/input layer is small and still exposes low-level state suc
 
 Web key rebinding now uses nonblocking SDL event capture (`pollKeyCapture()` in `Menu.cpp`), verified in Chrome on 2026-09-24. Native capture still uses `SDL_CreateThread`; its separate thread-affinity/portability question remains open (research backlog A4a).
 
-Controller support is also absent in the current browser experience.
+**VERIFIED SOURCE FINDING:** Controller foundation milestone 1 is implemented in `e5939fe`. `Source/Utils/Input.cpp` / `Input.hpp` expose `hasController()`, `controllerAxis()`, and `controllerButtonDown()` separately from keyboard/mouse bindings. `Source/main.cpp` calls `InitController()` at setup, `UpdateController()` during updates, and `ShutdownController()` before SDL shutdown. SDL GameController initialization discovers recognized startup devices; discovery repeats at one-second intervals while none is active. One controller is retained by handle/instance identity, with fresh enumeration on reconnect and cached state cleared on disconnect. There is no additional SDL event-queue consumer.
+
+**Build validation / RUNTIME-VERIFIED:** the Web target built successfully. An isolated native SDL virtual-controller harness verified lifecycle and state handling, not full native Lugaru gameplay. Manual Windows/Firefox testing with a wired DualSense and DS4Windows disabled verified analog sticks, binary Web trigger values, buttons, disconnect/reconnect, and continued mouse control. See [B-8](porting-notes.md#b-8--controller-input-foundation-implemented-gameplay-mapping-open) for evidence and limits; Bluetooth and Chrome remain open.
+
+**Decision:** gameplay, camera, menu, and rebinding mappings remain unimplemented. The next narrow slice is `left stick -> deadzone/threshold logic -> existing Lugaru digital movement booleans`, preserving Classic movement semantics rather than adding proportional analog movement. The broader action layer below remains a desired seam, not a prerequisite for this foundation.
 
 ## Desired seam
 
