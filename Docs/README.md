@@ -1,6 +1,6 @@
 # Lugaru-Web Documentation Index
 
-These documents capture the current technical, historical, preservation, and design understanding of Lugaru-Web through the 2026-09-23 source-archaeology continuation pass.
+These documents capture the technical, historical, preservation, and design understanding of Lugaru-Web, including the September 23 archaeology continuation and controller implementation updates and character-restoration findings through 2026-09-27.
 
 They are intentionally separated by purpose:
 
@@ -9,7 +9,8 @@ They are intentionally separated by purpose:
 - `design-direction.md` — preservation/product principles, Classic/Expanded/Arena rulesets, UI direction, mechanics, multiplayer, and long-term product identity.
 - `preservation-and-modding.md` — historical community content, archaeological leads, mod/tool preservation, licensing workflow, and restored-edition policy.
 - `research-backlog.md` — unresolved questions and concrete research/code-reading tasks.
-- `research-session-2026-09-18.md` — comprehensive working notes from the 2026-09-18 design/research session plus the 2026-09-23 continuation archaeology pass. This is the broad capture document; the other files are the cleaner long-lived references.
+- `research-session-2026-09-18.md` — working notes from the September 18 session, September 23 archaeology continuation, and subsequent implementation/evidence updates. This is the broad capture document; the other files are the cleaner long-lived references.
+- `porting-notes.md` — browser-port implementation, build and runtime evidence, including controller gameplay/menu UI and tutorial validation limits.
 
 ## Documentation conventions
 
@@ -26,3 +27,12 @@ The project should prefer evidence over folklore. When attribution matters, use 
 ## 2026-09-23 archaeology continuation
 
 The September 23 continuation is integrated primarily into `architecture.md` and `research-session-2026-09-18.md`, with unresolved runtime/provenance checks moved to `research-backlog.md` and compatibility implications added to `preservation-and-modding.md` and `design-direction.md`.
+
+## Controller implementation updates
+
+Controller gameplay and pointer-based menu/UI support are physically verified in Firefox with wired DualSense, DS4Windows disabled. Triangle tutorial advance and stage-3 right-stick recognition are source/automated-validated, with physical QA pending. Current evidence is consolidated in [porting notes B-8](porting-notes.md#b-8--controller-gameplay-menuui-and-tutorial-support), design seams in `architecture.md`, and remaining compatibility, tuning, and scope work in [backlog A6](research-backlog.md#a6-controller-support-completed-scope-and-remaining-work).
+
+
+## Character restoration milestone
+
+Historical yaw, tilt, and head behavior are finalized defaults with successful combined physical QA. [Architecture section 5](architecture.md#5-movement-facing-animation-and-high-refresh-behavior) owns the design, [B-13](porting-notes.md#b-13--player-direction-changes-snap-instead-of-rotating) the source/runtime evidence and separately preserved scheduler patch, and [history and lineage](history-and-lineage.md#exact-preservation-checkpoints-2026-09-27) the literal-1.2 side branch and canonical TalkIdle decision. Latest wired Chrome controller success and earlier exposure failures are distinguished in B-8; broader compatibility remains open.

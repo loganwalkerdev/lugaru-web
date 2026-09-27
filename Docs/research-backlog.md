@@ -31,16 +31,15 @@ For each subsystem record:
 - useful extension seams;
 - provenance where meaningful.
 
-### A2. B-13 player rotation regression
+### A2. B-13 character restoration — resolved (2026-09-27)
 
-Reproduce at 60, 120, 144+ Hz across:
+**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** historical bounded yaw, bounded body tilt, and draw-order-safe historical head tracking are finalized as default behavior. Native OSS 1.2/current OSS comparisons and isolated Web A/Bs led to successful combined normal gameplay QA. Camera-relative movement intent works correctly. No verified remaining player-locomotion regression currently warrants another code change. See [B-13](porting-notes.md#b-13--player-direction-changes-snap-instead-of-rotating); manual code/docs commits are pending.
 
-- OSS upstream;
-- Loupgarenne main;
-- `feature/wasm-support` baseline;
-- current Lugaru-Web.
+### A2a. NPC slope/seam and scheduler comparison — OPEN
 
-Trace facing/interpolation/timestep behavior before making a fix.
+The OSS-style subdivision experiment slightly improved some NPC slope/seam turning/contact and path alignment, with no meaningful player improvement. The fixed `1 ms` scheduler remains default. Preserve the external patch documented in B-13; further controlled evidence is required before any scheduler promotion. This does not reopen completed player restoration. Camera follow is a separate presentation subsystem, to revisit only if a meaningful runtime discrepancy is observed.
+
+
 
 ### A3. Motion blur on Web
 
@@ -61,6 +60,33 @@ Goal: either restore it correctly or hide/disable the option honestly on Web.
 ### A5. Native build health
 
 Resolve/understand the current native Linux SDL2 include-path/build issue so behavior can be compared against browser builds more easily.
+
+### A6. Controller support: completed scope and remaining work
+
+**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED — completed physical scope:** foundation `e5939fe`, digital movement `4b8af1d`, core gameplay actions `2387ebf`, camera look `ab46b53`, and pause/menu UI `8d549e4` are implemented, Web-built, and verified with wired DualSense in Firefox (DS4Windows disabled). Physical checks cover discovery/lifecycle, movement/deadzones, five action mappings, attack-driven dialogue, look, pause/resume, virtual cursor and fine D-pad movement, confirm/contextual Back, campaign/world-map and challenge/menu flows, and simultaneous keyboard/mouse use. Isolated SDL/input/timing harnesses supplement these checks; they do not establish full native gameplay or physical multi-refresh-rate coverage. See [B-8](porting-notes.md#b-8--controller-gameplay-menuui-and-tutorial-support).
+
+**VERIFIED SOURCE FINDING / automated validation:** Triangle tutorial advance (`bd7b207`) and stage-3 controller-look recognition (`f00ec72`) are implemented and passed Web builds and focused harness/regression checks. **Physical QA is pending for both.** The menu investigation is complete: the implementation reuses existing pointer/click semantics, not discrete focus or a separate campaign UI.
+
+**OPEN QUESTION — validation and compatibility:**
+
+- Physically verify Triangle tap/hold, stage 51, transition suppression, and tutorial stage 3 with horizontal/vertical look and centered noise.
+- Raw Bluetooth DualSense verification; consistent exposure was not established in the final foundation test.
+- Browser/controller matrix: earlier Chrome tests exposed no usable gamepads, but the user verified wired DualSense input in current Chrome with the final restored build. Cause unknown; no controller/browser-input change explains it. Firefox/wired DualSense remains most extensively tested; other Chromium versions, operating systems, controllers, and Bluetooth are not established by this result. No WebHID or Chrome-specific workaround exists.
+
+**OPEN QUESTION — polish and feel:**
+
+- Camera sensitivity: `120°/s` yaw and `90°/s` pitch work but felt slow for preference. Controller sensitivity/inversion settings UI and separate inversion are not implemented.
+- Left-stick activation `10000` / release `7000` hysteresis works correctly; extended playtesting may motivate feel tuning. This is distinct from changing Classic locomotion.
+- No controller glyph/prompt system; tutorial text still presents keyboard-oriented instructions.
+
+**Intentional scope exclusions / future design:**
+
+- Controller rebinding is absent; account/profile text entry still needs a keyboard. Existing cancellation does not provide controller-only text entry.
+- True analog player movement/arbitrary facing: current discrete/approximately eight-direction movement is expected Classic behavior, not a controller defect. Investigate animation, facing, combat, and timing implications separately.
+- **VERIFIED SOURCE FINDING / OPEN:** NPC steering generally produces continuous headings and shares the character executor. Character restoration is complete; residual NPC slope/seam behavior is tracked separately in A2a, not as a controller-input defect.
+- Multiple-controller/player ownership, rumble/advanced DualSense features, trigger mappings, and controller stereo decrement remain unimplemented. Stereo decrement is mouse-only; no WebHID fallback exists.
+
+**Next priority:** complete physical tutorial QA, then use extended playtesting to prioritize compatibility and tuning; do not treat every scope exclusion as a bug or a scheduled feature.
 
 ---
 

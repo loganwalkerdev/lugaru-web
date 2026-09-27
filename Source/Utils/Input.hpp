@@ -37,6 +37,47 @@ along with Lugaru.  If not, see <http://www.gnu.org/licenses/>.
 class Input
 {
 public:
+    static void InitController();
+    static void ShutdownController();
+    static void UpdateController();
+    static bool hasController();
+    // Raw standardized SDL values; no gameplay deadzone or bindings applied.
+    static Sint16 controllerAxis(SDL_GameControllerAxis axis);
+    static bool controllerButtonDown(SDL_GameControllerButton button);
+
+    struct ControllerMovement {
+        bool forward;
+        bool back;
+        bool left;
+        bool right;
+    };
+    // Digital left-stick directions, separate from keyboard/mouse bindings.
+    static ControllerMovement controllerMovement();
+
+    struct ControllerLook {
+        float x;
+        float y;
+    };
+    // Right-stick rate fractions in [-1, 1], after an axial deadzone.
+    static ControllerLook controllerLook();
+
+    // UI edges are separate from raw mouse/keyboard input.
+    static bool controllerMenuConfirmPressed();
+    static bool controllerMenuBackPressed();
+    static bool controllerPausePressed();
+    static void MoveControllerMenuCursor(float seconds);
+
+    // Triangle advances only during active tutorial gameplay, once per press.
+    static bool controllerTutorialAdvancePressed();
+
+    // Fixed gameplay buttons combined with the existing keyboard/mouse bindings.
+    static bool isJumpDown();
+    static bool isCrouchDown();
+    static bool isDrawDown();
+    static bool isThrowDown();
+    static bool isAttackDown();
+    static bool isAttackPressed();
+
     static void Tick();
     static bool isKeyDown(int k);
     static bool isKeyPressed(int k);

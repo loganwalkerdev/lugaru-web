@@ -1656,18 +1656,20 @@ void Person::DoHead()
 
     if (!freeze && !winfreeze) {
 
-        // Head tracking: only update once per frame (not every physics tick)
-        // The target calculation must only run once to avoid feedback loops
-        if (isFirstPhysicsTickOfFrame) {
-            // head facing - use fmod instead of int cast to avoid precision loss
-            targetheadyaw = fmod(0 - yaw - targetheadyaw + 180, 360.0f);
-            if (targetheadyaw < 0) targetheadyaw += 360.0f;
-            targetheadyaw -= 180.0f;
+        // Consume fresh simulation targets once, at the historical draw site.
+        // Stereo passes and frames without physics must not reconvert targets
+        // or rotate an already-rotated head joint.
+        if (historicalHeadPending) {
+            historicalHeadPending = false;
+            targetheadyaw = (float)((int)((0 - yaw - targetheadyaw + 180) * 100) % 36000) / 100;
+            targetheadpitch = (float)((int)(targetheadpitch * 100) % 36000) / 100;
 
-            // Normalize pitch without precision-losing int cast
-            targetheadpitch = fmod(targetheadpitch, 360.0f);
-            if (targetheadpitch > 180) targetheadpitch -= 360;
-            if (targetheadpitch < -180) targetheadpitch += 360;
+            while (targetheadyaw > 180) {
+                targetheadyaw -= 360;
+            }
+            while (targetheadyaw < -180) {
+                targetheadyaw += 360;
+            }
 
             if (targetheadyaw > 160) {
                 targetheadpitch = targetheadpitch * -1;
@@ -1713,16 +1715,24 @@ void Person::DoHead()
                 }
             }
 
-            // Use exponential damping for smooth, frame-rate independent head movement
-            // Note: actual rotation is applied in ApplyHeadRotation() after DoAnimations()
-            // Exponential damping: lerp factor = 1 - smoothing^dt
-            // smoothing = 0.05 gives nice smooth tracking
-            float smoothing = 0.05f;
-            float dt = frameDeltaTime * 60.0f; // Normalize to 60fps reference
-            float lerpFactor = 1.0f - pow(smoothing, dt);
+            if (abs(headyaw - targetheadyaw) < multiplier * lookspeed) {
+                headyaw = targetheadyaw;
+            } else if (headyaw > targetheadyaw) {
+                headyaw -= multiplier * lookspeed;
+            } else if (headyaw < targetheadyaw) {
+                headyaw += multiplier * lookspeed;
+            }
 
-            headyaw = headyaw + (targetheadyaw - headyaw) * lerpFactor;
-            headpitch = headpitch + (targetheadpitch - headpitch) * lerpFactor;
+            if (abs(headpitch - targetheadpitch) < multiplier * lookspeed / 2) {
+                headpitch = targetheadpitch;
+            } else if (headpitch > targetheadpitch) {
+                headpitch -= multiplier * lookspeed / 2;
+            } else if (headpitch < targetheadpitch) {
+                headpitch += multiplier * lookspeed / 2;
+            }
+
+            rotatearound = jointPos(neck);
+            jointPos(head) = rotatearound + DoRotation(jointPos(head) - rotatearound, headpitch, 0, 0);
         }
 
         facing = 0;
@@ -1753,17 +1763,14 @@ void Person::DoHead()
 }
 
 /* EFFECT
- * applies head rotation to head joint
- * called after DoAnimations() to prevent being overwritten by animation system
+ * prepares one draw-time head update after fresh simulation
+ * actual joint rotation occurs in DoHead(), after draw-time eligibility and IK
  */
 void Person::ApplyHeadRotation()
 {
-    // Skip if frozen, no skeleton, or ragdolled (skeleton.free)
-    if (!freeze && !winfreeze && skeleton.joints.size() > 0 && !skeleton.free) {
-        static XYZ rotatearound;
-        rotatearound = jointPos(neck);
-        jointPos(head) = rotatearound + DoRotation(jointPos(head) - rotatearound, headpitch, headyaw, 0);
-    }
+    // TickOnceAfter calls this once after fresh physics. Defer historical
+    // rotation until DrawSkeleton has applied its existing eligibility and IK.
+    historicalHeadPending = !freeze && !winfreeze && !skeleton.joints.empty() && !skeleton.free;
 }
 
 /* EFFECT
@@ -6408,8 +6415,8 @@ int Person::DrawSkeleton()
                 }
             }
 
-            // Update head once per frame (DrawSkeleton runs during rendering, after physics)
-            // No isFirstPhysicsTickOfFrame guard needed - DrawSkeleton already runs once per frame
+            // DoHead consumes a pending update only once after fresh physics,
+            // even if stereo rendering draws this actor more than once.
             if (!skeleton.free && (!Animation::animations[animTarget].attack && animTarget != getupfrombackanim && ((animTarget != rollanim && !isFlip()) || targetFrame().label == 6) && animTarget != getupfromfrontanim && animTarget != wolfrunninganim && animTarget != rabbitrunninganim && animTarget != backhandspringanim && animTarget != walljumpfrontanim && animTarget != hurtidleanim && !isLandhard() && !isSleeping())) {
                 DoHead();
             } else {

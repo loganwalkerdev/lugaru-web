@@ -66,6 +66,7 @@ using namespace Game;
 #endif
 
 extern float multiplier;
+extern float realmultiplier; // Elapsed frame seconds before gameplay time modifiers (stall-capped).
 extern float frameDeltaTime;  // Full frame time with modifiers, for non-physics damping
 extern bool isFirstPhysicsTickOfFrame;  // True only on first Tick() call per frame
 extern bool physicsRanThisFrame;  // True if at least one physics tick ran this frame
@@ -1210,7 +1211,7 @@ void Game::ProcessInput()
 #endif
 
     /* Menu handling (main menu, leave game) */
-    if (Input::isKeyPressed(SDL_SCANCODE_ESCAPE) &&
+    if ((Input::isKeyPressed(SDL_SCANCODE_ESCAPE) || Input::controllerPausePressed()) &&
         (gameon || mainmenu == 0)) {
         selected = -1;
         if (mainmenu == 0 && !winfreeze) {
@@ -1233,13 +1234,13 @@ void Game::ProcessInput()
 
     /* Challenge mode */
     if (!campaign && !mainmenu) {
-        if ((Input::isKeyPressed(jumpkey) || Input::isKeyPressed(SDL_SCANCODE_SPACE))) {
+        if ((Input::isKeyPressed(jumpkey) || Input::isKeyPressed(SDL_SCANCODE_SPACE) || Input::controllerMenuConfirmPressed())) {
             if (winfreeze) {
                 winfreeze = 0;
             }
         }
 
-        if ((Input::isKeyDown(SDL_SCANCODE_ESCAPE)) && gameon) {
+        if ((Input::isKeyDown(SDL_SCANCODE_ESCAPE) || Input::controllerMenuBackPressed()) && gameon) {
             if (console) {
                 console = false;
                 freeze = 0;
@@ -1253,7 +1254,7 @@ void Game::ProcessInput()
     /* Tutorial mode hotkeys */
     if (Tutorial::active) {
         // Skip current tutorial stage
-        if (Input::isKeyPressed(SDL_SCANCODE_TAB)) {
+        if (Input::isKeyPressed(SDL_SCANCODE_TAB) || Input::controllerTutorialAdvancePressed()) {
             if (Tutorial::stage != 51) {
                 Tutorial::stagetime = Tutorial::maxtime;
             }
@@ -2032,7 +2033,7 @@ void doAerialAcrobatics()
             Person::players[k]->animTarget == flipanim ||
             Person::players[k]->animTarget == fightsidestep ||
             Person::players[k]->animTarget == walkanim) {
-            Person::players[k]->yaw = exponentialDamp(Person::players[k]->yaw, Person::players[k]->targetyaw, 0.01f, frameDeltaTime * 60.0f);
+            Person::players[k]->yaw = stepTowardf(Person::players[k]->yaw, Person::players[k]->targetyaw, multiplier * Person::players[k]->turnspeed);
         }
 
         if (Person::players[k]->isStop() ||
@@ -2047,11 +2048,11 @@ void doAerialAcrobatics()
              Person::players[k]->animTarget != rabbitkickanim &&
              (Person::players[k]->animTarget != crouchstabanim || Person::players[k]->hasvictim) &&
              (Person::players[k]->animTarget != swordgroundstabanim || Person::players[k]->hasvictim))) {
-            Person::players[k]->yaw = exponentialDamp(Person::players[k]->yaw, Person::players[k]->targetyaw, 0.001f, frameDeltaTime * 60.0f);
+            Person::players[k]->yaw = stepTowardf(Person::players[k]->yaw, Person::players[k]->targetyaw, multiplier * Person::players[k]->turnspeed * 2);
         }
 
         if (Person::players[k]->animTarget == sneakanim && Person::players[k]->animCurrent != sneakanim) {
-            Person::players[k]->yaw = exponentialDamp(Person::players[k]->yaw, Person::players[k]->targetyaw, 0.001f, frameDeltaTime * 60.0f);
+            Person::players[k]->yaw = stepTowardf(Person::players[k]->yaw, Person::players[k]->targetyaw, multiplier * Person::players[k]->turnspeed * 4);
         }
 
         Person::players[k]->DoStuff();
@@ -2420,7 +2421,7 @@ void doAttacks()
     static int randattack;
     static bool playerrealattackkeydown = 0;
 
-    if (!Input::isKeyDown(attackkey)) {
+    if (!Input::isAttackDown()) {
         oldattackkey = 0;
     }
     if (oldattackkey) {
@@ -2430,7 +2431,7 @@ void doAttacks()
         playerrealattackkeydown = 0;
     }
     if (!oldattackkey) {
-        playerrealattackkeydown = Input::isKeyDown(attackkey);
+        playerrealattackkeydown = Input::isAttackDown();
     }
     if ((Person::players[0]->parriedrecently <= 0 ||
          !Person::players[0]->hasWeapon()) &&
@@ -2440,9 +2441,9 @@ void doAttacks()
           Person::players[0]->lastattack != knifeslashstartanim &&
           Person::players[0]->lastattack != staffhitanim &&
           Person::players[0]->lastattack != staffspinhitanim))) {
-        Person::players[0]->attackkeydown = Input::isKeyDown(attackkey);
+        Person::players[0]->attackkeydown = Input::isAttackDown();
     }
-    if (Input::isKeyDown(attackkey) &&
+    if (Input::isAttackDown() &&
         !oldattackkey &&
         !Person::players[0]->backkeydown) {
         for (unsigned k = 0; k < Person::players.size(); k++) {
@@ -3424,14 +3425,15 @@ void Game::Tick()
 
             // control keys
             if (!Dialog::inDialog()) {
-                Person::players[0]->forwardkeydown = Input::isKeyDown(forwardkey);
-                Person::players[0]->leftkeydown = Input::isKeyDown(leftkey);
-                Person::players[0]->backkeydown = Input::isKeyDown(backkey);
-                Person::players[0]->rightkeydown = Input::isKeyDown(rightkey);
-                Person::players[0]->jumpkeydown = Input::isKeyDown(jumpkey);
-                Person::players[0]->crouchkeydown = Input::isKeyDown(crouchkey);
-                Person::players[0]->drawkeydown = Input::isKeyDown(drawkey);
-                Person::players[0]->throwkeydown = Input::isKeyDown(throwkey);
+                const auto movement = Input::controllerMovement();
+                Person::players[0]->forwardkeydown = Input::isKeyDown(forwardkey) || movement.forward;
+                Person::players[0]->leftkeydown = Input::isKeyDown(leftkey) || movement.left;
+                Person::players[0]->backkeydown = Input::isKeyDown(backkey) || movement.back;
+                Person::players[0]->rightkeydown = Input::isKeyDown(rightkey) || movement.right;
+                Person::players[0]->jumpkeydown = Input::isJumpDown();
+                Person::players[0]->crouchkeydown = Input::isCrouchDown();
+                Person::players[0]->drawkeydown = Input::isDrawDown();
+                Person::players[0]->throwkeydown = Input::isThrowDown();
             } else {
                 Person::players[0]->forwardkeydown = 0;
                 Person::players[0]->leftkeydown = 0;
@@ -3612,7 +3614,7 @@ void Game::Tick()
                     yaw = Dialog::currentScene().camerayaw;
                     pitch = Dialog::currentScene().camerapitch;
                     if (Dialog::dialoguetime > 0.5) {
-                        if (Input::isKeyPressed(attackkey)) {
+                        if (Input::isAttackPressed()) {
                             Dialog::indialogue++;
                             if (Dialog::indialogue < int(Dialog::currentDialog().scenes.size())) {
                                 if (Dialog::currentScene().sound != 0) {
@@ -3706,7 +3708,7 @@ void Game::Tick()
                      (Input::isKeyDown(SDL_SCANCODE_K) &&
                       Input::isKeyDown(SDL_SCANCODE_LALT) &&
                       devtools) ||
-                 (Input::isKeyDown(jumpkey) &&
+                 (Input::isJumpDown() &&
                   !respawnkeydown &&
                   !oldattackkey &&
                   Person::players[0]->dead))) {
@@ -3714,7 +3716,7 @@ void Game::Tick()
                 loading = 1;
                 leveltime = 5;
             }
-            respawnkeydown = Input::isKeyDown(jumpkey);
+            respawnkeydown = Input::isJumpDown();
 
             static bool movekey;
 
@@ -4666,7 +4668,7 @@ void Game::Tick()
                     Person::players[k]->targettilt = (Person::players[k]->yaw - Person::players[k]->targetyaw) / 4;
                 }
 
-                Person::players[k]->tilt = exponentialDamp(Person::players[k]->tilt, Person::players[k]->targettilt, 0.05f, frameDeltaTime * 60.0f);
+                Person::players[k]->tilt = stepTowardf(Person::players[k]->tilt, Person::players[k]->targettilt, multiplier * 150);
 
                 // Grab delay: once per frame
                 if (isFirstPhysicsTickOfFrame) {
@@ -4749,6 +4751,16 @@ void Game::TickOnce()
         } else {
             pitch += deltav * .7;
         }
+        if (!Dialog::inDialog() && !Dialog::directing) {
+            // TickOnce runs once per outer frame, independent of physics substeps.
+            // Stick input is an angular rate; mouse deltas above remain unchanged.
+            constexpr float controllerYawDegreesPerSecond = 120.f;
+            constexpr float controllerPitchDegreesPerSecond = 90.f;
+            const auto look = Input::controllerLook();
+            yaw += look.x * controllerYawDegreesPerSecond * realmultiplier;
+            // Positive SDL Y looks down, like non-inverted mouse input.
+            pitch += look.y * controllerPitchDegreesPerSecond * realmultiplier;
+        }
         if (pitch > 90) {
             pitch = 90;
         }
@@ -4771,8 +4783,8 @@ void Game::TickOnceAfter()
     static float cameraspeed;
 
     if (!mainmenu) {
-        // Apply head rotation after all physics ticks complete (prevents DoAnimations from overwriting)
-        // Only apply if physics ran this frame to avoid re-rotating already-rotated head
+        // Prepare draw-time head tracking after all physics ticks complete.
+        // Without fresh physics, retain the pose instead of rotating it again.
         if (physicsRanThisFrame) {
             for (unsigned k = 0; k < Person::players.size(); k++) {
                 if (Person::players[k]) {

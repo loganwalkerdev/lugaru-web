@@ -24,6 +24,7 @@ along with Lugaru.  If not, see <http://www.gnu.org/licenses/>.
 #include "Audio/openal_wrapper.hpp"
 #include "Game.hpp"
 #include "Level/Awards.hpp"
+#include "Level/Dialog.hpp"
 #include "Objects/Person.hpp"
 #include "Utils/Input.hpp"
 
@@ -373,11 +374,17 @@ void Tutorial::Do(float multiplier)
     //Tutorial success
     if (stagetime < maxtime - 3) {
         switch (stage) {
-            case 3:
-                if (Game::deltah || Game::deltav) {
+            case 3: {
+                // Tick already excludes menus/freeze; use the camera's filtered
+                // stick signal and dialogue guards, without changing mouse input.
+                const auto look = Input::controllerLook();
+                const bool controllerLooking = Game::gameon && !Game::waiting &&
+                    !Dialog::inDialog() && !Dialog::directing && (look.x || look.y);
+                if (Game::deltah || Game::deltav || controllerLooking) {
                     success += multiplier;
                 }
                 break;
+            }
             case 4:
                 if (Person::players[0]->forwardkeydown || Person::players[0]->backkeydown || Person::players[0]->leftkeydown || Person::players[0]->rightkeydown) {
                     success += multiplier;

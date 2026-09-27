@@ -56,6 +56,14 @@ The OSS lineage added or consolidated work around:
 
 The modern source should therefore not be described as a frozen dump of Rosen's original code. It is a community-maintained descendant.
 
+### Exact preservation checkpoints (2026-09-27)
+
+**VERIFIED GIT HISTORY:** literal OSS 1.2 is `c7b99378439735c60f84869b05c6ebde53083667`, a release-side-branch child of shared preparation commit `a09b7f8c367dd9dabae2eeac9032217cfc6f901a`. Its release-only commit adds an animation-frame crash workaround. Later master continued separately from the shared parent; do not treat `1.2..master` as a simple linear sequence of post-release changes.
+
+Ryan's inherited OSS fork point is `8edd5eec93285cfe942c6babe036603bac64b33e`. The inspected current OSS checkpoint, `42f148d033358925d1e31cec68ad02ee03ec64c2`, remains a useful living preservation/reference baseline. **RUNTIME-VERIFIED — user comparison:** both official 1.2 and current OSS felt smooth for general character locomotion. This does not make all later OSS changes undesirable or clear Ryan of independently introduced regressions; each mechanism must be checked at the inherited base.
+
+**VERIFIED GIT HISTORY / preservation decision — rabbit dialogue idle:** `25fd991fca18b740e622d8cf50532f18af1b9711` ("Set forgotten rabbit talk anim") assigns the already-existing `TalkIdle` animation to rabbits. Both the 1.2 preparation and literal release lack that assignment; Ryan's base already includes it, and current OSS retains it. `Idle` and `TalkIdle` assets are byte-identical across all four checkpoints. The more bouncy literal-1.2 dialogue fallback is treated as an omission/quirk, not a restoration target. Canonical later OSS TalkIdle remains; the temporary 1.2 experiment was removed. Literal 1.2 is not automatically preferable to legitimate later fixes.
+
 ### Community campaigns incorporated by OSS
 
 OSS Lugaru formally incorporated three historical campaigns with explicit licenses:
@@ -85,6 +93,10 @@ The fork's visible work includes:
 - general refactoring and platform modernization.
 
 This matters because not every behavioral difference between modern Lugaru and old Lugaru is a WebAssembly issue. Some regressions may have entered through Loupgarenne's timing work before the browser branch existed.
+
+### Character regressions isolated and restored
+
+**VERIFIED GIT HISTORY / VERIFIED SOURCE FINDING:** `1db27611eec7fe4c3f4019e233235e3a80fb2460` changed yaw and body-tilt convergence and head update/application. Source and physical A/B evidence support restoring these specific behaviors; they do not indict every modernization in the commit. The final default restorations and Web draw-order adaptation are documented in [architecture section 5](architecture.md#5-movement-facing-animation-and-high-refresh-behavior), with validation and the separate open scheduler experiment in [B-13](porting-notes.md#b-13--player-direction-changes-snap-instead-of-rotating). No engine-base migration decision follows from this milestone.
 
 ### Unmerged WebAssembly branch
 

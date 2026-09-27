@@ -93,7 +93,23 @@ The current SDL event/input layer is small and still exposes low-level state suc
 
 Web key rebinding now uses nonblocking SDL event capture (`pollKeyCapture()` in `Menu.cpp`), verified in Chrome on 2026-09-24. Native capture still uses `SDL_CreateThread`; its separate thread-affinity/portability question remains open (research backlog A4a).
 
-Controller support is also absent in the current browser experience.
+**VERIFIED SOURCE FINDING:** Controller foundation milestone 1 is implemented in `e5939fe`. `Source/Utils/Input.cpp` / `Input.hpp` expose `hasController()`, `controllerAxis()`, and `controllerButtonDown()` separately from keyboard/mouse bindings. `Source/main.cpp` calls `InitController()` at setup, `UpdateController()` during updates, and `ShutdownController()` before SDL shutdown. SDL GameController initialization discovers recognized startup devices; discovery repeats at one-second intervals while none is active. One controller is retained by handle/instance identity, with fresh enumeration on reconnect and cached state cleared on disconnect. There is no additional SDL event-queue consumer.
+
+**VERIFIED SOURCE FINDING — gameplay integration:** movement (`4b8af1d`) ORs `Input::controllerMovement()` into the existing `Person::players[0]` forward/back/left/right booleans in `Game::Tick()`. Independent left-axis hysteresis activates at `10000` and releases at `7000`; disconnect/reset clears its latches. Existing Classic speed, animation, facing, and eight-direction combinations remain authoritative. Directional snapping is expected for this digital implementation; proportional movement/arbitrary facing would require separate animation/combat/timing investigation.
+
+Gameplay actions (`2387ebf`) combine held keyboard/mouse state with Cross jump, Circle crouch, Square draw/sheath, L1 throw/pickup, and R1 attack. Existing gameplay transitions and toggles remain in place. `doAttacks()` receives combined held attack with `oldattackkey` unchanged; `Input::Tick()` derives the combined attack press edge used by dialogue initiation (`Dialog::tick()`) and advancement (`Game::Tick()`). Jump-based respawn also accepts combined input. Raw developer input remains separate, and disconnect does not clear held keyboard/mouse input.
+
+Camera look (`ab46b53`) feeds `Input::controllerLook()` into `Game::TickOnce()` beside mouse look. An axial `8000` deadzone rescales remaining travel continuously; yaw/pitch maxima are `120°/s` / `90°/s`. Right/down increase yaw/pitch; mouse sensitivity/inversion do not alter stick response. Integration uses `rate × realmultiplier` once per outer frame, before physics substeps and independently of gameplay time modifiers, subject to the existing 250 ms stall cap. Existing `[-70°, 90°]` pitch limits and menu/dialogue guards remain. Triggers do not rotate the camera.
+
+**VERIFIED SOURCE FINDING — pointer UI (`8d549e4`):** `DoUpdate()` calls `Input::MoveControllerMenuCursor(realmultiplier)` once per outer frame, after mouse movement. Left stick uses continuous response outside an `8000` axial deadzone at up to `320` logical pixels/second; D-pad overrides it for `80` pixels/second precision motion. Both feed the existing shared cursor, scaled from logical 640×480 coordinates and clamped to screen bounds. `Menu::Tick()` retains pointer hit-testing and activation: Cross joins the existing left-click dispatcher locally, Circle selects existing Back/No/Resume actions, and campaign cycling/world-map markers retain existing progress and load logic. There is no discrete-focus menu or synthetic mouse input.
+
+Start joins existing gameplay pause and actual pause-menu resume transitions, including audio, but is not Back in nested screens. Challenge-result Cross/Circle use existing continue/back handlers. `syncControllerContext()` and controller press history suppress held buttons through release across UI/gameplay/modal transitions; raw keyboard/mouse state remains independent. Name entry still needs a keyboard, controller confirm cannot start rebinding, and stereo decrement is mouse-only.
+
+**VERIFIED SOURCE FINDING — tutorial seams:** `bd7b207` adds Triangle press-edge advance through `Input::controllerTutorialAdvancePressed()` and the existing Tab handler, with tutorial/gameplay guards and release suppression. Stage 51 and keyboard Tab behavior are unchanged. `f00ec72` extends stage 3's mouse criterion with `Input::controllerLook()` X/Y after the existing deadzone. Tutorial-call guards plus active-gameplay/input-waiting/dialogue checks exclude inactive contexts. No mouse deltas, deadzone math, stage timing, or camera tuning are changed.
+
+**Build validation / RUNTIME-VERIFIED:** milestones 1–5 and tutorial additions built for Web and passed focused SDL/input/timing checks. Physical wired DualSense/Firefox tests with DS4Windows disabled verified discovery/lifecycle, movement, five actions, attack-driven dialogue, look, pause, shared cursor/confirm/Back, campaign/world-map and challenge/menu flows, and simultaneous keyboard/mouse use. **Physical verification remains pending for Triangle advance and stage-3 controller-look recognition.** See [B-8](porting-notes.md#b-8--controller-gameplay-menuui-and-tutorial-support) for evidence limits; automated multi-rate tests do not establish physical multi-refresh-rate or Bluetooth support. A later user test verified wired DualSense input in current Chrome; see B-8 for the earlier failures and limits of that result.
+
+**Decision / open work:** preserve Classic digital movement while separately evaluating movement feel and camera tuning. True analog locomotion/arbitrary facing is not implemented. NPC steering generally uses continuous target headings; shared turning and presentation were investigated separately from controller input. The residual NPC slope/seam scheduler observation remains open (backlog A2a). Compatibility, configuration, prompts, and scope exclusions are tracked in backlog A6. The broader action layer below remains a desired seam, not a description of the implemented controller path.
 
 ## Desired seam
 
@@ -173,31 +189,15 @@ Once two local human-controlled Persons work correctly, network ownership become
 
 # 5. Movement, facing, animation, and high-refresh behavior
 
-An open regression reports that player direction changes can snap instead of smoothly rotating, especially at >100 Hz.
+**VERIFIED SOURCE FINDING — finalized character behavior (2026-09-27):** `GameTick.cpp::doAerialAcrobatics()` retains the historical state predicates and bounded yaw rates: ordinary `500°/s`, faster states `1000°/s`, entering sneak `2000°/s`, integrated with per-tick `multiplier`. `Game::Tick()` approaches `targettilt` with `stepTowardf(..., multiplier * 150)`; target-tilt generation is unchanged.
 
-Because Loupgarenne itself changed timing/frame-rate behavior, the investigation must compare:
+`Person::DoHead()` retains historical target conversion/normalization, angular limits, bounded yaw/pitch rates of `500°/s` / `250°/s`, and pitch-only head-joint rotation about the neck. Player targets come from camera view-direction yaw/pitch relative to body orientation; NPC and dialogue target producers and animation eligibility are unchanged. This is not a world-space camera-position look-at operation.
 
-```text
-OSS upstream
-    ↓
-Loupgarenne main
-    ↓
-Ryan wasm branch
-    ↓
-Lugaru-Web
-```
+`TickOnceAfter()` calls `ApplyHeadRotation()` after fresh physics to prepare `historicalHeadPending`. The first eligible draw consumes it in `DoHead()`, after draw-time eligibility/IK. Repeated/stereo draws do not reconvert targets or reapply the joint rotation; zero-physics frames retain the prior pose. This preserves the validated adaptation to Web execution rather than blindly copying the historical function. The character restorations are unconditional, with no character A/B definitions required.
 
-at multiple refresh rates.
+**RUNTIME-VERIFIED — user physical comparison:** bounded yaw improved turning, bounded tilt substantially improved locomotion presentation, and restored head tracking reproduced expected Classic look behavior. Forward movement continuously follows camera-forward as the camera rotates. Combined normal gameplay QA found no remaining perceptible player-locomotion problem. Classic digital/eight-direction intent remains unchanged; NPC steering generally produces continuous target headings and shares the character executor.
 
-Likely relevant domains:
-
-- facing direction interpolation;
-- timestep scaling;
-- animation transitions;
-- state update vs. render interpolation;
-- normalization/clamping assumptions.
-
-Do not "fix" this by adding arbitrary browser-only smoothing before identifying where the behavior diverged.
+**OPEN — separate scheduler experiment:** the default remains the fixed `1 ms` accumulator with its existing `20 ms` simulation cap. OSS-style count-and-divide scheduling showed small NPC slope/seam improvements but no meaningful player improvement. The experiment is preserved outside the source tree, not promoted. See [B-13](porting-notes.md#b-13--player-direction-changes-snap-instead-of-rotating) for provenance, validation, and patch details. Camera follow is a separate presentation subsystem; investigate only if a meaningful runtime discrepancy remains.
 
 ---
 
