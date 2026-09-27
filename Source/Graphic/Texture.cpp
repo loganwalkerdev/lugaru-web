@@ -44,6 +44,20 @@ void TextureRes::load()
         type = GL_RGB;
     }
 
+    bool useMipmaps = hasMipmap;
+
+#ifdef __EMSCRIPTEN__
+    // Keep NPOT textures usable on the Web path without mipmapped filtering.
+    const bool widthIsPowerOfTwo =
+        texture.sizeX > 0 && (texture.sizeX & (texture.sizeX - 1)) == 0;
+    const bool heightIsPowerOfTwo =
+        texture.sizeY > 0 && (texture.sizeY & (texture.sizeY - 1)) == 0;
+
+    if (!widthIsPowerOfTwo || !heightIsPowerOfTwo) {
+        useMipmaps = false;
+    }
+#endif
+
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     glDeleteTextures(1, &id);
@@ -52,7 +66,7 @@ void TextureRes::load()
 
     glBindTexture(GL_TEXTURE_2D, id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    if (hasMipmap) {
+    if (useMipmaps) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (trilinear ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR_MIPMAP_NEAREST));
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
     } else {
