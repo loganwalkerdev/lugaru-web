@@ -364,40 +364,27 @@ Close the active B-5 investigation as a low-priority compatibility note. No sour
 
 ## B-6 — Motion Blur Option Is Exposed but Unsupported on Web
 
-**Status:** Open
+**Status:** Fixed; investigation closed
 **Priority:** Low
-**Evidence:** Source inspection
+**Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED experimental rendering; final menu guard source-validated
 
-### Location
+### Findings
 
-Relevant settings and menu handling:
+**VERIFIED SOURCE FINDING:** historical blur remains implemented for native builds in `GameDraw.cpp`. It uses framebuffer-to-texture copies and textured-quad compositing, with native front-buffer behavior for slow-motion/velocity blur; it does not use an accumulation buffer. The Web path excludes front-buffer selection and the ordinary two-frame blur selector. GL4ES implements copy/compositing operations but stubs `glDrawBuffer()` / `glReadBuffer()`. These findings do not establish that WebGL fundamentally cannot implement motion blur.
 
-```text
-Source/User/Settings.cpp
-Source/Menu/Menu.cpp
-Web-specific rendering conditionals
-```
+`Settings.cpp` defaults Web blur off and forces `ismotionblur = 0` / `alwaysblur = 0` after settings loading. Previously, Options could toggle the live `ismotionblur` value and save it, despite the reload override. The control was therefore misleading, not a universal no-op: some effect paths remained reachable during that session.
 
-### Current Behavior
+**RUNTIME-VERIFIED — user physical A/B:** the experimental Web ON build reproduced visibly malformed slow-motion rendering: an apparent resolution/viewport change and a washed-out gray/white composite. Enabling the historical effect as-is is unacceptable. The precise rendering fault was not isolated further; no unsupported-feature or crash claim is inferred from these symptoms.
 
-Motion blur is disabled for the Web build, while the corresponding option appears to remain available through the settings interface.
+### Resolution and Preservation Decision
 
-This has not yet been deliberately confirmed in browser QA.
+Keep historical motion blur disabled on Web. Exact renderer restoration was judged disproportionate to the feature's value for this milestone. No renderer redesign or modern replacement effect was introduced; native behavior remains unchanged.
 
-### Impact
+`Menu::updateSettingsMenu()` now displays `Blur Effects: Unavailable on Web`. The existing row/index is retained, and the shared activation dispatcher ignores the blur toggle under Emscripten. Mouse and controller confirmation therefore cannot enable it. Native builds retain the original label and toggle. Neighboring options, cursor hit-testing, keyboard Escape, contextual controller Back, and Options Back/save retain their existing paths.
 
-If confirmed, the UI exposes a control that has no effect.
+### Validation and Cleanup
 
-### Reproduction Steps
-
-1. Open the browser options menu.
-2. Determine whether the motion blur option is visible.
-3. Determine whether the option can be changed.
-4. Determine whether changing it has any observable effect.
-
-### Expected Direction
-
-If the option is confirmed to be nonfunctional on Web, either support it or hide/disable it in Web builds.
+Temporary experiment definitions and BLUR diagnostics were removed; `Source/User/Settings.cpp` and `Source/GameDraw.cpp` were restored to the committed baseline. The only final source change is the Web-only menu label/activation guard in `Source/Menu/Menu.cpp`. Final validation covers the normal Release Web build, `git diff --check`, native preprocessor equivalence, and focused Web dispatch checks. Physical confirmation of the final unavailable row remains a short manual UI check; the malformed experimental rendering itself was physically verified.
 
 ---
 

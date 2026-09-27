@@ -43,13 +43,11 @@ For each subsystem record:
 
 
 
-### A3. Motion blur on Web
+### A3. B-6 Web motion blur — resolved
 
-Investigate why Ryan disabled motion blur in browser builds.
+**RUNTIME-VERIFIED — user physical A/B:** experimental enablement produced malformed slow-motion rendering, including an apparent resolution/viewport change and washed-out gray/white compositing. **Decision:** retain Web force-disable; close renderer investigation because exact historical restoration is disproportionate to this milestone. No modern replacement was introduced and native blur remains implemented.
 
-Read the known relevant regions of `GameDraw.cpp`, settings/menu code, framebuffer/post-process requirements, and GL4ES/WebGL constraints.
-
-Goal: either restore it correctly or hide/disable the option honestly on Web.
+**VERIFIED SOURCE FINDING:** the Web Options row now says `Blur Effects: Unavailable on Web`, and the shared dispatcher cannot toggle it. Native Options behavior is unchanged. This resolves the misleading control without claiming that WebGL fundamentally cannot implement blur. See [B-6](porting-notes.md#b-6--motion-blur-option-is-exposed-but-unsupported-on-web) for evidence and validation limits.
 
 ### A4. Web key rebinding — fixed (2026-09-24)
 

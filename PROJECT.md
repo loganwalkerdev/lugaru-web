@@ -142,7 +142,7 @@ This file tracks only the current high-level state.
 | B-3  | Browser persistence migrated from localStorage to IDBFS with safe legacy migration| Fixed  | High     |
 | B-4  | Animation bounds checking removed in shared code                                  | Fixed  | High     |
 | B-5  | Asset case fallback: latent external-content compatibility risk                    | Closed — note retained | Low |
-| B-6  | Unsupported motion blur option remains visible                                    | Open   | Low      |
+| B-6  | Web blur intentionally disabled; Options row unavailable                          | Fixed  | Low      |
 | B-7  | Browser key rebinding replaced with Web-only nonblocking capture                  | Fixed  | Medium   |
 | B-8  | Controller gameplay/menu UI Firefox/wired DualSense verified; tutorial physical QA and compatibility/tuning open | Partial | Medium |
 | B-9  | Web build is optimized primarily for binary size                                  | Open   | Low      |
