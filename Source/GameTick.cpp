@@ -2033,7 +2033,7 @@ void doAerialAcrobatics()
             Person::players[k]->animTarget == flipanim ||
             Person::players[k]->animTarget == fightsidestep ||
             Person::players[k]->animTarget == walkanim) {
-            Person::players[k]->yaw = exponentialDamp(Person::players[k]->yaw, Person::players[k]->targetyaw, 0.01f, frameDeltaTime * 60.0f);
+            Person::players[k]->yaw = stepTowardf(Person::players[k]->yaw, Person::players[k]->targetyaw, multiplier * Person::players[k]->turnspeed);
         }
 
         if (Person::players[k]->isStop() ||
@@ -2048,11 +2048,11 @@ void doAerialAcrobatics()
              Person::players[k]->animTarget != rabbitkickanim &&
              (Person::players[k]->animTarget != crouchstabanim || Person::players[k]->hasvictim) &&
              (Person::players[k]->animTarget != swordgroundstabanim || Person::players[k]->hasvictim))) {
-            Person::players[k]->yaw = exponentialDamp(Person::players[k]->yaw, Person::players[k]->targetyaw, 0.001f, frameDeltaTime * 60.0f);
+            Person::players[k]->yaw = stepTowardf(Person::players[k]->yaw, Person::players[k]->targetyaw, multiplier * Person::players[k]->turnspeed * 2);
         }
 
         if (Person::players[k]->animTarget == sneakanim && Person::players[k]->animCurrent != sneakanim) {
-            Person::players[k]->yaw = exponentialDamp(Person::players[k]->yaw, Person::players[k]->targetyaw, 0.001f, frameDeltaTime * 60.0f);
+            Person::players[k]->yaw = stepTowardf(Person::players[k]->yaw, Person::players[k]->targetyaw, multiplier * Person::players[k]->turnspeed * 4);
         }
 
         Person::players[k]->DoStuff();
@@ -4668,7 +4668,7 @@ void Game::Tick()
                     Person::players[k]->targettilt = (Person::players[k]->yaw - Person::players[k]->targetyaw) / 4;
                 }
 
-                Person::players[k]->tilt = exponentialDamp(Person::players[k]->tilt, Person::players[k]->targettilt, 0.05f, frameDeltaTime * 60.0f);
+                Person::players[k]->tilt = stepTowardf(Person::players[k]->tilt, Person::players[k]->targettilt, multiplier * 150);
 
                 // Grab delay: once per frame
                 if (isFirstPhysicsTickOfFrame) {
@@ -4783,8 +4783,8 @@ void Game::TickOnceAfter()
     static float cameraspeed;
 
     if (!mainmenu) {
-        // Apply head rotation after all physics ticks complete (prevents DoAnimations from overwriting)
-        // Only apply if physics ran this frame to avoid re-rotating already-rotated head
+        // Prepare draw-time head tracking after all physics ticks complete.
+        // Without fresh physics, retain the pose instead of rotating it again.
         if (physicsRanThisFrame) {
             for (unsigned k = 0; k < Person::players.size(); k++) {
                 if (Person::players[k]) {

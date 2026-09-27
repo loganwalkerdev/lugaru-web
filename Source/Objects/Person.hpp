@@ -152,6 +152,7 @@ public:
 
     float headyaw, headpitch;
     float targetheadyaw, targetheadpitch;
+    bool historicalHeadPending = false;
 
     bool onterrain;
     bool pause;
