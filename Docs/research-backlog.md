@@ -37,7 +37,9 @@ For each subsystem record:
 
 ### A2a. NPC slope/seam and scheduler comparison — OPEN
 
-The OSS-style subdivision experiment slightly improved some NPC slope/seam turning/contact and path alignment, with no meaningful player improvement. The fixed `1 ms` scheduler remains default. Preserve the external patch documented in B-13; further controlled evidence is required before any scheduler promotion. This does not reopen completed player restoration. Camera follow is a separate presentation subsystem, to revisit only if a meaningful runtime discrepancy is observed.
+**Priority / status:** low-priority open observation; active investigation closed after physical A/B testing at approximately 60 Hz. **RUNTIME-VERIFIED — user observation:** no clear or substantial overall difference was reliably distinguishable. OSS-style scheduling appeared possibly slightly smoother over NPC slope/seam traversal, but no reproducible gameplay failure or meaningful regression was established.
+
+**VERIFIED SOURCE FINDING:** contact-corrected positions can feed subsequent AI steering, and several operations are subdivision-sensitive. This supports a possible interaction, not a verified cause. **Decision:** retain the fixed `1 ms` scheduler and unchanged NPC gameplay; no scheduler or local gameplay fix is justified. Preserve the external comparison patch and evidence in [B-13](porting-notes.md#scheduler-investigation-closed-low-priority-open-observation). Reopen only if a concrete reproduction emerges. Completed player restoration remains closed; camera follow remains a separate subsystem.
 
 
 
