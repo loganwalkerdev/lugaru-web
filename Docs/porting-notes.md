@@ -337,53 +337,28 @@ Restored `.at()` for both animation and frame lookup, matching upstream checked-
 
 ## B-5 — Asset Filename Case Fallback Is Incomplete
 
-**Status:** Open
-**Priority:** Medium
-**Evidence:** Source inspection
+**Status:** Investigation closed; compatibility note retained
+**Priority:** Low
+**Classification:** Latent compatibility risk, not a current runtime bug
+**Evidence:** Source/history inspection, tracked-reference/package audit, isolated filesystem harnesses
 
-### Location
+### Verified Coverage
 
-The case-insensitive fallback is implemented around:
+**VERIFIED SOURCE FINDING:** `Source/Utils/Folders.cpp::findCaseInsensitiveFile()` tries the exact path first. Its fallback is Emscripten-only and is called only through `openMandatoryFile()`. It scans the requested parent directory for a basename match without case; it does not repair parent-directory case. `getResourcePath()` only prepends the data directory.
 
-```text
-Source/Utils/Folders.cpp
-findCaseInsensitiveFile()
-openMandatoryFile()
-```
+Models, skeletons, and animations use `openMandatoryFile()`. Images (`load_image()`), audio opens, campaign/dialogue streams, JSON map loading, and `file_exists()` do not use the fallback. Binary map loading also performs an exact-case existence check before reaching `openMandatoryFile()`. These uncovered paths can matter for external/custom/historical content with incorrect casing. Current OSS `42f148d` does not provide broader case-insensitive handling; no missing upstream fix was identified.
 
-Other loading paths requiring review include:
+### Content and Packaging Audit
 
-```text
-file_exists()
-load_image()
-Campaign.cpp ifstream usage
-Dialog.cpp ifstream usage
-LoadJsonLevel ifstream usage
-```
+**VERIFIED SOURCE FINDING / static audit:** current tracked Lugaru-Web content has zero confirmed case-only asset-reference mismatches and no duplicate tracked filenames differing only by case. Audited references include source literals, animation/sound definitions, campaign map names, all 1,874 JSON clothing paths, and generated tutorial/configured challenge names. Optional absent campaign world textures use the existing default-world fallback.
 
-### Current Behavior
+**VERIFIED SOURCE FINDING / package audit:** the inspected local Web package contains exactly the 542 tracked asset filenames, preserving case without aliases. CMake preloads `Data` at `/Data`; packaging does not mask a detected mismatch. CDN selection changes the aggregate data-file URL, not internal lookup semantics. Remote CDN contents were not independently validated.
 
-The Web port contains a case-insensitive file lookup fallback through:
+**RUNTIME-VERIFIED — isolated harnesses:** native Linux and Emscripten builds of the actual `Folders.cpp`, tested with the unchanged tracked `World.png`, confirmed exact-case success, raw wrong-case lookup failure, Web-only basename recovery through `openMandatoryFile()`, and failure to repair parent-directory case. The Emscripten harness ran under Node; this was not a full browser gameplay test. No shipped-content runtime failure was reproduced.
 
-```text
-findCaseInsensitiveFile()
-```
+### Decision
 
-However, that fallback is currently associated with `openMandatoryFile()` and is not consistently used by every asset-loading path.
-
-### Impact
-
-Linux and browser builds use case-sensitive filesystem behavior.
-
-Filename/reference mismatches that may go unnoticed on case-insensitive filesystems can result in missing assets or failed content loads.
-
-Community campaigns such as Temple, Empire, and Seven Tasks are useful candidates for testing because they contain additional independently authored content.
-
-### Expected Direction
-
-First identify actual filename mismatches.
-
-Long-term, prefer correcting or normalizing filenames and references rather than relying indefinitely on runtime directory scanning.
+Close the active B-5 investigation as a low-priority compatibility note. No source or data change is justified. Prefer exact-case references; do not expand filesystem fallback without a demonstrated compatibility need. Reopen only if a concrete custom/historical-content failure is reproduced. Dynamic user-entered paths and external content remain outside the exhaustive static audit.
 
 ---
 
