@@ -59,6 +59,12 @@ Goal: either restore it correctly or hide/disable the option honestly on Web.
 
 **OPEN QUESTION:** The native `setKeySelected_thread()` still calls `SDL_WaitEvent()` from a worker, although SDL documents that this function must run on the thread that initialized video. It also mutates shared menu state. Native behavior was intentionally left unchanged by B-7. Determine the practical impact across supported native platforms before proposing a separate fix; no native runtime failure has been established by this investigation.
 
+### A4b. B-5 asset filename case fallback — closed; compatibility note
+
+**Priority:** Low. **VERIFIED SOURCE FINDING:** the tracked-reference audit found zero confirmed case-only mismatches; the inspected Web package preserves all tracked filenames/case exactly. The Emscripten-only `openMandatoryFile()` fallback repairs basenames only, leaving parent-directory casing and other loaders uncovered. Current OSS offers no broader handling.
+
+**Decision:** latent compatibility risk for external/custom/historical content, not a current runtime bug. No shipped-content failure was reproduced and no code/data change is justified. Reopen only if a concrete custom/historical-content failure is reproduced. [Porting notes B-5](porting-notes.md#b-5--asset-filename-case-fallback-is-incomplete) record coverage, isolated harness validation, and audit limits.
+
 ### A5. Native build health
 
 Resolve/understand the current native Linux SDL2 include-path/build issue so behavior can be compared against browser builds more easily.

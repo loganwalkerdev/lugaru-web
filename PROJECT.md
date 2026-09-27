@@ -141,7 +141,7 @@ This file tracks only the current high-level state.
 | B-2  | Browser main loop uses timeout scheduling as a consequence of B-1                 | Fixed  | High     |
 | B-3  | Browser persistence migrated from localStorage to IDBFS with safe legacy migration| Fixed  | High     |
 | B-4  | Animation bounds checking removed in shared code                                  | Fixed  | High     |
-| B-5  | Asset filename case fallback is incomplete                                        | Open   | Medium   |
+| B-5  | Asset case fallback: latent external-content compatibility risk                    | Closed — note retained | Low |
 | B-6  | Unsupported motion blur option remains visible                                    | Open   | Low      |
 | B-7  | Browser key rebinding replaced with Web-only nonblocking capture                  | Fixed  | Medium   |
 | B-8  | Controller gameplay/menu UI Firefox/wired DualSense verified; tutorial physical QA and compatibility/tuning open | Partial | Medium |
@@ -220,7 +220,7 @@ Current priorities are approximately:
 4. Correct browser settings handling and frame scheduling together.
 5. Investigate and harden browser persistence.
 6. Verify and repair browser key rebinding — completed and Chrome-verified on 2026-09-24.
-7. Investigate asset filename case mismatches.
+7. Asset filename case investigation complete: no confirmed tracked-content case mismatch or shipped-content runtime failure. B-5 is a low-priority compatibility note; no code change justified. Reopen only for a concrete custom/historical-content failure. See [B-5](Docs/porting-notes.md#b-5--asset-filename-case-fallback-is-incomplete).
 8. Controller foundation (`e5939fe`), Classic digital movement (`4b8af1d`), gameplay actions (`2387ebf`), camera look (`ab46b53`), and pause/menu UI (`8d549e4`) completed: Web builds, isolated harness checks, and physical wired DualSense/Firefox verification passed with DS4Windows disabled, including campaign/world-map and challenge/menu flows. Triangle tutorial advance (`bd7b207`) and stage-3 right-stick recognition (`f00ec72`) are source/automated-validated; physical QA is next. Latest user testing also verified wired DualSense input in current Chrome with the final restored build; earlier Chrome exposure failures remain historical observations with unknown cause. Broader browser/Bluetooth compatibility, controller configuration/prompts, and sensitivity/threshold tuning remain open. True analog locomotion is not implemented; Classic digital intent remains unchanged. Character restoration is complete; NPC slope/seam scheduler behavior remains separate. See [B-8](Docs/porting-notes.md#b-8--controller-gameplay-menuui-and-tutorial-support) and [backlog A6](Docs/research-backlog.md#a6-controller-support-completed-scope-and-remaining-work) for evidence and scope exclusions.
 9. Benchmark WebAssembly optimization settings.
 10. Improve browser loading behavior if testing shows it is necessary.
