@@ -94,6 +94,16 @@ Resolve/understand the current native Linux SDL2 include-path/build issue so beh
 
 **Next priority:** complete physical tutorial QA, then use extended playtesting to prioritize compatibility and tuning; do not treat every scope exclusion as a bug or a scheduled feature.
 
+### A7. B-14 Web NPOT mipmapped textures — resolved
+
+**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** `eea54f4` adds a shared Web-only NPOT fallback while preserving native and Web POT behavior. The owner verified correct SnowFlake rendering with its original mipmap-requesting load and correct `Fire.jpg` appearance. No asset was changed. The active defect is closed; the exact failing runtime GL4ES state remains unproven, not a blocker requiring speculative work. [B-14](porting-notes.md#b-14--web-npot-textures-render-black-with-mipmapped-sampling) owns the policy, audit and evidence limits.
+
+### A8. Dense fire-spawner Web slowdown — OPEN
+
+**RUNTIME-VERIFIED — project-owner observation:** a scene containing many active fire spawners produces noticeable Web slowdown. This is separate from B-14; no evidence currently attributes the slowdown to the NPOT fallback.
+
+**OPEN / investigation candidates, not findings:** active fire-sprite count, particle simulation, immediate-mode `glBegin`/`glEnd` translation through GL4ES, per-sprite matrix work, texture/state changes, additive blending and effect rendering cost. Establish a reproducible scene and measured baseline before choosing a cause or fix. No diagnosis or performance change has been made.
+
 ---
 
 ## B. Gameplay-system seams

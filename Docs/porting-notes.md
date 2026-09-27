@@ -838,6 +838,57 @@ See [backlog A2a](research-backlog.md#a2a-npc-slopeseam-and-scheduler-comparison
 
 ---
 
+## B-14 — Web NPOT Textures Render Black with Mipmapped Sampling
+
+**Status:** Fixed; investigation closed
+**Priority:** Medium
+**Fix:** `eea54f4b7e079c27964b7decde3d6c7f56e0a5fd` — `fix: handle NPOT mipmapped textures on Web`
+**Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (project-owner QA)
+
+### Reproduction and Validation
+
+**RUNTIME-VERIFIED — project-owner tests:** the shipped 40×40 RGBA `Data/Textures/SnowFlake.png` rendered as solid black squares when requested with mipmaps. Changing only its load argument from `1` to `0` restored correct snow. Restoring `1` and replacing Web automatic generation with explicit `glGenerateMipmap()` did not fix the black squares. The generic Web-only NPOT fallback then restored correct snow while keeping the original `Sprite::snowflaketexture.load("Textures/SnowFlake.png", 1)` call. Final manual QA also confirmed correct rendering of the 300×300 `Fire.jpg` loading-screen texture.
+
+The Release Web build and `git diff --check` passed during implementation. Native preprocessing was equivalent apart from the local boolean alias; extracted policy checks covered 168 dimension/request combinations per native/Web variant. These automated checks supplement, not replace, the owner's physical rendering results.
+
+### Compatibility Finding and Preservation
+
+**VERIFIED SOURCE FINDING:** `Source/Graphic/Texture.cpp::TextureRes::load()` knows decoded image dimensions and controls minification/upload. The pinned GL4ES path handles legacy mipmap generation internally. The project permits WebGL2 but does not explicitly require it; the inspected SDL GLES2/Emscripten context path corresponds to WebGL1. Explicit generation alone cannot be assumed to solve limited NPOT sampling through that translation layer. This is not the blanket claim that WebGL cannot mipmap NPOT textures: WebGL2 supports NPOT mipmapping.
+
+**HISTORICAL:** the relevant pre-fix loader behavior exists in current OSS `42f148d` and the known-good WASM baseline `b340204`; this was not identified as a recent Lugaru-Web regression.
+
+**INFERENCE:** the evidence strongly supports an NPOT + mipmapped-sampling compatibility issue in the current Web/GL4ES translation path. The black result is consistent with incomplete/unsupported sampling state involving mipmapped filtering and GL4ES handling. **OPEN:** the exact runtime GL4ES branch and texture state producing the black result were not instrumented and proven.
+
+### Final Policy
+
+| Texture path | Behavior |
+| --- | --- |
+| Native | Unchanged, including historical `GL_GENERATE_MIPMAP` behavior |
+| Web POT, mipmaps requested | Unchanged |
+| Web NPOT, mipmaps requested | Use non-mipmapped `GL_LINEAR` minification; do not request automatic mipmap generation |
+| Mipmaps not requested | Unchanged |
+
+The local `useMipmaps` decision preserves the requested `hasMipmap` value. No asset-specific exception, resize, asset edit, or SnowFlake call-site workaround remains. Handling dimensions in the shared loader also covers dynamic/custom NPOT images reaching that loader without global mipmap disablement.
+
+### Asset Audit
+
+All 136 tracked texture images were inspected; exactly four were NPOT:
+
+| Asset | Dimensions / format | Shipped use and mipmap request |
+| --- | --- | --- |
+| `SnowFlake.png` | 40×40 RGBA PNG | Snow sprite; requests mipmaps; reproduced defect and final fix physically verified |
+| `Fire.jpg` | 300×300 RGB JPEG | Loading screen; requests mipmaps; final appearance physically verified |
+| `Quit.png` | 166×64 RGB PNG | Menu texture; no mipmaps requested; unaffected |
+| `GrassDirt2.jpg` | 921×921 RGB JPEG | Packaged; no established shipped source/map load found |
+
+All 13 shipped character skins are POT, as are the 18 shipped skybox faces and representative Smoke, Flame, BloodParticle, Leaf and Splinter sprites. `Fire.jpg` also appears as clothing in `jendraz1`; that path blends image data into a POT skin on the CPU rather than creating a separate NPOT mipmapped texture. The separate `Person::DoMipmaps()` skin re-upload path is unchanged; arbitrary external/custom skin behavior was not exhaustively validated.
+
+### Separate Performance Observation
+
+**RUNTIME-VERIFIED — project-owner observation:** many active fire spawners cause noticeable Web slowdown. No causal link to this compatibility fix has been established. Track this separately in [backlog A8](research-backlog.md#a8-dense-fire-spawner-web-slowdown--open); no performance diagnosis or additional rendering change is part of B-14.
+
+---
+
 ## CI-1 — macOS CI Fails During Dependency Setup
 
 **Status:** Open
