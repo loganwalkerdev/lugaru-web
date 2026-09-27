@@ -150,6 +150,9 @@ This file tracks only the current high-level state.
 | B-11 | Account creation behavior was changed globally rather than only for Web builds    | Open   | Medium   |
 | B-12 | WebAssembly runtime crash: memory access out of bounds                            | Fixed  | High     |
 | B-13 | Historical yaw, tilt, and head behavior restored; combined physical QA passed      | Fixed  | Medium   |
+| B-14 | Web NPOT mipmap compatibility fixed; snow and Fire loading-screen QA passed (`eea54f4`) | Fixed | Medium |
+
+B-14 preserves native and Web POT behavior; only Web NPOT images requesting mipmaps fall back to `GL_LINEAR` without automatic generation. SnowFlake retains its original mipmap request and assets are unchanged. See [B-14 evidence](Docs/porting-notes.md#b-14--web-npot-textures-render-black-with-mipmapped-sampling). A separately observed slowdown with many active fire spawners remains [open in backlog A8](Docs/research-backlog.md#a8-dense-fire-spawner-web-slowdown--open); it is not attributed to this fix.
 
 ---
 
