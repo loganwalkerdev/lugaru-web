@@ -31,16 +31,15 @@ For each subsystem record:
 - useful extension seams;
 - provenance where meaningful.
 
-### A2. B-13 player rotation regression
+### A2. B-13 character restoration — resolved (2026-09-27)
 
-Reproduce at 60, 120, 144+ Hz across:
+**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** historical bounded yaw, bounded body tilt, and draw-order-safe historical head tracking are finalized as default behavior. Native OSS 1.2/current OSS comparisons and isolated Web A/Bs led to successful combined normal gameplay QA. Camera-relative movement intent works correctly. No verified remaining player-locomotion regression currently warrants another code change. See [B-13](porting-notes.md#b-13--player-direction-changes-snap-instead-of-rotating); manual code/docs commits are pending.
 
-- OSS upstream;
-- Loupgarenne main;
-- `feature/wasm-support` baseline;
-- current Lugaru-Web.
+### A2a. NPC slope/seam and scheduler comparison — OPEN
 
-Trace facing/interpolation/timestep behavior before making a fix.
+The OSS-style subdivision experiment slightly improved some NPC slope/seam turning/contact and path alignment, with no meaningful player improvement. The fixed `1 ms` scheduler remains default. Preserve the external patch documented in B-13; further controlled evidence is required before any scheduler promotion. This does not reopen completed player restoration. Camera follow is a separate presentation subsystem, to revisit only if a meaningful runtime discrepancy is observed.
+
+
 
 ### A3. Motion blur on Web
 
@@ -72,7 +71,7 @@ Resolve/understand the current native Linux SDL2 include-path/build issue so beh
 
 - Physically verify Triangle tap/hold, stage 51, transition suppression, and tutorial stage 3 with horizontal/vertical look and centered noise.
 - Raw Bluetooth DualSense verification; consistent exposure was not established in the final foundation test.
-- Chrome Gamepad API behavior: null `navigator.getGamepads()` entries persisted on the development machine after renderer focus/fullscreen tests. Investigate separately from the SDL foundation; no WebHID or Chrome-specific workaround exists.
+- Browser/controller matrix: earlier Chrome tests exposed no usable gamepads, but the user verified wired DualSense input in current Chrome with the final restored build. Cause unknown; no controller/browser-input change explains it. Firefox/wired DualSense remains most extensively tested; other Chromium versions, operating systems, controllers, and Bluetooth are not established by this result. No WebHID or Chrome-specific workaround exists.
 
 **OPEN QUESTION — polish and feel:**
 
@@ -84,7 +83,7 @@ Resolve/understand the current native Linux SDL2 include-path/build issue so beh
 
 - Controller rebinding is absent; account/profile text entry still needs a keyboard. Existing cancellation does not provide controller-only text entry.
 - True analog player movement/arbitrary facing: current discrete/approximately eight-direction movement is expected Classic behavior, not a controller defect. Investigate animation, facing, combat, and timing implications separately.
-- **Supplied runtime observation / OPEN QUESTION:** enemy/NPC movement has also appeared similarly quantized. Source investigation is pending; do not infer a shared mechanism or a Web/controller regression. Keep this distinct from the older unconfirmed facing-transition report in porting note B-13.
+- **VERIFIED SOURCE FINDING / OPEN:** NPC steering generally produces continuous headings and shares the character executor. Character restoration is complete; residual NPC slope/seam behavior is tracked separately in A2a, not as a controller-input defect.
 - Multiple-controller/player ownership, rumble/advanced DualSense features, trigger mappings, and controller stereo decrement remain unimplemented. Stereo decrement is mouse-only; no WebHID fallback exists.
 
 **Next priority:** complete physical tutorial QA, then use extended playtesting to prioritize compatibility and tuning; do not treat every scope exclusion as a bug or a scheduled feature.

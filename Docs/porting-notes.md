@@ -583,7 +583,7 @@ Controller press edges and `syncControllerContext()` consume held buttons throug
 
 **OPEN QUESTION — Bluetooth:** raw Bluetooth DualSense support is not verified. Exposure was inconsistent/not successfully established during the final runtime test.
 
-**OPEN QUESTION — Chrome:** on this development machine, `navigator.getGamepads()` continued returning null entries, including after focusing the renderer and testing fullscreen. This remains a separate browser/controller compatibility investigation, not evidence of a failure in Lugaru's SDL controller foundation. No WebHID or Chrome-specific workaround was added.
+**RUNTIME-VERIFIED — Chrome, updated 2026-09-27:** earlier tests on this development machine repeatedly returned null `navigator.getGamepads()` entries, including after renderer focus/fullscreen testing. The user now reports working wired DualSense input in current Chrome with the final character-restored Web build. The cause of the discrepancy is unknown: character restoration changed no controller/browser-input code, so no causal link is established. Firefox/wired DualSense remains the most extensively validated setup. This one Chrome result does not establish Bluetooth, other Chromium versions, other operating systems, or other controllers. No WebHID or Chrome-specific workaround was added.
 
 ### Historical context and remaining scope
 
@@ -593,7 +593,7 @@ Controller press edges and `syncControllerContext()` consume held buttons throug
 
 **RUNTIME-VERIFIED — progression:** the earlier observation that mouse clicking changes campaigns motivated pointer-path reuse. Milestone 5 physical QA now verifies controller campaign switching and world-map interaction through that same UI.
 
-**OPEN QUESTION / remaining work:** physical tutorial QA; Chrome/Bluetooth compatibility; camera sensitivity and movement-threshold feel tuning; controller settings/inversion and glyphs/prompts; keyboard-only account naming and controller rebinding. True analog locomotion is a separate design problem; multiple-controller ownership, rumble/advanced DualSense features, trigger mappings, stereo decrement from controller, and WebHID remain outside implemented scope. The supplied observation that enemy/NPC movement also appears quantized has no source diagnosis yet. See [backlog A6](research-backlog.md#a6-controller-support-completed-scope-and-remaining-work) for classification and follow-up priorities.
+**OPEN QUESTION / remaining work:** physical tutorial QA; broader Chrome/Bluetooth compatibility; camera sensitivity and movement-threshold feel tuning; controller settings/inversion and glyphs/prompts; keyboard-only account naming and controller rebinding. True analog locomotion is a separate design problem; multiple-controller ownership, rumble/advanced DualSense features, trigger mappings, stereo decrement from controller, and WebHID remain outside implemented scope. NPC steering and shared character turning have now been investigated; residual slope/seam scheduler behavior remains open separately in B-13. See [backlog A6](research-backlog.md#a6-controller-support-completed-scope-and-remaining-work) for classification and follow-up priorities.
 
 ---
 
@@ -835,45 +835,36 @@ B-12 is considered fixed based on the identified unsafe erase pattern, the match
 
 ## B-13 — Player Direction Changes Snap Instead of Rotating
 
-**Status:** Open
+**Status:** Fixed — finalized default source and physical QA; manual commit pending
 **Priority:** Medium
-**Evidence:** External user report against the inherited Web fork; not yet independently reproduced
+**Evidence:** VERIFIED SOURCE FINDING / VERIFIED GIT HISTORY / RUNTIME-VERIFIED
 
-**Scope distinction (controller follow-up):** B-8 establishes that current controller movement uses Classic digital/eight-direction combinations. That does not establish or resolve this older report about rotation between facing directions. The newer observation that NPC movement also appears quantized likewise has no source diagnosis yet. Keep these questions separate from controller threshold tuning and from a future true-analog locomotion design.
+### Original symptom and provenance
 
-### Reported Behavior
+The inherited Web fork was reported to snap on direction reversals instead of visibly turning, including a report above 100 Hz. Later physical comparisons found native OSS 1.2 and current OSS `42f148d` smooth, while Web remained rough after yaw alone was restored. Classic eight-direction movement intent is distinct from this regression in executing/presenting turns.
 
-A user of the inherited Web version reported that reversing the player's movement direction causes the character to snap immediately to the opposite facing direction.
+**VERIFIED GIT HISTORY:** Ryan commit `1db27611eec7fe4c3f4019e233235e3a80fb2460` replaced bounded yaw and tilt with exponential damping using full-frame `frameDeltaTime` inside repeated physics subdivisions. It also changed head normalization/convergence/application and guarded draw-time `DoHead()` updates with `isFirstPhysicsTickOfFrame`. Normal physics frames clear that flag before drawing, skipping target conversion and convergence. Zero-tick frames are an exception, not a reliable update contract. These identified regressions do not establish that every change in that commit is broken.
 
-The reported comparison with the original game was:
+### Final restoration
 
-```text
-Original: moving left and then right causes the character to rotate between directions.
-Web fork: moving left and then right causes the character to snap immediately to the opposite direction.
-```
+**VERIFIED SOURCE FINDING:** `Source/GameTick.cpp` restores the existing historical yaw predicates and `500/1000/2000°/s` rates, and bounded body tilt at `150°/s`, using `multiplier`. `Source/Objects/Person.cpp` / `Person.hpp` restore historical head conversion, limits, `500°/s` yaw and `250°/s` pitch, and pitch-only head-joint application. Head behavior matched across OSS 1.2, current OSS, and pre-modernization `8cee3e3`.
 
-The reporter also specifically noted playing at refresh rates above 100 Hz.
+The final head implementation prepares one per-actor pending update after fresh simulation and consumes it at the first eligible draw. It preserves state eligibility and target producers while preventing repeated/stereo mutation and retaining the previous pose on zero-physics frames. This draw-order adaptation is intentional. Character experiment macros and Ryan's alternate yaw/tilt/head paths are removed; canonical rabbit TalkIdle remains. Input, locomotion intent, target-heading generation, velocity integration, AI, animation progression, camera follow, and browser/controller systems are unchanged by this restoration.
 
-### Impact
+### Validation
 
-The behavior removes or bypasses a visible part of the original character movement animation and makes direction changes appear abrupt.
+**RUNTIME-VERIFIED — user physical QA:** yaw materially improved turning; tilt substantially improved player locomotion presentation; head restoration worked well and resembled original Lugaru. Holding forward while rotating the camera continuously retargeted physical movement correctly. The combined restored build played normally with controller/gameplay behavior intact and no remaining perceptible player-locomotion problem. No verified remaining player-locomotion regression currently warrants another code change.
 
-If the report is reproducible, this represents a behavioral regression from the original game.
+**Build/source validation:** isolated historical-law and head-equivalence checks preceded physical QA. The final default Release Web target is `build-web-character-final/bin/lugaru.html`, built without character or scheduler experiment definitions. Rebuilding after scheduler separation and `git diff --check` passed; bundled assets remain unchanged. Source behavior matches the physically validated restored character configuration. No fixing commit is recorded yet because staging/committing is reserved for manual review.
 
-### Investigation Direction
+### Scheduler remains a separate experiment
 
-Reproduce the behavior in the current Web build and compare it against a native/original build before assigning a cause.
+**OPEN / RUNTIME-VERIFIED — user A/B observation:** fixed `1 ms` versus OSS-style count-and-divide scheduling produced essentially no player improvement, but slightly smoother NPC turning/contact on some slope seams and path-alignment situations. This is insufficient evidence to change the default. That scheduler A/B preceded the tilt/head restorations: fewer repeated full-frame damping calls and different simulated-time budgets complicated attribution. It was not proof of a scheduler-only mechanism.
 
-Relevant areas to investigate include:
+The exact `Source/main.cpp` experiment was preserved as `/home/logan/projects/lugaru-web-oss-scheduler-experiment.patch`, outside the repository. It uses `LUGARU_EXPERIMENT_OSS_SCHEDULER`, selects `max(2, int(T * 200))` before gameplay modifiers, and preserves the current outer-frame/controller integration and `250 ms` stall cap. Its base is `8820f6125030127b1c7e8c328511c72a71d9299b`; patch SHA-256 is `e259a2f61248792b250462923666162b66182c8778dd333178ea4b2f58935448`. Application was checked against that baseline and reproduced the experimental file exactly. The patch was then reversed from the working tree and checked for clean reapplication. This local artifact is not part of the character commit; preserve it separately when moving the workspace.
 
-- player facing and rotation interpolation,
-- movement-direction changes,
-- frame-time-dependent rotation logic,
-- differences between Wolfire upstream, Loupgarenne main, and the inherited WebAssembly branch.
+See [backlog A2a](research-backlog.md#a2a-npc-slopeseam-and-scheduler-comparison--open). Camera follow remains separate and is not an unfinished locomotion blocker.
 
-The reported high-refresh-rate environment should also be tested to determine whether the behavior is frame-rate dependent.
-
-Do not assume the issue is WebAssembly-specific until the behavior and source divergence have been identified.
 
 ---
 

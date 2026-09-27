@@ -149,7 +149,7 @@ This file tracks only the current high-level state.
 | B-10 | Synchronous level loading can block the browser main thread                       | Open   | Low      |
 | B-11 | Account creation behavior was changed globally rather than only for Web builds    | Open   | Medium   |
 | B-12 | WebAssembly runtime crash: memory access out of bounds                            | Fixed  | High     |
-| B-13 | Player direction changes snap instead of rotating                                 | Open   | Medium   |
+| B-13 | Historical yaw, tilt, and head behavior restored; combined physical QA passed      | Fixed  | Medium   |
 
 ---
 
@@ -204,6 +204,12 @@ See **Near-Term Priorities** for the active work sequence.
 
 ---
 
+## Character restoration milestone — completed (2026-09-27)
+
+**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** bounded yaw, bounded body tilt, and historical head tracking adapted to fresh-simulation/draw ordering are now default behavior. The user reports normal combined gameplay with controller behavior intact and no perceptible remaining player-locomotion problem. No verified remaining player-locomotion regression currently warrants another code change.
+
+The default Release build is `build-web-character-final/bin/lugaru.html`; no experiment definitions are needed. Current OSS rabbit TalkIdle is preserved. The unresolved OSS-scheduler experiment is saved separately outside the repository; the normal fixed scheduler is unchanged. See [B-13](Docs/porting-notes.md#b-13--player-direction-changes-snap-instead-of-rotating) for provenance, build evidence, and patch location, and [backlog A2a](Docs/research-backlog.md#a2a-npc-slopeseam-and-scheduler-comparison--open) for the remaining NPC observation. Camera follow is a separate subsystem only to revisit if a meaningful discrepancy is observed. Code and documentation are prepared for manual commits; nothing is committed by this milestone task.
+
 ## Near-Term Priorities
 
 Current priorities are approximately:
@@ -215,7 +221,7 @@ Current priorities are approximately:
 5. Investigate and harden browser persistence.
 6. Verify and repair browser key rebinding — completed and Chrome-verified on 2026-09-24.
 7. Investigate asset filename case mismatches.
-8. Controller foundation (`e5939fe`), Classic digital movement (`4b8af1d`), gameplay actions (`2387ebf`), camera look (`ab46b53`), and pause/menu UI (`8d549e4`) completed: Web builds, isolated harness checks, and physical wired DualSense/Firefox verification passed with DS4Windows disabled, including campaign/world-map and challenge/menu flows. Triangle tutorial advance (`bd7b207`) and stage-3 right-stick recognition (`f00ec72`) are source/automated-validated; physical QA is next. Chrome/Bluetooth compatibility, controller configuration/prompts, and camera/movement feel tuning remain open. True analog locomotion is not implemented; current player movement remains approximately eight-direction Classic behavior, while similar reported NPC quantization still needs source investigation. See [B-8](Docs/porting-notes.md#b-8--controller-gameplay-menuui-and-tutorial-support) and [backlog A6](Docs/research-backlog.md#a6-controller-support-completed-scope-and-remaining-work) for evidence and scope exclusions.
+8. Controller foundation (`e5939fe`), Classic digital movement (`4b8af1d`), gameplay actions (`2387ebf`), camera look (`ab46b53`), and pause/menu UI (`8d549e4`) completed: Web builds, isolated harness checks, and physical wired DualSense/Firefox verification passed with DS4Windows disabled, including campaign/world-map and challenge/menu flows. Triangle tutorial advance (`bd7b207`) and stage-3 right-stick recognition (`f00ec72`) are source/automated-validated; physical QA is next. Latest user testing also verified wired DualSense input in current Chrome with the final restored build; earlier Chrome exposure failures remain historical observations with unknown cause. Broader browser/Bluetooth compatibility, controller configuration/prompts, and sensitivity/threshold tuning remain open. True analog locomotion is not implemented; Classic digital intent remains unchanged. Character restoration is complete; NPC slope/seam scheduler behavior remains separate. See [B-8](Docs/porting-notes.md#b-8--controller-gameplay-menuui-and-tutorial-support) and [backlog A6](Docs/research-backlog.md#a6-controller-support-completed-scope-and-remaining-work) for evidence and scope exclusions.
 9. Benchmark WebAssembly optimization settings.
 10. Improve browser loading behavior if testing shows it is necessary.
 11. Restore useful native CI coverage where practical.
