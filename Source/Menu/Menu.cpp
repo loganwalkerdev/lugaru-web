@@ -304,7 +304,11 @@ void Menu::updateSettingsMenu() {
     if (bloodtoggle == 2) {
         setText(2, "Blood: On, high detail (slower)");
     }
+#ifdef __EMSCRIPTEN__
+    setText(4, "Blur Effects: Unavailable on Web");
+#else
     setText(4, ismotionblur ? "Blur Effects: Enabled (less compatible)" : "Blur Effects: Disabled (more compatible)");
+#endif
     setText(5, decalstoggle ? "Decals: Enabled (slower)" : "Decals: Disabled");
     setText(6, musictoggle ? "Music: Enabled" : "Music: Disabled");
     setText(9, invertmouse ? "Invert mouse: Yes" : "Invert mouse: No");
@@ -758,7 +762,9 @@ void Menu::Tick() {
                         unlockfps = !unlockfps;
                         break;
                     case 4:
+#ifndef __EMSCRIPTEN__
                         ismotionblur = !ismotionblur;
+#endif
                         break;
                     case 5:
                         decalstoggle = !decalstoggle;
