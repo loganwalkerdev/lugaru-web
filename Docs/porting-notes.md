@@ -1,6 +1,6 @@
 # WebAssembly Porting Notes
 
-**Last updated:** 2026-09-24
+**Last updated:** 2026-09-28
 
 This document tracks WebAssembly-specific defects, inherited behavior changes, browser compatibility issues, and related implementation notes for Lugaru Web.
 
@@ -885,7 +885,47 @@ All 13 shipped character skins are POT, as are the 18 shipped skybox faces and r
 
 ### Separate Performance Observation
 
-**RUNTIME-VERIFIED — project-owner observation:** many active fire spawners cause noticeable Web slowdown. No causal link to this compatibility fix has been established. Track this separately in [backlog A8](research-backlog.md#a8-dense-fire-spawner-web-slowdown--open); no performance diagnosis or additional rendering change is part of B-14.
+**RUNTIME-VERIFIED — project-owner observation:** many active fire spawners caused noticeable Web slowdown. This was investigated and fixed separately in [B-15](#b-15--dense-fire-sprite-rendering-slows-web); no causal link to the B-14 NPOT fallback was established.
+
+---
+
+## B-15 — Dense Fire Sprite Rendering Slows Web
+
+**Status:** Fixed; R1 shipped-content blocker closed
+**Priority:** High
+**Fix:** `592e158` — `fix: optimize Web sprite rendering with client arrays`
+**Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (manual browser QA)
+
+### Shipped Reproduction and Mechanism
+
+**RUNTIME-VERIFIED:** Seven Tasks `Data/Maps/task3.json`, "Desert Village - evening," contains six historical fire objects. A temporary exact copy, `Data/Maps/task3_nofire.json`, removed only those six objects and ran smoothly. This A/B establishes that the fire-generated sprite population was sufficient to trigger the Web slowdown; the control is untracked test equipment, not shipped content.
+
+**VERIFIED SOURCE FINDING:** fire emits many flame particles, which also produce smoke. The historical `Source/Graphic/Sprite.cpp::Sprite::Draw()` path rendered each sprite individually with per-particle matrix work and immediate-mode geometry. Web/GL4ES paid substantial CPU overhead for that path. The fire objects and their spawn behavior are historical; this was not a new Web spawn regression. Reducing particle counts, rates, lifetimes, or visual fidelity was unnecessary.
+
+### Manual Browser Measurements and Experiments
+
+These are approximate observations from the investigated browser build and scene, not universal benchmarks. `calls_s` counts diagnostic `Sprite::Draw()` invocations per second; it is **not** literal displayed FPS.
+
+| Path | Approximate task3 observation | What it established |
+| --- | --- | --- |
+| Legacy Web | ~30 `calls_s`; ~1,670 sprites/call; ~18.2 ms Sprite draw CPU; ~1,435 active flame and ~231 smoke | Visuals were correct, but per-sprite Web CPU cost was high. |
+| CPU billboards | ~6.5 ms draw CPU with ~2,100 sprites | Removing per-particle matrix operations removed a major cost. |
+| Immediate-mode batching | ~6.5 ms draw CPU with ~2,300 sprites | Fewer `glBegin`/`glEnd` groups alone did not remove the remaining cost. |
+| Client arrays | Settled worst-case ~60–65 `calls_s`; ~2,350 sprites/call; ~1.9–2.0 ms draw CPU; ~1,990 active flame and ~320–340 smoke | The loop sustained more historical particles while rendering them more cheaply. |
+
+In the array path, approximate draw CPU split into ~0.43–0.48 ms billboard geometry and ~1.4–1.6 ms submission. The observed CPU sprite-render cost per submitted particle fell by approximately 90% or more versus the legacy Web path. The larger active counts reflect the game loop no longer being starved by sprite rendering; they are not a particle-count reduction.
+
+### Production Renderer and Preservation
+
+**VERIFIED SOURCE FINDING:** under `__EMSCRIPTEN__`, `Sprite::Draw()` computes CPU billboards, packs position/UV/final-color client arrays, and submits `glDrawArrays` for consecutive compatible sprites. It preserves sprite storage and triangle order, retains the 1,024-sprite grouping cap, and does not sort or cull. Native retains its historical matrix and immediate-mode path. The normal Web build selects the optimized path automatically; there is no runtime sprite-path selector or experimental startup output. Optional effect diagnostics are compile-time disabled by default.
+
+The change preserves particle counts, spawn and lifetime behavior, motion, opacity, size, rotation, billboarding, snow orbit, flame growth, textures, UVs, colors, blend/alpha rules, secondary smoke, blood collision/decal behavior, update/deletion logic, and sprite-type special cases. Static experiment validation included randomized billboard-geometry and rendering-stream-order comparisons.
+
+### Regression and Final Production QA
+
+**RUNTIME-VERIFIED — manual browser tests:** fire/smoke-heavy task3 looked normal and was dramatically smoother. The no-fire control remained smooth with ~17–25 incidental sprites and ~0.03–0.05 ms draw CPU, showing no pathological fixed overhead. Map1 snow looked normal with ~300 active particles, ~20 snow spawns/s, and ~0.28 ms draw CPU; the prior Web NPOT snow fix remained intact. Mixed combat effects during heavy fire showed cloud, blood, impact, bloodflame, shine, flame, and smoke with normal-looking visuals and ~1.7–2.2 ms draw CPU.
+
+The cleaned normal Web build and diagnostic Web build both passed, as did `git diff --check` during implementation. The project owner then ran `build-web-character-final/bin/lugaru.html` with no experimental query parameters, reported that the production build felt good, and accepted the fix. These are manual scene-specific results, not a cross-browser or native runtime benchmark.
 
 ---
 

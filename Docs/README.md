@@ -1,6 +1,6 @@
 # Lugaru-Web Documentation Index
 
-These documents capture the technical, historical, preservation, and design understanding of Lugaru-Web, including the September 23 archaeology continuation and controller implementation updates and character-restoration findings through 2026-09-27.
+These documents capture the technical, historical, preservation, and design understanding of Lugaru-Web, including the September 23 archaeology continuation, controller implementation updates, character restoration, and the 2026-09-28 Web sprite performance fix.
 
 They are intentionally separated by purpose:
 
@@ -36,3 +36,7 @@ Controller gameplay and pointer-based menu/UI support are physically verified in
 ## Character restoration milestone
 
 Historical yaw, tilt, and head behavior are finalized defaults with successful combined physical QA. [Architecture section 5](architecture.md#5-movement-facing-animation-and-high-refresh-behavior) owns the design, [B-13](porting-notes.md#b-13--player-direction-changes-snap-instead-of-rotating) the source/runtime evidence and separately preserved scheduler patch, and [history and lineage](history-and-lineage.md#exact-preservation-checkpoints-2026-09-27) the literal-1.2 side branch and canonical TalkIdle decision. Latest wired Chrome controller success and earlier exposure failures are distinguished in B-8; broader compatibility remains open.
+
+## Web sprite performance milestone
+
+The shipped Seven Tasks task3 fire/sprite slowdown is resolved for R1. [Porting notes B-15](porting-notes.md#b-15--dense-fire-sprite-rendering-slows-web) holds the A/B reproduction, experiment measurements, production renderer behavior, and manual QA; [backlog A8](research-backlog.md#a8-dense-fire-spawner-web-slowdown--resolved-for-r1-2026-09-28) records closure. Native sprite rendering and historical particle behavior remain preserved.
