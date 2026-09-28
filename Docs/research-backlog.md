@@ -98,11 +98,11 @@ Resolve/understand the current native Linux SDL2 include-path/build issue so beh
 
 **VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** `eea54f4` adds a shared Web-only NPOT fallback while preserving native and Web POT behavior. The owner verified correct SnowFlake rendering with its original mipmap-requesting load and correct `Fire.jpg` appearance. No asset was changed. The active defect is closed; the exact failing runtime GL4ES state remains unproven, not a blocker requiring speculative work. [B-14](porting-notes.md#b-14--web-npot-textures-render-black-with-mipmapped-sampling) owns the policy, audit and evidence limits.
 
-### A8. Dense fire-spawner Web slowdown — OPEN
+### A8. Dense fire-spawner Web slowdown — resolved for R1 (2026-09-28)
 
-**RUNTIME-VERIFIED — project-owner observation:** a scene containing many active fire spawners produces noticeable Web slowdown. This is separate from B-14; no evidence currently attributes the slowdown to the NPOT fallback.
+**RUNTIME-VERIFIED / VERIFIED SOURCE FINDING:** Seven Tasks `Data/Maps/task3.json` ("Desert Village - evening") has six historical fire objects. An exact temporary copy with only those objects removed ran smoothly, establishing the fire-generated sprite population as sufficient to trigger the Web slowdown. The historical fire spawn behavior was not a new Web regression. Per-sprite matrix and immediate-mode rendering through Web/GL4ES made the large flame and secondary smoke population expensive on the CPU.
 
-**OPEN / investigation candidates, not findings:** active fire-sprite count, particle simulation, immediate-mode `glBegin`/`glEnd` translation through GL4ES, per-sprite matrix work, texture/state changes, additive blending and effect rendering cost. Establish a reproducible scene and measured baseline before choosing a cause or fix. No diagnosis or performance change has been made.
+**Decision / RUNTIME-VERIFIED:** `592e158` uses CPU billboards and client arrays on Web; native retains historical immediate mode. Normal production-build QA accepted the result, closing this shipped-content R1 blocker. Particle behavior and visual fidelity were preserved. The temporary `Data/Maps/task3_nofire.json` A/B control remains untracked test equipment. [Porting notes B-15](porting-notes.md#b-15--dense-fire-sprite-rendering-slows-web) record the experiment, approximate measurements, implementation, and regression checks. This issue is separate from the B-14 NPOT texture fix.
 
 ---
 

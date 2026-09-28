@@ -39,6 +39,99 @@ extern XYZ viewerfacing;
 extern int bloodtoggle;
 extern XYZ windvector;
 
+// Web sprites use CPU billboards and client arrays; native keeps the historical path.
+#ifdef __EMSCRIPTEN__
+#include <cmath>
+
+namespace {
+struct SpriteBillboard {
+    float vertex[4][3];
+};
+
+// Equivalent to M*T(position)*T(offset), then the historical eye-space T*Rz*S.
+// Snow's rotating local offset is supplied separately, just as its old T(1,0,0).
+SpriteBillboard spriteBillboard(const float* matrix, const XYZ& position, const XYZ& offset,
+                               float rotation, float size, float growth)
+{
+    float center[3];
+    for (int row = 0; row < 3; ++row) {
+        center[row] = matrix[row] * position.x + matrix[4 + row] * position.y
+                    + matrix[8 + row] * position.z + matrix[12 + row];
+        center[row] += matrix[row] * offset.x + matrix[4 + row] * offset.y
+                     + matrix[8 + row] * offset.z;
+    }
+    const float angle = rotation * (3.1415926535f / 180.f);
+    const float cosine = std::cos(angle) * growth;
+    const float sine = std::sin(angle) * growth;
+    const float half = .5f * size;
+    const float corners[4][2] = {{half, half}, {-half, half}, {half, -half}, {-half, -half}};
+    SpriteBillboard result;
+    for (int corner = 0; corner < 4; ++corner) {
+        const float x = corners[corner][0];
+        const float y = corners[corner][1];
+        result.vertex[corner][0] = center[0] + cosine * x - sine * y;
+        result.vertex[corner][1] = center[1] + sine * x + cosine * y;
+        result.vertex[corner][2] = center[2];
+    }
+    return result;
+}
+}
+#endif
+
+// Temporary characterization only: no GL synchronization or per-particle timers.
+#if defined(__EMSCRIPTEN__) && defined(LUGARU_WEB_EFFECT_DIAGNOSTICS) && LUGARU_WEB_EFFECT_DIAGNOSTICS
+#include <emscripten/emscripten.h>
+#include <cstdio>
+
+namespace {
+struct EffectDiagnostics {
+    double started = emscripten_get_now();
+    double drawMs = 0;
+    double updateMs = 0;
+    double geometryMs = 0;
+    unsigned batches = 0;
+    unsigned arrayVertices = 0;
+    unsigned calls = 0;
+    unsigned submitted = 0;
+    unsigned updated = 0;
+    unsigned binds = 0;
+    unsigned blendCalls = 0;
+    unsigned active[spritenumber] = {};
+    unsigned spawned[spritenumber] = {};
+
+    void report(double now)
+    {
+        const double elapsed = (now - started) / 1000;
+        if (elapsed < 1 || !calls) {
+            return;
+        }
+        // Calls are Sprite::Draw invocations, not necessarily rendered frames (stereo).
+        std::printf("EFFECT PERF: seconds=%.2f calls_s=%.1f submit_call=%.1f update_call=%.1f "
+                    "draw_cpu_ms=%.3f update_cpu_ms=%.3f binds_call=%.1f blend_calls=%.1f\n",
+                    elapsed, calls / elapsed, double(submitted) / calls, double(updated) / calls,
+                    drawMs / calls, updateMs / calls, double(binds) / calls, double(blendCalls) / calls);
+        std::printf("EFFECT SECTIONS: geometry_cpu_ms=%.3f submit_cpu_ms=%.3f batches_call=%.1f array_vertices_call=%.1f\n",
+                    geometryMs / calls, (drawMs - geometryMs) / calls, double(batches) / calls,
+                    double(arrayVertices) / calls);
+        static const char* names[spritenumber] = {
+            "cloud", "blood", "flame", "smoke", "weaponflame", "impact", "snow",
+            "shine", "bloodflame", "breath", "splinter"
+        };
+        std::printf("EFFECT TYPES: mean_active/spawn_s");
+        for (int i = 0; i < spritenumber; ++i) {
+            std::printf(" %s=%.1f/%.1f", names[i], double(active[i]) / calls, spawned[i] / elapsed);
+        }
+        std::printf("\n");
+        *this = EffectDiagnostics();
+    }
+};
+EffectDiagnostics effectDiagnostics;
+}
+#define EFFECT_DIAGNOSTIC(statement) do { statement; } while (0)
+#else
+#define EFFECT_DIAGNOSTIC(statement) do {} while (0)
+#endif
+
 // init statics
 Texture Sprite::cloudtexture;
 Texture Sprite::cloudimpacttexture;
@@ -59,6 +152,9 @@ vector<std::unique_ptr<Sprite> > Sprite::sprites = vector<std::unique_ptr<Sprite
 //Functions
 void Sprite::Draw()
 {
+#if defined(__EMSCRIPTEN__) && defined(LUGARU_WEB_EFFECT_DIAGNOSTICS) && LUGARU_WEB_EFFECT_DIAGNOSTICS
+    const double drawStarted = emscripten_get_now();
+#endif
     int k;
     static float M[16];
     static XYZ point;
@@ -96,96 +192,219 @@ void Sprite::Draw()
     glDisable(GL_CULL_FACE);
     glEnable(GL_TEXTURE_2D);
     blend = 1;
+    EFFECT_DIAGNOSTIC(++effectDiagnostics.blendCalls);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDepthMask(0);
     glAlphaFunc(GL_GREATER, 0.0001);
+#ifdef __EMSCRIPTEN__
+    static std::vector<SpriteBillboard> billboards;
+    unsigned batchSprites = 0;
+    // Tightly packed attributes avoid FULL_ES2 uploading count*interleaved-stride
+    // separately for each attribute (including bytes beyond the last field).
+    static GLfloat arrayPositions[1024 * 6 * 3];
+    static GLfloat arrayUVs[1024 * 6 * 2];
+    static GLfloat arrayColors[1024 * 6 * 4];
+    unsigned arrayVertexCount = 0;
+    float arrayColor[4] = {};
+    GLint savedArrayBuffer = 0;
+    if (!sprites.empty()) {
+        // GL4ES saves array pointers/enables and client texture selection here, but
+        // not GL_ARRAY_BUFFER_BINDING. Restore that binding explicitly below.
+        glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
+        glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &savedArrayBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glDisableClientState(GL_NORMAL_ARRAY);
+        glDisableClientState(GL_SECONDARY_COLOR_ARRAY);
+        glDisableClientState(GL_FOG_COORDINATE_ARRAY);
+        GLint textureUnits = 0;
+        glGetIntegerv(GL_MAX_TEXTURE_UNITS, &textureUnits);
+        for (GLint unit = 0; unit < textureUnits; ++unit) {
+            glClientActiveTexture(GL_TEXTURE0 + unit);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        }
+        glClientActiveTexture(GL_TEXTURE0);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_COLOR_ARRAY);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    }
+    const auto flushArray = [&]() {
+        if (!arrayVertexCount) {
+            return;
+        }
+        glVertexPointer(3, GL_FLOAT, 0, arrayPositions);
+        glTexCoordPointer(2, GL_FLOAT, 0, arrayUVs);
+        glColorPointer(4, GL_FLOAT, 0, arrayColors);
+        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(arrayVertexCount));
+        EFFECT_DIAGNOSTIC(++effectDiagnostics.batches);
+        EFFECT_DIAGNOSTIC(effectDiagnostics.arrayVertices += arrayVertexCount);
+        arrayVertexCount = 0;
+    };
+    if (!sprites.empty()) {
+#if defined(LUGARU_WEB_EFFECT_DIAGNOSTICS) && LUGARU_WEB_EFFECT_DIAGNOSTICS
+        const double geometryStarted = emscripten_get_now();
+#endif
+        // Capture separately for each draw/eye. Restore this matrix after all submissions.
+        glMatrixMode(GL_MODELVIEW);
+        glGetFloatv(GL_MODELVIEW_MATRIX, M);
+        glPushMatrix();
+        glLoadIdentity();
+        billboards.resize(sprites.size());
+        for (size_t i = 0; i < sprites.size(); ++i) {
+            const Sprite& sprite = *sprites[i];
+            XYZ offset;
+            offset = 0;
+            if (sprite.type == flamesprite || sprite.type == weaponflamesprite || sprite.type == weaponshinesprite) {
+                offset = viewer - sprite.position;
+                Normalise(&offset);
+                offset.x = offset.x * sprite.size / 4;
+                offset.y = offset.y * sprite.size / 4;
+                offset.z = offset.z * sprite.size / 4;
+            }
+            if (sprite.type == snowsprite) {
+                // First column of R(rotation*.2, 0,.3,1), with the axis normalized.
+                const float angle = static_cast<float>(sprite.rotation * .2) * (3.1415926535f / 180.f);
+                const float inverseLength = 1.f / std::sqrt(.3f * .3f + 1.f);
+                offset.x = std::cos(angle);
+                offset.y = inverseLength * std::sin(angle);
+                offset.z = -.3f * inverseLength * std::sin(angle);
+            }
+            float growth = 1;
+            if ((sprite.type == flamesprite || sprite.type == weaponflamesprite ||
+                 sprite.type == weaponshinesprite || sprite.type == bloodflamesprite) && sprite.alivetime < .14) {
+                growth = sprite.alivetime / .14;
+            }
+            billboards[i] = spriteBillboard(M, sprite.position, offset, sprite.rotation, sprite.size, growth);
+        }
+        EFFECT_DIAGNOSTIC(effectDiagnostics.geometryMs += emscripten_get_now() - geometryStarted);
+    }
+#endif
+#ifdef __EMSCRIPTEN__
+    const auto setSpriteColor = [&](float red, float green, float blue, float alpha) {
+        arrayColor[0] = red;
+        arrayColor[1] = green;
+        arrayColor[2] = blue;
+        arrayColor[3] = alpha;
+    };
+#else
+#define setSpriteColor glColor4f
+#endif
     for (unsigned i = 0; i < sprites.size(); i++) {
+        EFFECT_DIAGNOSTIC(++effectDiagnostics.active[sprites[i]->type]);
+        EFFECT_DIAGNOSTIC(++effectDiagnostics.submitted);
+#ifdef __EMSCRIPTEN__
+        // The historical dispatcher changes render state only at type boundaries.
+        if (arrayVertexCount && lasttype != sprites[i]->type) {
+            flushArray();
+            batchSprites = 0;
+        }
+#endif
         if (lasttype != sprites[i]->type) {
             switch (sprites[i]->type) {
                 case cloudsprite:
+                    EFFECT_DIAGNOSTIC(++effectDiagnostics.binds);
                     cloudtexture.bind();
                     if (!blend) {
                         blend = 1;
                         glAlphaFunc(GL_GREATER, 0.0001);
+                        EFFECT_DIAGNOSTIC(++effectDiagnostics.blendCalls);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     }
                     break;
                 case breathsprite:
                 case cloudimpactsprite:
+                    EFFECT_DIAGNOSTIC(++effectDiagnostics.binds);
                     cloudimpacttexture.bind();
                     if (!blend) {
                         blend = 1;
                         glAlphaFunc(GL_GREATER, 0.0001);
+                        EFFECT_DIAGNOSTIC(++effectDiagnostics.blendCalls);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     }
                     break;
                 case smoketype:
+                    EFFECT_DIAGNOSTIC(++effectDiagnostics.binds);
                     smoketexture.bind();
                     if (!blend) {
                         blend = 1;
                         glAlphaFunc(GL_GREATER, 0.0001);
+                        EFFECT_DIAGNOSTIC(++effectDiagnostics.blendCalls);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     }
                     break;
                 case bloodsprite:
+                    EFFECT_DIAGNOSTIC(++effectDiagnostics.binds);
                     bloodtexture.bind();
                     if (!blend) {
                         blend = 1;
                         glAlphaFunc(GL_GREATER, 0.0001);
+                        EFFECT_DIAGNOSTIC(++effectDiagnostics.blendCalls);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     }
                     break;
                 case splintersprite:
                     if (lastspecial != sprites[i]->special) {
                         if (sprites[i]->special == 0) {
+                            EFFECT_DIAGNOSTIC(++effectDiagnostics.binds);
                             splintertexture.bind();
                         }
                         if (sprites[i]->special == 1) {
+                            EFFECT_DIAGNOSTIC(++effectDiagnostics.binds);
                             leaftexture.bind();
                         }
                         if (sprites[i]->special == 2) {
+                            EFFECT_DIAGNOSTIC(++effectDiagnostics.binds);
                             snowflaketexture.bind();
                         }
                         if (sprites[i]->special == 3) {
+                            EFFECT_DIAGNOSTIC(++effectDiagnostics.binds);
                             toothtexture.bind();
                         }
                         if (!blend) {
                             blend = 1;
                             glAlphaFunc(GL_GREATER, 0.0001);
+                            EFFECT_DIAGNOSTIC(++effectDiagnostics.blendCalls);
                             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                         }
                     }
                     break;
                 case snowsprite:
+                    EFFECT_DIAGNOSTIC(++effectDiagnostics.binds);
                     snowflaketexture.bind();
                     if (!blend) {
                         blend = 1;
                         glAlphaFunc(GL_GREATER, 0.0001);
+                        EFFECT_DIAGNOSTIC(++effectDiagnostics.blendCalls);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     }
                     break;
                 case weaponshinesprite:
+                    EFFECT_DIAGNOSTIC(++effectDiagnostics.binds);
                     shinetexture.bind();
                     if (blend) {
                         blend = 0;
                         glAlphaFunc(GL_GREATER, 0.001);
+                        EFFECT_DIAGNOSTIC(++effectDiagnostics.blendCalls);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
                     }
                     break;
                 case flamesprite:
                 case weaponflamesprite:
+                    EFFECT_DIAGNOSTIC(++effectDiagnostics.binds);
                     flametexture.bind();
                     if (blend || lasttype == bloodflamesprite) {
                         blend = 0;
                         glAlphaFunc(GL_GREATER, 0.3);
+                        EFFECT_DIAGNOSTIC(++effectDiagnostics.blendCalls);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
                     }
                     break;
                 case bloodflamesprite:
+                    EFFECT_DIAGNOSTIC(++effectDiagnostics.binds);
                     bloodflametexture.bind();
                     if (blend) {
                         blend = 0;
                         glAlphaFunc(GL_GREATER, 0.3);
+                        EFFECT_DIAGNOSTIC(++effectDiagnostics.blendCalls);
                         glBlendFunc(GL_ONE, GL_ZERO);
                     }
                     break;
@@ -198,96 +417,140 @@ void Sprite::Draw()
         }
         if (sprites[i]->type == flamesprite) {
             if (distancemult >= 1) {
-                glColor4f(sprites[i]->color[0], sprites[i]->color[1], sprites[i]->color[2], sprites[i]->opacity);
+                setSpriteColor(sprites[i]->color[0], sprites[i]->color[1], sprites[i]->color[2], sprites[i]->opacity);
             } else {
-                glColor4f(sprites[i]->color[0], sprites[i]->color[1], sprites[i]->color[2], sprites[i]->opacity * distancemult);
+                setSpriteColor(sprites[i]->color[0], sprites[i]->color[1], sprites[i]->color[2], sprites[i]->opacity * distancemult);
             }
         } else {
             if (distancemult >= 1) {
-                glColor4f(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], sprites[i]->opacity);
+                setSpriteColor(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], sprites[i]->opacity);
             } else {
-                glColor4f(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], sprites[i]->opacity * distancemult);
+                setSpriteColor(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], sprites[i]->opacity * distancemult);
             }
         }
         lasttype = sprites[i]->type;
         lastspecial = sprites[i]->special;
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glTranslatef(sprites[i]->position.x, sprites[i]->position.y, sprites[i]->position.z);
-        if ((sprites[i]->type == flamesprite || sprites[i]->type == weaponflamesprite || sprites[i]->type == weaponshinesprite)) {
-            difference = viewer - sprites[i]->position;
-            Normalise(&difference);
-            glTranslatef(difference.x * sprites[i]->size / 4, difference.y * sprites[i]->size / 4, difference.z * sprites[i]->size / 4);
-        }
-        if (sprites[i]->type == snowsprite) {
-            glRotatef(sprites[i]->rotation * .2, 0, .3, 1);
-            glTranslatef(1, 0, 0);
-        }
-        glGetFloatv(GL_MODELVIEW_MATRIX, M);
-        point.x = M[12];
-        point.y = M[13];
-        point.z = M[14];
-        glLoadIdentity();
-        glTranslatef(point.x, point.y, point.z);
+#ifndef __EMSCRIPTEN__
+        {
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            glTranslatef(sprites[i]->position.x, sprites[i]->position.y, sprites[i]->position.z);
+            if ((sprites[i]->type == flamesprite || sprites[i]->type == weaponflamesprite || sprites[i]->type == weaponshinesprite)) {
+                difference = viewer - sprites[i]->position;
+                Normalise(&difference);
+                glTranslatef(difference.x * sprites[i]->size / 4, difference.y * sprites[i]->size / 4, difference.z * sprites[i]->size / 4);
+            }
+            if (sprites[i]->type == snowsprite) {
+                glRotatef(sprites[i]->rotation * .2, 0, .3, 1);
+                glTranslatef(1, 0, 0);
+            }
+            glGetFloatv(GL_MODELVIEW_MATRIX, M);
+            point.x = M[12];
+            point.y = M[13];
+            point.z = M[14];
+            glLoadIdentity();
+            glTranslatef(point.x, point.y, point.z);
 
-        glRotatef(sprites[i]->rotation, 0, 0, 1);
+            glRotatef(sprites[i]->rotation, 0, 0, 1);
 
-        if ((sprites[i]->type == flamesprite || sprites[i]->type == weaponflamesprite || sprites[i]->type == weaponshinesprite || sprites[i]->type == bloodflamesprite)) {
-            if (sprites[i]->alivetime < .14) {
-                glScalef(sprites[i]->alivetime / .14, sprites[i]->alivetime / .14, sprites[i]->alivetime / .14);
+            if ((sprites[i]->type == flamesprite || sprites[i]->type == weaponflamesprite || sprites[i]->type == weaponshinesprite || sprites[i]->type == bloodflamesprite)) {
+                if (sprites[i]->alivetime < .14) {
+                    glScalef(sprites[i]->alivetime / .14, sprites[i]->alivetime / .14, sprites[i]->alivetime / .14);
+                }
             }
         }
+#endif
         if (sprites[i]->type == smoketype || sprites[i]->type == snowsprite || sprites[i]->type == weaponshinesprite || sprites[i]->type == breathsprite) {
             if (sprites[i]->alivetime < .3) {
                 if (distancemult >= 1) {
-                    glColor4f(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], sprites[i]->opacity * sprites[i]->alivetime / .3);
+                    setSpriteColor(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], sprites[i]->opacity * sprites[i]->alivetime / .3);
                 }
                 if (distancemult < 1) {
-                    glColor4f(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], sprites[i]->opacity * distancemult * sprites[i]->alivetime / .3);
+                    setSpriteColor(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], sprites[i]->opacity * distancemult * sprites[i]->alivetime / .3);
                 }
             }
         }
         if (sprites[i]->type == splintersprite && sprites[i]->special > 0 && sprites[i]->special != 3) {
             if (sprites[i]->alivetime < .2) {
                 if (distancemult >= 1) {
-                    glColor4f(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], sprites[i]->alivetime / .2);
+                    setSpriteColor(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], sprites[i]->alivetime / .2);
                 } else {
-                    glColor4f(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], distancemult * sprites[i]->alivetime / .2);
+                    setSpriteColor(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], distancemult * sprites[i]->alivetime / .2);
                 }
             } else {
                 if (distancemult >= 1) {
-                    glColor4f(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], 1);
+                    setSpriteColor(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], 1);
                 } else {
-                    glColor4f(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], distancemult);
+                    setSpriteColor(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], distancemult);
                 }
             }
         }
         if (sprites[i]->type == splintersprite && (sprites[i]->special == 0 || sprites[i]->special == 3)) {
             if (distancemult >= 1) {
-                glColor4f(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], 1);
+                setSpriteColor(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], 1);
             } else {
-                glColor4f(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], distancemult);
+                setSpriteColor(sprites[i]->color[0] * lightcolor[0], sprites[i]->color[1] * lightcolor[1], sprites[i]->color[2] * lightcolor[2], distancemult);
             }
         }
 
-        glBegin(GL_TRIANGLES);
-        glTexCoord2f(1.0f, 1.0f);
-        glVertex3f(.5 * sprites[i]->size, .5 * sprites[i]->size, 0.0f);
-        glTexCoord2f(0.0f, 1.0f);
-        glVertex3f(-.5 * sprites[i]->size, .5 * sprites[i]->size, 0.0f);
-        glTexCoord2f(1.0f, 0.0f);
-        glVertex3f(.5 * sprites[i]->size, -.5 * sprites[i]->size, 0.0f);
-        glTexCoord2f(0.0f, 0.0f);
-        glVertex3f(-.5 * sprites[i]->size, -.5 * sprites[i]->size, 0.0f);
-        glTexCoord2f(1.0f, 0.0f);
-        glVertex3f(.5 * sprites[i]->size, -.5 * sprites[i]->size, 0.0f);
-        glTexCoord2f(0.0f, 1.0f);
-        glVertex3f(-.5 * sprites[i]->size, .5 * sprites[i]->size, 0.0f);
-        glEnd();
+#ifdef __EMSCRIPTEN__
+        {
+            const int indices[6] = {0, 1, 2, 3, 2, 1};
+            const float uv[4][2] = {{1, 1}, {0, 1}, {1, 0}, {0, 0}};
+            for (int corner : indices) {
+                std::memcpy(arrayPositions + arrayVertexCount * 3, billboards[i].vertex[corner], 3 * sizeof(GLfloat));
+                std::memcpy(arrayUVs + arrayVertexCount * 2, uv[corner], 2 * sizeof(GLfloat));
+                std::memcpy(arrayColors + arrayVertexCount * 4, arrayColor, 4 * sizeof(GLfloat));
+                ++arrayVertexCount;
+            }
+            // Bound each run without dropping, sorting, or delaying any triangles.
+            if (++batchSprites == 1024) {
+                flushArray();
+                batchSprites = 0;
+            }
+        }
+#else
+        {
+            glBegin(GL_TRIANGLES);
+            glTexCoord2f(1.0f, 1.0f);
+            glVertex3f(.5 * sprites[i]->size, .5 * sprites[i]->size, 0.0f);
+            glTexCoord2f(0.0f, 1.0f);
+            glVertex3f(-.5 * sprites[i]->size, .5 * sprites[i]->size, 0.0f);
+            glTexCoord2f(1.0f, 0.0f);
+            glVertex3f(.5 * sprites[i]->size, -.5 * sprites[i]->size, 0.0f);
+            glTexCoord2f(0.0f, 0.0f);
+            glVertex3f(-.5 * sprites[i]->size, -.5 * sprites[i]->size, 0.0f);
+            glTexCoord2f(1.0f, 0.0f);
+            glVertex3f(.5 * sprites[i]->size, -.5 * sprites[i]->size, 0.0f);
+            glTexCoord2f(0.0f, 1.0f);
+            glVertex3f(-.5 * sprites[i]->size, .5 * sprites[i]->size, 0.0f);
+            glEnd();
+            glPopMatrix();
+            EFFECT_DIAGNOSTIC(++effectDiagnostics.batches);
+        }
+#endif
+    }
+#ifdef __EMSCRIPTEN__
+    flushArray();
+    if (!sprites.empty()) {
+        glPopClientAttrib();
+        glBindBuffer(GL_ARRAY_BUFFER, savedArrayBuffer);
+        // DrawArrays need not retain current color/UV; match the immediate path's
+        // last particle color and final texture coordinate for subsequent draws.
+        glColor4fv(arrayColor);
+        glTexCoord2f(0, 1);
         glPopMatrix();
     }
+#else
+#undef setSpriteColor
+#endif
+#if defined(__EMSCRIPTEN__) && defined(LUGARU_WEB_EFFECT_DIAGNOSTICS) && LUGARU_WEB_EFFECT_DIAGNOSTICS
+    const double updateStarted = emscripten_get_now();
+    effectDiagnostics.drawMs += updateStarted - drawStarted;
+#endif
     tempmult = frameDeltaTime;
     for (int i = sprites.size() - 1; i >= 0; i--) {
+        EFFECT_DIAGNOSTIC(++effectDiagnostics.updated);
         float spriteDt = tempmult;
         if (sprites[i]->type != snowsprite) {
             sprites[i]->position += sprites[i]->velocity * spriteDt;
@@ -463,7 +726,11 @@ void Sprite::Draw()
         }
     }
     glAlphaFunc(GL_GREATER, 0.0001);
+    EFFECT_DIAGNOSTIC(++effectDiagnostics.blendCalls);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    EFFECT_DIAGNOSTIC(effectDiagnostics.updateMs += emscripten_get_now() - updateStarted);
+    EFFECT_DIAGNOSTIC(++effectDiagnostics.calls);
+    EFFECT_DIAGNOSTIC(effectDiagnostics.report(emscripten_get_now()));
 }
 
 void Sprite::DeleteSprite(int i)
@@ -476,6 +743,7 @@ void Sprite::MakeSprite(int atype, XYZ where, XYZ avelocity, float red, float gr
     if (sprites.size() < max_sprites - 1) {
         sprites.push_back(std::unique_ptr<Sprite>(new Sprite()));
         if ((atype != bloodsprite && atype != bloodflamesprite) || bloodtoggle) {
+            EFFECT_DIAGNOSTIC(++effectDiagnostics.spawned[atype]);
             sprites.back()->special = 0;
             sprites.back()->type = atype;
             sprites.back()->position = where;

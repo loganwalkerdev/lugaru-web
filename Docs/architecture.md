@@ -500,6 +500,8 @@ Known browser-specific concerns include:
 
 The Web target should remain a platform implementation, not a place where gameplay semantics diverge unnecessarily.
 
+**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** `Source/Graphic/Sprite.cpp::Sprite::Draw()` now uses CPU billboards and client-array `glDrawArrays` submission on Web while retaining the historical immediate-mode path on native. The Web path keeps sprite order and gameplay particle behavior. This platform-specific renderer seam resolved the fire-heavy Seven Tasks task3 slowdown without changing fire spawning; [B-15](porting-notes.md#b-15--dense-fire-sprite-rendering-slows-web) records the measurements and preservation QA.
+
 ---
 
 # 18. Ruleset seam
