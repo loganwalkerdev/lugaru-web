@@ -104,6 +104,16 @@ Resolve/understand the current native Linux SDL2 include-path/build issue so beh
 
 **Decision / RUNTIME-VERIFIED:** `592e158` uses CPU billboards and client arrays on Web; native retains historical immediate mode. Normal production-build QA accepted the result, closing this shipped-content R1 blocker. Particle behavior and visual fidelity were preserved. The temporary `Data/Maps/task3_nofire.json` A/B control remains untracked test equipment. [Porting notes B-15](porting-notes.md#b-15--dense-fire-sprite-rendering-slows-web) record the experiment, approximate measurements, implementation, and regression checks. This issue is separate from the B-14 NPOT texture fix.
 
+### A9. Empire Sky Palace campaign progression — resolved for R1 (2026-09-29)
+
+**RUNTIME-VERIFIED / VERIFIED SOURCE FINDING:** on `jendraz1`, entering the bridge type `-1` exit hotspot recorded the campaign win immediately, but routing waited ~0.7 s and then re-checked live `winhotspot` occupancy. A fast player who left the trigger stalled the transition; a subsequent death reloaded `campaignlevels[getCampaignChoicesMade()]` (a choice count, not a node) into `jendraz2` with `actuallevel` still `0`, producing duplicate Throne Room completions and skipping `jendraz3`. Staying inside the trigger progressed correctly, so the hotspot data was not at fault. The susceptibility is shared/historical upstream logic, not a WASM-specific or established Web-introduced regression.
+
+**Decision / RUNTIME-VERIFIED:** `97121db` latches `acceptedSpatialWin`, reloads ordinary campaign deaths from `actuallevel`, and resolves a death after a recorded win exactly once through existing routing. Fast-exit, stop-inside, Throne Room, death-before-win, and main-campaign Village QA passed; the post-win/pre-route death window is source-verified only. Empire's draw/fade pop-in remains HISTORICAL original behavior and is unrelated. [Porting notes B-16](porting-notes.md#b-16--delayed-spatial-exit-loses-campaign-progression-empire-sky-palace) hold the mechanism, fix, review, and residual risk.
+
+### A9a. Throne Room Emperor dialogue activation area — OPEN polish
+
+**OPEN — user observation during A9 QA:** in `jendraz2`, the player appears to need to climb onto or near the Emperor's raised platform before the dialogue activates, although the scene itself stages Turner on the floor below. This is separate from the fixed progression defect and is **not** established as a regression. Before any change, identify the activating hotspot/dialogue data and its effective radius (see H2), and compare against historical Empire behavior. No map data or source was changed.
+
 ---
 
 ## B. Gameplay-system seams
@@ -474,6 +484,8 @@ Find or construct a minimal branching campaign to determine:
 - whether world-map highlighting and connection lines represent branches correctly;
 - whether old community campaigns ever exercised branching;
 - whether historical documentation's intended branching was ever completed.
+
+**VERIFIED SOURCE FINDING:** `Account::getCampaignChoicesMade()` is a choice count, not a node ID. B-16 (`97121db`) removed its use as a node index in the campaign death reload, but campaign menu entry (`Source/Menu/Menu.cpp`) still computes `actuallevel` from `campaignlevels[getCampaignChoicesMade() - 1].nextlevel[whichchoice]`. That relies on the linear-prefix assumption and is unproven for branching campaigns; a branching fixture should exercise it.
 
 ### H8. Map objective mode history
 

@@ -40,3 +40,7 @@ Historical yaw, tilt, and head behavior are finalized defaults with successful c
 ## Web sprite performance milestone
 
 The shipped Seven Tasks task3 fire/sprite slowdown is resolved for R1. [Porting notes B-15](porting-notes.md#b-15--dense-fire-sprite-rendering-slows-web) holds the A/B reproduction, experiment measurements, production renderer behavior, and manual QA; [backlog A8](research-backlog.md#a8-dense-fire-spawner-web-slowdown--resolved-for-r1-2026-09-28) records closure. Native sprite rendering and historical particle behavior remain preserved.
+
+## Campaign progression fix
+
+The Empire Sky Palace delayed-exit progression bug is resolved for R1 (`97121db`). [Porting notes B-16](porting-notes.md#b-16--delayed-spatial-exit-loses-campaign-progression-empire-sky-palace) holds the mechanism, fix, review, QA, and residual risk; [architecture 20.3](architecture.md#delayed-completion-occupancy-vs-recorded-win) the state semantics; [backlog A9](research-backlog.md#a9-empire-sky-palace-campaign-progression--resolved-for-r1-2026-09-29) closure and the separate open Emperor dialogue-trigger polish item (A9a).
