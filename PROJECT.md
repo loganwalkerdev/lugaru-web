@@ -152,8 +152,11 @@ This file tracks only the current high-level state.
 | B-13 | Historical yaw, tilt, and head behavior restored; combined physical QA passed      | Fixed  | Medium   |
 | B-14 | Web NPOT mipmap compatibility fixed; snow and Fire loading-screen QA passed (`eea54f4`) | Fixed | Medium |
 | B-15 | Fire-heavy Seven Tasks task3 Web sprite rendering optimized (`592e158`) | Fixed | High |
+| B-16 | Delayed spatial exit lost Empire campaign progression; shared, not Web-specific (`97121db`) | Fixed | High |
 
 B-14 preserves native and Web POT behavior; only Web NPOT images requesting mipmaps fall back to `GL_LINEAR` without automatic generation. SnowFlake retains its original mipmap request and assets are unchanged. See [B-14 evidence](Docs/porting-notes.md#b-14--web-npot-textures-render-black-with-mipmapped-sampling). The separate fire/sprite slowdown is [resolved for R1 in backlog A8](Docs/research-backlog.md#a8-dense-fire-spawner-web-slowdown--resolved-for-r1-2026-09-28): B-15 uses client arrays on Web, preserves native rendering and historical particles, and passed project-owner production QA. See [B-15 evidence](Docs/porting-notes.md#b-15--dense-fire-sprite-rendering-slows-web).
+
+B-16 closes the R1 Empire progression blocker: leaving the Sky Palace bridge exit during the completion delay no longer stalls routing or causes count-based death reloads to skip Rebel Outpost. The defect was inherited shared logic, not WASM-specific. See [B-16 evidence](Docs/porting-notes.md#b-16--delayed-spatial-exit-loses-campaign-progression-empire-sky-palace) and [backlog A9](Docs/research-backlog.md#a9-empire-sky-palace-campaign-progression--resolved-for-r1-2026-09-29).
 
 ---
 

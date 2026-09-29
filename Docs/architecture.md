@@ -694,6 +694,12 @@ That makes `mapgosomewhere`, `mapkillsomeone`, and `mapkillmost` partly historic
 
 The ordinary fail state is much simpler: when player 0 dies, the current level is reloaded. There is no comparable generalized failure-condition data structure in current map JSON.
 
+### Delayed completion: occupancy vs. recorded win
+
+**VERIFIED SOURCE FINDING:** `winhotspot` is live exit-hotspot occupancy recomputed each tick, while `won` latches that a win was already recorded. The win (and, in campaigns, `winCampaignLevel()`) is recorded when the condition is first met, but routing waits for `changedelay` and re-checks the completion flags. Historically a player could leave a type `-1` exit during that delay and stall the transition. Since `97121db`, `acceptedSpatialWin` latches an accepted spatial win until `ResetBeforeLevelLoad()` for campaign and non-campaign maps alike.
+
+In campaigns, `actuallevel` is the active node and `whichchoice` the incoming edge ordinal; `Account::getCampaignChoicesMade()` is only the count of saved choices. Campaign death reload now uses `campaignlevels[actuallevel]`, and a death after a recorded win but before routing finishes routes that win once. See [B-16](porting-notes.md#b-16--delayed-spatial-exit-loses-campaign-progression-empire-sky-palace).
+
 ## 20.4 Hotspots: tiny invisible script volumes
 
 A `Hotspot` is only:

@@ -1,6 +1,6 @@
 # WebAssembly Porting Notes
 
-**Last updated:** 2026-09-28
+**Last updated:** 2026-09-29
 
 This document tracks WebAssembly-specific defects, inherited behavior changes, browser compatibility issues, and related implementation notes for Lugaru Web.
 
@@ -926,6 +926,78 @@ The change preserves particle counts, spawn and lifetime behavior, motion, opaci
 **RUNTIME-VERIFIED — manual browser tests:** fire/smoke-heavy task3 looked normal and was dramatically smoother. The no-fire control remained smooth with ~17–25 incidental sprites and ~0.03–0.05 ms draw CPU, showing no pathological fixed overhead. Map1 snow looked normal with ~300 active particles, ~20 snow spawns/s, and ~0.28 ms draw CPU; the prior Web NPOT snow fix remained intact. Mixed combat effects during heavy fire showed cloud, blood, impact, bloodflame, shine, flame, and smoke with normal-looking visuals and ~1.7–2.2 ms draw CPU.
 
 The cleaned normal Web build and diagnostic Web build both passed, as did `git diff --check` during implementation. The project owner then ran `build-web-character-final/bin/lugaru.html` with no experimental query parameters, reported that the production build felt good, and accepted the fix. These are manual scene-specific results, not a cross-browser or native runtime benchmark.
+
+---
+
+## B-16 — Delayed Spatial Exit Loses Campaign Progression (Empire Sky Palace)
+
+**Status:** Fixed; R1 Empire progression blocker closed
+**Priority:** High
+**Fix:** `97121db` — `fix: preserve campaign progression across delayed exits` (`Source/GameTick.cpp` only)
+**Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (controlled diagnostic runs and manual production QA)
+**Provenance:** shared game logic, not WebAssembly-specific. The susceptibility is inherited from upstream/historical completion and death-reload code; it is **not** established as a Web-introduced regression. Tracked here because it was found during Web R1 campaign QA.
+
+### State semantics
+
+**VERIFIED SOURCE FINDING** (`Source/GameTick.cpp`, `Source/User/Account.hpp`):
+
+| Name | Meaning |
+| --- | --- |
+| `winhotspot` | Live occupancy of any type `-1` exit hotspot, recomputed every tick in `TickOnceAfter()` (`distsq < Hotspot::size`). It is **not** a completion latch. |
+| `won` | Generic in-memory "win already recorded" latch; cleared by `ResetBeforeLevelLoad()`. |
+| `actuallevel` | Active campaign node index into `campaignlevels`. |
+| `whichchoice` | Ordinal of the incoming `nextlevel` edge chosen to reach the node. |
+| `Account::getCampaignChoicesMade()` | `choices.size()` — the **count** of saved edge choices, not a node ID. Campaign files allow arbitrary successor indices, so it cannot safely substitute for `actuallevel`. |
+
+`Data/Maps/jendraz1.json` (Empire "Sky Palace") has two type `-1` hotspots on the bridge: a size-`0.0` placeholder and a size-`15.0` exit (effective radius about `3.87` under the squared-distance check; see [backlog H2](research-backlog.md#h2-hotspot-radius-semantics)).
+
+### Failure mechanism
+
+**RUNTIME-VERIFIED — controlled diagnostics:**
+
+1. Entering the bridge hotspot recorded the campaign win immediately (`winCampaignLevel()`, `won = true`).
+2. `changedelay` then counted down for roughly 0.7 s before routing.
+3. A fast-moving player could leave the hotspot before the delay finished.
+4. The later completion checks re-tested `winhotspot`, now false, so the transition stalled even though the win/progression was already saved.
+5. If the player then fell and died, the old campaign death reload chose `campaignlevels[Account::getCampaignChoicesMade()]`. With one extra saved choice this loaded `jendraz2` (Throne Room) while `actuallevel` stayed `0`.
+6. Completing the Emperor scene once routed with node-0 semantics and loaded `jendraz2` again; completing it a second time advanced again.
+7. The accumulated extra choices then skipped `jendraz3` (Rebel Outpost).
+
+**RUNTIME-VERIFIED — control:** remaining inside the bridge trigger until the delay completed behaved correctly (`jendraz1 → jendraz2 →` campaign menu `→ jendraz3`). The hotspot data and position are therefore not the defect; the fragile part is the delayed completion re-checking live occupancy, compounded by count-as-node death reload.
+
+**HISTORICAL — separate:** Empire's visible draw-distance/fade pop-in was earlier concluded to be original behavior. It is unrelated to this defect and was not changed.
+
+### Fix
+
+**VERIFIED SOURCE FINDING** — `97121db`:
+
+- Adds file-static `acceptedSpatialWin`, latched when a successful win is recorded while `winhotspot` is true. It survives the player leaving the trigger during the delay and resets in `ResetBeforeLevelLoad()`.
+- Shared completion checks use `winhotspot || acceptedSpatialWin`.
+- Ordinary campaign death before a win reloads `campaignlevels[actuallevel]`. The `loading == 2` reload is now campaign-gated; non-campaign reload handling remains separate and unchanged.
+- A campaign death after the win is recorded but before delayed routing finishes resolves the recorded completion exactly once through the existing `winfreeze`/campaign-routing flow (`changedelay = -999`, matching the normal `winfreeze` convention).
+- For `ChooseNext == 2` stealth transitions, the player's `coords`/`yaw`/`targetyaw` at win time are cached and restored in that death-recovery path, so dead/fallen coordinates are not carried into the successor map.
+
+**Shared-mechanism note:** the latch is not campaign-only, so it also fixes the same fast-exit stall for non-campaign spatial-exit wins. This is a small intentional improvement to shared completion behavior, not a separate campaign feature.
+
+### Review and QA
+
+**Independent review:** Claude Code reviewed the final production diff after runtime QA. Verdict: **CLEAN WITH MINOR RESIDUAL RISK**; no blocker or high-severity defects; `Source/GameTick.cpp` recommended as-is. It verified in source that `acceptedSpatialWin` resets through the common load path; campaign wins cannot be recorded twice through the new path; death-before-win and death-after-recorded-win are mutually exclusive; loader state reset makes the cached coords/yaw/targetyaw sufficient for the `ChooseNext == 2` case; non-campaign `loading == 2` handling remains intact; and `changedelay = -999` matches the existing `winfreeze` convention.
+
+**RUNTIME-VERIFIED — production fix, all passed:**
+
+1. Fresh Empire fast bridge run: player leaves the hotspot before the old delay expires; the transition to `jendraz2` still occurs.
+2. Fresh Empire stop-inside control: remaining in the hotspot still transitions normally.
+3. Throne Room: the Emperor scene completes once; the campaign menu offers Rebel Outpost (`jendraz3`) next; no duplicate Throne Room completion.
+4. Ordinary campaign death before win: Sky Palace reloaded normally, NPC conversations still worked, and later bridge → Throne Room → Rebel Outpost progression remained correct.
+5. Main campaign Village: normal completion, campaign/title flow, and next-mission selection behaved normally.
+
+**VERIFIED SOURCE FINDING — not runtime-forced:** a death during the very small window after the win is recorded but before routing. Independent review traced `ChooseNext` `0`, `1`, and `2` and found it correct; temporary instrumentation to manufacture that state was intentionally not added.
+
+### Residual risk
+
+- **OPEN:** the post-win/pre-route death path is source-verified only.
+- **VERIFIED SOURCE FINDING / OPEN:** campaign menu entry still derives `actuallevel` from `campaignlevels[getCampaignChoicesMade() - 1].nextlevel[whichchoice]` (`Source/Menu/Menu.cpp`), i.e. it treats the choice count as the predecessor node. This is correct for the linear bundled campaigns but unproven for branching campaigns; out of scope for `97121db` and tracked under [backlog H7](research-backlog.md#h7-campaign-branching-testhistory).
+- **OPEN — separate polish:** the Throne Room Emperor dialogue activation area feels small; see [backlog A9a](research-backlog.md#a9a-throne-room-emperor-dialogue-activation-area--open-polish). Not part of this defect and not established as a regression.
 
 ---
 

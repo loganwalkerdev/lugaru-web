@@ -147,6 +147,10 @@ extern void toggleFullscreen();
 bool won = false;
 int whichchoice = 0;
 bool winhotspot = false;
+static bool acceptedSpatialWin = false;
+static XYZ acceptedCampaignWinCoords;
+static float acceptedCampaignWinYaw;
+static float acceptedCampaignWinTargetYaw;
 bool windialogue = false;
 bool realthreat = 0;
 XYZ cameraloc;
@@ -522,6 +526,7 @@ void Game::ResetBeforeLevelLoad(bool tutorial)
     windialogue = false;
     hostiletime = 0;
     won = 0;
+    acceptedSpatialWin = false;
 
     Dialog::dialogs.clear();
 
@@ -4995,7 +5000,11 @@ void Game::TickOnceAfter()
 
             if (changedelay > 0 && !Person::players[0]->dead && !won) {
                 // high scores, awards, win
+                acceptedSpatialWin = winhotspot;
                 if (campaign) {
+                    acceptedCampaignWinCoords = Person::players[0]->coords;
+                    acceptedCampaignWinYaw = Person::players[0]->yaw;
+                    acceptedCampaignWinTargetYaw = Person::players[0]->targetyaw;
                     Account::active().winCampaignLevel(whichchoice, bonustotal, leveltime);
                     scoreadded = 1;
                 } else {
@@ -5009,7 +5018,22 @@ void Game::TickOnceAfter()
 
         if (!winfreeze) {
 
-            if (leveltime < 1) {
+            // A recorded campaign win must route once, even if the player dies before the delay ends.
+            const bool finishRecordedCampaignWin = campaign && won && Person::players[0]->dead &&
+                                                   !editorenabled && gameon && !mainmenu;
+            if (finishRecordedCampaignWin) {
+                loading = 0;
+                winfreeze = true;
+                changedelay = -999;
+                if (campaignlevels[actuallevel].choosenext == 2) {
+                    // Stealth loading carries player position into the successor map.
+                    Person::players[0]->coords = acceptedCampaignWinCoords;
+                    Person::players[0]->yaw = acceptedCampaignWinYaw;
+                    Person::players[0]->targetyaw = acceptedCampaignWinTargetYaw;
+                }
+            }
+
+            if (leveltime < 1 && !finishRecordedCampaignWin) {
                 loading = 0;
                 changedelay = .1;
                 alldead = false;
@@ -5017,7 +5041,7 @@ void Game::TickOnceAfter()
                 Hotspot::killhotspot = 0;
             }
 
-            if (!editorenabled && gameon && !mainmenu) {
+            if (!editorenabled && gameon && !mainmenu && !finishRecordedCampaignWin) {
                 if (changedelay != -999) {
                     changedelay -= frameDeltaTime / 7;
                 }
@@ -5038,13 +5062,13 @@ void Game::TickOnceAfter()
 
                     loading = 3;
                 }
-                if (loading == 2 && targetlevel == whichlevel) {
+                if (loading == 2 && campaign && targetlevel == whichlevel) {
                     flash();
                     loadtime = 0;
 
                     fireSound(firestartsound);
 
-                    LoadLevel(campaignlevels[Account::active().getCampaignChoicesMade()].mapname.c_str());
+                    LoadLevel(campaignlevels[actuallevel].mapname.c_str());
 
                     fireSound();
 
@@ -5055,13 +5079,13 @@ void Game::TickOnceAfter()
                     !loading &&
                     (Person::players[0]->dead ||
                      (alldead && maptype == mapkilleveryone) ||
-                     (winhotspot) ||
+                     (winhotspot || acceptedSpatialWin) ||
                      (Hotspot::killhotspot))) {
                     loading = 1;
                 }
                 if ((Person::players[0]->dead ||
                      (alldead && maptype == mapkilleveryone) ||
-                     (winhotspot) ||
+                     (winhotspot || acceptedSpatialWin) ||
                      (windialogue) ||
                      (Hotspot::killhotspot)) &&
                     changedelay <= 0) {
