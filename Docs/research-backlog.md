@@ -110,9 +110,11 @@ Resolve/understand the current native Linux SDL2 include-path/build issue so beh
 
 **Decision / RUNTIME-VERIFIED:** `97121db` latches `acceptedSpatialWin`, reloads ordinary campaign deaths from `actuallevel`, and resolves a death after a recorded win exactly once through existing routing. Fast-exit, stop-inside, Throne Room, death-before-win, and main-campaign Village QA passed; the post-win/pre-route death window is source-verified only. Empire's draw/fade pop-in remains HISTORICAL original behavior and is unrelated. [Porting notes B-16](porting-notes.md#b-16--delayed-spatial-exit-loses-campaign-progression-empire-sky-palace) hold the mechanism, fix, review, and residual risk.
 
-### A9a. Throne Room Emperor dialogue activation area — OPEN polish
+### A9a. Throne Room Emperor dialogue activation area — resolved for R1 (2026-09-29)
 
-**OPEN — user observation during A9 QA:** in `jendraz2`, the player appears to need to climb onto or near the Emperor's raised platform before the dialogue activates, although the scene itself stages Turner on the floor below. This is separate from the fixed progression defect and is **not** established as a regression. Before any change, identify the activating hotspot/dialogue data and its effective radius (see H2), and compare against historical Empire behavior. No map data or source was changed.
+**RUNTIME-VERIFIED / VERIFIED SOURCE FINDING:** on `jendraz2`, Emperor dialogue 1 is type `32`, so its normal special-dialogue activation depends on `distsq < 6` to participant 2. Because the Emperor stands elevated on the raised platform, the effective floor-level activation area is unusually small and can require the player to climb onto or near the dais before the dialogue begins. A type `21` hotspot correctly launches dialogue index 1 through the existing hotspot dialogue path and preserves its one-shot `gonethrough` behavior.
+
+**Decision / RUNTIME-VERIFIED:** `2ae4c5e` adds a map-local type `21` hotspot at Ash's authored dialogue staging position `[748.7458, 156.4227, 986.3483]` with size `9.0` (3-unit effective radius). Decimus still activates first, the Emperor dialogue now triggers naturally from the floor, does not repeat, and campaign progression continues normally to the Rebel Outpost. No global dialogue-distance logic was changed; this is treated as localized polish for inherited map behavior rather than a Web-specific regression.
 
 ---
 
