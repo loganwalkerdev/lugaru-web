@@ -124,6 +124,16 @@ Resolve/understand the current native Linux SDL2 include-path/build issue so beh
 
 **Decision / RUNTIME-VERIFIED:** temporarily restoring the two paths to the historically missing `Textures/fire.png` immediately restored the normal NPC appearance, confirming the substitution as the cause. `6142c73` removes only those two dead `Fire.jpg` clothing layers from `jendraz1.json`; `bf94eca` removes the corresponding hardcoded-path rewrite so future conversions cannot recreate the regression. The final map renders correctly without relying on a missing asset. This is an inherited OSS content-conversion bug, not a Web-specific rendering defect. See [B-17](porting-notes.md#b-17--empire-sky-palace-npcs-receive-firejpg-as-clothing).
 
+### A9c. Empire Sky Palace dense foliage Web slowdown — resolved for R1 (2026-09-30)
+
+**RUNTIME-VERIFIED:** the Web build suffered substantial slowdown inside the dense tree cluster around the opening area of `jendraz1`, particularly while jumping or rotating the camera through overlapping foliage. The comparable native OSS build did not show the same severe slowdown, and areas of Sky Palace without dense trees remained smooth.
+
+Controlled A/B testing isolated the cost to rasterizing the full overlapping leaf geometry rather than simply processing many tree objects. Removing leaves eliminated the slowdown; reducing leaf count by roughly half did not materially improve it; rendering the full leaf vertex count as points remained smooth; and disabling the translucent foliage second pass did not eliminate the defect. Front-to-back normal-pass leaf ordering produced a major improvement, while removing legacy alpha testing from that sorted path made the affected area smooth.
+
+**VERIFIED SOURCE FINDING:** GL4ES fixed-pipeline emulation translates legacy alpha testing into fragment-shader discard logic. Its fixed-pipeline state path also tracked `GL_SAMPLE_ALPHA_TO_COVERAGE` without forwarding that enable to the underlying WebGL context. Direct WebGL alpha-to-coverage with a multisampled context restored correct leaf cutouts while retaining the performance improvement.
+
+**Decision / RUNTIME-VERIFIED:** `df72be9` keeps all original foliage content while optimizing only the Web path. Web builds request 4x MSAA, render normal-pass tree leaves front-to-back, and use alpha-to-coverage instead of GL4ES legacy alpha testing. A small patch to the pinned GL4ES dependency forwards alpha-to-coverage to WebGL and is applied automatically by CMake. A completely fresh Emscripten 6.0.9 build reproduced the patch, correct foliage cutouts, and smooth Sky Palace performance with no obvious regressions. Native rendering behavior remains unchanged. See [B-18](porting-notes.md#b-18--dense-web-foliage-causes-severe-slowdown).
+
 ---
 
 ## B. Gameplay-system seams

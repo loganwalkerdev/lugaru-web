@@ -154,12 +154,15 @@ This file tracks only the current high-level state.
 | B-15 | Fire-heavy Seven Tasks task3 Web sprite rendering optimized (`592e158`) | Fixed | High |
 | B-16 | Delayed spatial exit lost Empire campaign progression; shared, not Web-specific (`97121db`) | Fixed | High |
 | B-17 | Empire Sky Palace NPC clothing corrupted by inherited fire-texture path conversion (`6142c73`, `bf94eca`) | Fixed | Medium |
+| B-18 | Dense Web foliage slowdown caused by GL4ES alpha-test rendering (`df72be9`) | Fixed | High |
 
 B-14 preserves native and Web POT behavior; only Web NPOT images requesting mipmaps fall back to `GL_LINEAR` without automatic generation. SnowFlake retains its original mipmap request and assets are unchanged. See [B-14 evidence](Docs/porting-notes.md#b-14--web-npot-textures-render-black-with-mipmapped-sampling). The separate fire/sprite slowdown is [resolved for R1 in backlog A8](Docs/research-backlog.md#a8-dense-fire-spawner-web-slowdown--resolved-for-r1-2026-09-28): B-15 uses client arrays on Web, preserves native rendering and historical particles, and passed project-owner production QA. See [B-15 evidence](Docs/porting-notes.md#b-15--dense-fire-sprite-rendering-slows-web).
 
 B-16 closes the R1 Empire progression blocker: leaving the Sky Palace bridge exit during the completion delay no longer stalls routing or causes count-based death reloads to skip Rebel Outpost. The defect was inherited shared logic, not WASM-specific. See [B-16 evidence](Docs/porting-notes.md#b-16--delayed-spatial-exit-loses-campaign-progression-empire-sky-palace) and [backlog A9](Docs/research-backlog.md#a9-empire-sky-palace-campaign-progression--resolved-for-r1-2026-09-29).
 
 B-17 closes an inherited OSS Empire content-conversion regression: two historically unresolved `fire.png` clothing references in Sky Palace had been remapped to the opaque `Fire.jpg` loading texture, corrupting two NPC appearances. The shipped map now omits those dead clothing layers and the obsolete conversion rule has been removed so the defect cannot be recreated. See [B-17 evidence](Docs/porting-notes.md#b-17--empire-sky-palace-npcs-receive-firejpg-as-clothing) and [backlog A9b](Docs/research-backlog.md#a9b-empire-sky-palace-npc-clothing-corruption--resolved-for-r1-2026-09-30).
+
+B-18 closes a Web-specific dense-foliage performance regression exposed by Empire's Sky Palace tree cluster. Controlled A/B testing isolated the bottleneck to overlapping alpha-tested leaf triangles rather than object count or vertex submission. The Web renderer now sorts normal-pass tree leaves front-to-back and uses 4x MSAA alpha-to-coverage instead of GL4ES's legacy alpha-test discard path; the pinned GL4ES dependency is patched during CMake configuration so that alpha-to-coverage reaches WebGL. Native rendering and all original Empire foliage content remain unchanged. A fresh Emscripten 6.0.9 build reproduced the fix with correct cutouts and smooth runtime behavior. See [B-18 evidence](Docs/porting-notes.md#b-18--dense-web-foliage-causes-severe-slowdown) and [backlog A9c](Docs/research-backlog.md#a9c-empire-sky-palace-dense-foliage-web-slowdown--resolved-for-r1-2026-09-30).
 
 ---
 
