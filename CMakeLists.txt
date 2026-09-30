@@ -254,10 +254,13 @@ if(EMSCRIPTEN)
     endif()
 
     FetchContent_Declare(
-        gl4es
-        GIT_REPOSITORY https://github.com/ptitSeb/gl4es.git
-        GIT_TAG        8b424fa5aeea8a2445961ae98c326dc6061e109a
-    )
+    gl4es
+    GIT_REPOSITORY https://github.com/ptitSeb/gl4es.git
+    GIT_TAG        8b424fa5aeea8a2445961ae98c326dc6061e109a
+    PATCH_COMMAND
+        git -C <SOURCE_DIR> apply --whitespace=nowarn
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/gl4es-alpha-to-coverage.patch
+)
     set(STATICLIB ON CACHE BOOL "" FORCE)
     set(NOX11 ON CACHE BOOL "" FORCE)
     set(NOEGL ON CACHE BOOL "" FORCE)

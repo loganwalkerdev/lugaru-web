@@ -1072,6 +1072,78 @@ That uncertainty does not affect the demonstrated regression: mapping the unreso
 
 ---
 
+## B-18 — Dense Web Foliage Causes Severe Slowdown
+
+**Status:** Fixed; R1 Web performance regression closed
+**Priority:** High
+**Fix:** `df72be9` — `fix: optimize Web foliage rendering`
+**Evidence:** RUNTIME-VERIFIED controlled A/B + VERIFIED SOURCE FINDING + clean-build validation
+**Provenance:** Web/GL4ES rendering regression. Empire map content and foliage assets were not defective; the comparable native OSS build did not exhibit the same severe slowdown.
+
+### Observed behavior
+
+In Empire's opening Sky Palace map (`Data/Maps/jendraz1.json`), the Web build slowed substantially in the dense tree cluster around the opening area near Leila. The slowdown was most noticeable while moving, jumping, or rotating the camera inside the foliage. Areas of the same map without dense trees remained substantially smoother.
+
+The native OSS build did not show comparable slowdown in the same area.
+
+### Controlled A/B findings
+
+Removing the tree-leaf objects made the affected area smooth, establishing foliage as the trigger.
+
+Reducing the leaf-object count by approximately half did not materially reduce the slowdown, so the defect did not scale primarily with the number of leaf objects or draw calls.
+
+Enabling backface culling did not resolve the slowdown and visibly broke the foliage.
+
+Disabling the normal-pass alpha test improved performance but did not fully resolve it by itself.
+
+Disabling the translucent foliage second pass did not resolve the remaining slowdown.
+
+Rendering the full leaf vertex count as points instead of triangles was smooth. This showed that vertex submission itself was not the dominant cost; rasterizing the overlapping leaf triangles was.
+
+Sorting normal-pass tree leaves front-to-back substantially improved performance. Combining front-to-back ordering with removal of the legacy alpha-test path made the dense cluster smooth.
+
+### GL4ES alpha-test finding
+
+**VERIFIED SOURCE FINDING:** GL4ES fixed-pipeline emulation implements legacy `GL_ALPHA_TEST` by generating fragment-shader discard logic.
+
+That path was disproportionately expensive for Lugaru's dense, overlapping foliage in WebGL. Front-to-back ordering reduced overdraw substantially, but the alpha-test path remained a major cost in the densest foliage.
+
+`GL_SAMPLE_ALPHA_TO_COVERAGE` was available through GL4ES state tracking, but its fixed-pipeline enable path did not forward the state to the underlying GLES/WebGL context. Directly enabling alpha-to-coverage through WebGL restored the foliage cutouts while retaining the improved performance.
+
+### Resolution
+
+`df72be9` applies the Web-specific rendering fix without modifying Empire content or foliage assets:
+
+- Web builds request a 4-sample multisampled OpenGL/WebGL context.
+- Normal-pass tree leaves are rendered front-to-back on Web to reduce overdraw.
+- Web tree leaves use multisample alpha-to-coverage instead of the legacy alpha-test path.
+- Native builds retain the original object ordering and alpha-test behavior.
+- `cmake/patches/gl4es-alpha-to-coverage.patch` changes the pinned GL4ES dependency so `GL_SAMPLE_ALPHA_TO_COVERAGE` is forwarded to the underlying WebGL state.
+- CMake applies that GL4ES patch automatically when the dependency is fetched.
+
+The original foliage second pass remains intact.
+
+### Validation
+
+A completely fresh `build-web-clean` directory was configured using Emscripten 6.0.9.
+
+The clean dependency fetch automatically applied `cmake/patches/gl4es-alpha-to-coverage.patch`, producing the expected GL4ES `proxy_GO(GL_SAMPLE_ALPHA_TO_COVERAGE, ...)` path.
+
+The resulting browser context reported antialiasing enabled with four samples.
+
+Runtime QA on `jendraz1` confirmed:
+
+- foliage retained its transparent cutout appearance;
+- the severe slowdown in the dense Sky Palace tree cluster was eliminated;
+- only minor residual slowdown could occasionally be observed in the worst-case foliage concentration;
+- no obvious foliage rendering regressions were found.
+
+No Empire map objects, leaf models, or textures were removed or simplified.
+
+See [backlog A9c](research-backlog.md#a9c-empire-sky-palace-dense-foliage-web-slowdown--resolved-for-r1-2026-09-30).
+
+---
+
 ## CI-1 — macOS CI Fails During Dependency Setup
 
 **Status:** Open
