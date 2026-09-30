@@ -1537,7 +1537,7 @@
 				"clothes" : 
 				[
 					{
-						"path" : "Textures/Fur.jpg",
+						"path" : "Textures/Fur.png",
 						"tintb" : 0.45,
 						"tintg" : 0.5,
 						"tintr" : 0.6

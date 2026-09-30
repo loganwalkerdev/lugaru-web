@@ -1200,6 +1200,74 @@ Commit `1db2761` also changed other multiplier-sensitive systems, including ragd
 
 ---
 
+## B-20 — Temple Tinted JPEG Fur Renders with RGB Striping
+
+**Status:** Fixed
+**Priority:** Medium
+
+### Symptom
+
+Three characters in the bundled Temple campaign render with repeating RGB-colored vertical stripes across their fur:
+
+- `svendecoy` player 0
+- `svencouncil` player 4
+- `svendoor` player 1
+
+All three use `Textures/Fur.jpg` as a full-body clothing layer with tint `(0.6, 0.5, 0.45)`. A control case using the same `Fur.jpg` at tint `(1.0, 1.0, 1.0)` renders normally.
+
+### Source finding
+
+`Person::addClothes()` applies clothing tint while iterating raw image bytes. JPEG textures load as 24bpp RGB, but the tint-selection logic uses `i % 4`, effectively assuming four-byte RGBA pixels:
+
+```cpp
+if ((i % 4) == 0) texture.data[i] *= tintr;
+if ((i % 4) == 1) texture.data[i] *= tintg;
+if ((i % 4) == 2) texture.data[i] *= tintb;
+```
+
+For three-byte RGB input, the four-byte tint cycle becomes misaligned with the three-byte RGB pixel layout. Non-unity tint therefore produces a repeating striped color pattern. Unity tint hides the defect because multiplying each affected byte by `1.0` leaves the image unchanged.
+
+PNG textures load as 32bpp RGBA and therefore align with the existing compositor logic.
+
+### Historical provenance
+
+The Temple campaign originally referenced `furwhite.png`. Upstream commit `acadd9e` changed those references to `Fur.jpg` because the two images had identical pixel content.
+
+That substitution preserved the decoded RGB image but not its runtime format semantics: the PNG path supplies 32bpp data while `Fur.jpg` supplies 24bpp data. As a result, three non-unity-tinted Temple fur layers began exercising the compositor's RGB tint-indexing quirk.
+
+This predates Loupgarenne, the WASM port, and lugaru-web.
+
+### Fix
+
+Commit `85477f5` adds `Data/Textures/Fur.png`, an RGBA PNG re-encode of the existing `Fur.jpg`.
+
+The new asset was verified to have:
+
+- identical 512×512 dimensions
+- RGB pixels identical to the decoded `Fur.jpg`
+- alpha `255` for every pixel
+
+Only the three affected non-unity-tinted Temple references were changed from `Textures/Fur.jpg` to `Textures/Fur.png`. Existing unity-tinted `Fur.jpg` references remain unchanged.
+
+No compositor behavior was modified.
+
+### Validation
+
+Before the fix:
+
+- `svendecoy`, `svencouncil`, and `svendoor` reproduced visible RGB striping on the affected characters.
+- `svenchasm`, using the same `Fur.jpg` with unity tint, rendered normally.
+
+After changing only the three affected references to `Fur.png`, all three previously striped characters rendered cleanly with their intended tint.
+
+This runtime A/B agrees with the source analysis and isolates the format-sensitive clothing tint path as the cause.
+
+### Scope
+
+B-20 intentionally uses a narrow data restoration rather than globally changing the historical `addClothes()` compositor. The broader clothing audit found additional historical, devtool, and preservation issues that are tracked separately under backlog A11.
+
+---
+
 ## CI-1 — macOS CI Fails During Dependency Setup
 
 **Status:** Open

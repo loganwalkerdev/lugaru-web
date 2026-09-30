@@ -146,6 +146,22 @@ A one-line A/B restoring `multiplier * 6.0f` while leaving the fixed scheduler u
 
 Historical 1.05 binary parity remains unverified. Other multiplier-sensitive changes introduced by `1db2761`, including ragdoll constraint calculations, remain separate follow-up research.
 
+### A11. Clothing, skins, and historical asset audit — active (2026-09-30)
+
+A repository-wide audit covered bundled campaign clothing references, skin and fur assets, `Person::addClothes()`, devtool clothing commands, path-conversion rules, historical/easter-egg skins, and lineage from the original source through upstream, Loupgarenne, the WASM baseline, and lugaru-web.
+
+**RESOLVED / B-20:** three Temple characters used `Fur.jpg` with non-unity tint, exposing the compositor's three-byte JPEG / four-byte tint-index mismatch and producing runtime-verified RGB striping. Commit `85477f5` adds a pixel-equivalent opaque RGBA `Fur.png` and redirects only those three affected references. Unity-tinted JPEG fur remains unchanged.
+
+**VERIFIED:** the Loupgarenne/WASM lineage introduced no additional clothing regression. Empire clothing is correct after B-17, and intentional RGB full-body skins such as the bundled bloodied-character textures remain valid.
+
+**OPEN — devtool safety:** `addClothes()` has no destination-size validation. The `clothes` command can therefore feed oversized or otherwise incorrectly sized PNG textures into the fixed 512×512 skin buffer. This is a separate hardening issue and should be tested with native sanitizers rather than intentionally triggered in the normal Web build.
+
+**OPEN — preservation archaeology:** upstream made several Temple and Seven Tasks clothing/content edits during the 2016–17 asset-licensing work, including outfit removal, re-dressing, and tint changes. These changes are already present in Lugaru 1.2 and predate the Web port, so they should be evaluated as historical-preservation questions rather than current port regressions.
+
+**RUNTIME-VERIFIED — special/historical:** `darko` and `lizardwolf` both render correctly in the Web build. The intentional bloodied full-body skins in `Lugaru5` also render correctly: April, Trixie, and Clover use only their respective full-body `Blood*.png` skins, while Jack additionally receives `FancyPants.png` and `HeadBand.png` overlays from the map data. `FurWolfLizard` remains a valid historical/easter-egg wolf-layout skin, `FurDarko` renders correctly through the `darko` command, and the orphaned `FurDavid` asset remains historical but unreachable through a live command.
+
+Further work should keep content-preservation decisions, devtool safety, and actual bundled-game regressions separate.
+
 ---
 
 ## B. Gameplay-system seams
