@@ -1151,6 +1151,55 @@ See [backlog A9c](research-backlog.md#a9c-empire-sky-palace-dense-foliage-web-sl
 
 ---
 
+## B-19 — Jump Boost Applied Too Quickly Under Fixed Physics Timestep
+
+**Status:** Fixed
+**Priority:** High
+
+### Symptom
+
+Player jumps in the inherited Loupgarenne/Web baseline are noticeably higher and feel floatier than current upstream Lugaru. Quick taps and held jumps also produce much less variation in jump height.
+
+### Source finding
+
+Lugaru `1.2` and Loupgarenne immediately before commit `1db2761` apply stored jump power using the time-scaled increment `multiplier * 6`.
+
+Loupgarenne commit `1db2761` replaced that behavior with:
+
+```cpp
+const float jumpIncrement = std::max(multiplier * 6.0f, 0.1f);
+```
+
+The same commit introduced the fixed 1 ms simulation timestep. At `multiplier == 0.001`, the Lugaru 1.2/upstream increment is `0.006`, while the new minimum forces `0.1`, causing stored jump power to be applied approximately 16.7 times faster than intended. Roughly four units of remaining jump power can therefore be consumed in about 40 ms, making nearly every ordinary jump approach full boost.
+
+The change predates the WASM-support commit `b340204`, so it is inherited by `baseline/wasm-b340204` and was not introduced by later lugaru-web work.
+
+### Fix
+
+Restore the time-scaled Lugaru 1.2/upstream behavior:
+
+```cpp
+const float jumpIncrement = multiplier * 6.0f;
+```
+
+The fixed 1 ms simulation timestep remains unchanged.
+
+### Validation
+
+A controlled one-line Web A/B retained the current scheduler, gravity, takeoff velocity, jump-power recharge, and movement integration. With only the `0.1f` floor removed, quick taps became shorter, held jumps again produced progressively greater height, and overall jump behavior matched the separately tested upstream OSS build by physical gameplay comparison.
+
+This source and runtime evidence isolates the jump-boost floor, rather than the fixed timestep itself, as the cause of the excessive jump height.
+
+### Historical scope
+
+The fix is verified against the Lugaru `1.2` source tag and current upstream behavior. Parity with the older commercial/native 1.05 executable has not yet been physically measured, so this is documented specifically as restoration of Lugaru 1.2/upstream behavior.
+
+### Separate follow-up
+
+Commit `1db2761` also changed other multiplier-sensitive systems, including ragdoll constraint calculations. Those changes are not part of B-19 and should be investigated independently rather than bundled with the jump fix.
+
+---
+
 ## CI-1 — macOS CI Fails During Dependency Setup
 
 **Status:** Open
