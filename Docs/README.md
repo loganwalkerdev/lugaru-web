@@ -32,7 +32,6 @@ The September 23 continuation is integrated primarily into `architecture.md` and
 
 Controller gameplay and pointer-based menu/UI support are physically verified in Firefox with wired DualSense, DS4Windows disabled. Triangle tutorial advance and stage-3 right-stick recognition are source/automated-validated, with physical QA pending. Current evidence is consolidated in [porting notes B-8](porting-notes.md#b-8--controller-gameplay-menuui-and-tutorial-support), design seams in `architecture.md`, and remaining compatibility, tuning, and scope work in [backlog A6](research-backlog.md#a6-controller-support-completed-scope-and-remaining-work).
 
-
 ## Character restoration milestone
 
 Historical yaw, tilt, and head behavior are finalized defaults with successful combined physical QA. [Architecture section 5](architecture.md#5-movement-facing-animation-and-high-refresh-behavior) owns the design, [B-13](porting-notes.md#b-13--player-direction-changes-snap-instead-of-rotating) the source/runtime evidence and separately preserved scheduler patch, and [history and lineage](history-and-lineage.md#exact-preservation-checkpoints-2026-09-27) the literal-1.2 side branch and canonical TalkIdle decision. Latest wired Chrome controller success and earlier exposure failures are distinguished in B-8; broader compatibility remains open.
@@ -43,4 +42,8 @@ The shipped Seven Tasks task3 fire/sprite slowdown is resolved for R1. [Porting 
 
 ## Campaign progression fix
 
-The Empire Sky Palace delayed-exit progression bug is resolved for R1 (`97121db`). [Porting notes B-16](porting-notes.md#b-16--delayed-spatial-exit-loses-campaign-progression-empire-sky-palace) holds the mechanism, fix, review, QA, and residual risk; [architecture 20.3](architecture.md#delayed-completion-occupancy-vs-recorded-win) the state semantics; [backlog A9](research-backlog.md#a9-empire-sky-palace-campaign-progression--resolved-for-r1-2026-09-29) closure and the separate open Emperor dialogue-trigger polish item (A9a).
+The Empire Sky Palace delayed-exit progression bug is resolved for R1 (`97121db`). [Porting notes B-16](porting-notes.md#b-16--delayed-spatial-exit-loses-campaign-progression-empire-sky-palace) holds the mechanism, fix, review, QA, and residual risk; [architecture 20.3](architecture.md#delayed-completion-occupancy-vs-recorded-win) the state semantics; [backlog A9](research-backlog.md#a9-empire-sky-palace-campaign-progression--resolved-for-r1-2026-09-29) records closure, and [backlog A9a](research-backlog.md#a9a-throne-room-emperor-dialogue-activation-area--resolved-for-r1-2026-09-29) records the resolved Emperor dialogue-trigger polish.
+
+## Web foliage rendering fix
+
+The dense-foliage Web rendering regression is resolved for R1 (`df72be9`). [Porting notes B-18](porting-notes.md#b-18--dense-web-foliage-causes-severe-slowdown) documents the GL4ES alpha-test/overdraw regression, Web-specific rendering fix, dependency patch, and clean-build validation; [backlog A9c](research-backlog.md#a9c-empire-sky-palace-dense-foliage-web-slowdown--resolved-for-r1-2026-09-30) records the Empire Sky Palace investigation that exposed it.
