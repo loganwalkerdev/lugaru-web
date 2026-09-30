@@ -116,6 +116,14 @@ Resolve/understand the current native Linux SDL2 include-path/build issue so beh
 
 **Decision / RUNTIME-VERIFIED:** `2ae4c5e` adds a map-local type `21` hotspot at Ash's authored dialogue staging position `[748.7458, 156.4227, 986.3483]` with size `9.0` (3-unit effective radius). Decimus still activates first, the Emperor dialogue now triggers naturally from the floor, does not repeat, and campaign progression continues normally to the Rebel Outpost. No global dialogue-distance logic was changed; this is treated as localized polish for inherited map behavior rather than a Web-specific regression.
 
+### A9b. Empire Sky Palace NPC clothing corruption — resolved for R1 (2026-09-30)
+
+**RUNTIME-VERIFIED / VERIFIED SOURCE FINDING:** two NPCs in `jendraz1` rendered with a dark/red full-body texture instead of their intended clothing. The untouched 2008 Empire map contains two `:Data:Textures:fire.png` clothing references. The verified Lugaru v1.05 installer from the same era contains `Data/Textures/Fire.jpg` but no `fire.png`, and the Empire archive does not provide that missing texture. OSS later mapped `:Data:Textures:fire.png` to `Textures/Fire.jpg` during hardcoded-path conversion.
+
+`Person::addClothes()` treats a three-channel RGB image as fully opaque when compositing clothing. The substituted JPEG therefore overwrote the underlying rabbit skin instead of behaving like a transparent clothing layer.
+
+**Decision / RUNTIME-VERIFIED:** temporarily restoring the two paths to the historically missing `Textures/fire.png` immediately restored the normal NPC appearance, confirming the substitution as the cause. `6142c73` removes only those two dead `Fire.jpg` clothing layers from `jendraz1.json`; `bf94eca` removes the corresponding hardcoded-path rewrite so future conversions cannot recreate the regression. The final map renders correctly without relying on a missing asset. This is an inherited OSS content-conversion bug, not a Web-specific rendering defect. See [B-17](porting-notes.md#b-17--empire-sky-palace-npcs-receive-firejpg-as-clothing).
+
 ---
 
 ## B. Gameplay-system seams
