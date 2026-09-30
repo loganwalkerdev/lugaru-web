@@ -998,6 +998,7 @@ The cleaned normal Web build and diagnostic Web build both passed, as did `git d
 - **OPEN:** the post-win/pre-route death path is source-verified only.
 - **VERIFIED SOURCE FINDING / OPEN:** campaign menu entry still derives `actuallevel` from `campaignlevels[getCampaignChoicesMade() - 1].nextlevel[whichchoice]` (`Source/Menu/Menu.cpp`), i.e. it treats the choice count as the predecessor node. This is correct for the linear bundled campaigns but unproven for branching campaigns; out of scope for `97121db` and tracked under [backlog H7](research-backlog.md#h7-campaign-branching-testhistory).
 - **RESOLVED — separate polish:** the Throne Room Emperor dialogue activation area was improved with a map-local type `21` hotspot; see [backlog A9a](research-backlog.md#a9a-throne-room-emperor-dialogue-activation-area--resolved-for-r1-2026-09-29). This was localized polish rather than part of B-16 or a Web-specific regression.
+- **RESOLVED — separate exit-area polish:** the existing `jendraz1` type `-1` bridge exit hotspot was widened from size `15.0` (~3.87-unit effective radius) to `100.0` (10-unit effective radius) after runtime testing. The underlying exit/progression logic is unchanged; this is a map-local usability adjustment.
 
 ---
 
