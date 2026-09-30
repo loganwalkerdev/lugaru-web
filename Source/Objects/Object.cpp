@@ -21,6 +21,10 @@ along with Lugaru.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Objects/Object.hpp"
 
+#ifdef __EMSCRIPTEN__
+#include <algorithm>
+#endif
+
 extern XYZ viewer;
 extern float viewdistance;
 extern float fadestart;
@@ -430,10 +434,22 @@ void Object::draw()
                         glDisable(GL_LIGHTING);
                         terrainlight = terrain.getLighting(position.x, position.z);
                         glColor4f(terrainlight.x, terrainlight.y, terrainlight.z, distance);
+
+#ifdef __EMSCRIPTEN__
+                        glDisable(GL_ALPHA_TEST);
+                        glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+#else
                         if (distance < 1) {
                             glAlphaFunc(GL_GREATER, 0.2);
                         }
+#endif
+
                         model.drawdifftex(treetextureptr);
+
+#ifdef __EMSCRIPTEN__
+                        glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+                        glEnable(GL_ALPHA_TEST);
+#endif
                     }
                     if (type == bushtype) {
                         glDisable(GL_CULL_FACE);
@@ -632,11 +648,41 @@ void Object::SphereCheckPossible(XYZ* p1, float radius)
 
 void Object::Draw()
 {
+#ifdef __EMSCRIPTEN__
+    // Render opaque scene geometry before foliage, then render tree leaves
+    // front-to-back to reduce overdraw in dense foliage areas.
+    for (unsigned i = 0; i < objects.size(); i++) {
+        if (objects[i]->type != treeleavestype) {
+            objects[i]->draw();
+        }
+    }
+
+    std::vector<Object*> leaves;
+    leaves.reserve(objects.size());
+
+    for (unsigned i = 0; i < objects.size(); i++) {
+        if (objects[i]->type == treeleavestype) {
+            leaves.push_back(objects[i].get());
+        }
+    }
+
+    std::sort(leaves.begin(), leaves.end(),
+              [](Object* a, Object* b) {
+                  return distsq(&viewer, &a->position) <
+                         distsq(&viewer, &b->position);
+              });
+
+    for (Object* leaf : leaves) {
+        leaf->draw();
+    }
+#else
     for (unsigned i = 0; i < objects.size(); i++) {
         objects[i]->draw();
     }
+#endif
 
     glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, 0);
+
     for (unsigned i = 0; i < objects.size(); i++) {
         objects[i]->drawSecondPass();
     }
