@@ -155,6 +155,7 @@ This file tracks only the current high-level state.
 | B-16 | Delayed spatial exit lost Empire campaign progression; shared, not Web-specific (`97121db`) | Fixed | High |
 | B-17 | Empire Sky Palace NPC clothing corrupted by inherited fire-texture path conversion (`6142c73`, `bf94eca`) | Fixed | Medium |
 | B-18 | Dense Web foliage slowdown caused by GL4ES alpha-test rendering (`df72be9`) | Fixed | High |
+| B-19 | Jump boost applied too quickly under fixed physics timestep (`21efae8`) | Fixed | High |
 
 B-14 preserves native and Web POT behavior; only Web NPOT images requesting mipmaps fall back to `GL_LINEAR` without automatic generation. SnowFlake retains its original mipmap request and assets are unchanged. See [B-14 evidence](Docs/porting-notes.md#b-14--web-npot-textures-render-black-with-mipmapped-sampling). The separate fire/sprite slowdown is [resolved for R1 in backlog A8](Docs/research-backlog.md#a8-dense-fire-spawner-web-slowdown--resolved-for-r1-2026-09-28): B-15 uses client arrays on Web, preserves native rendering and historical particles, and passed project-owner production QA. See [B-15 evidence](Docs/porting-notes.md#b-15--dense-fire-sprite-rendering-slows-web).
 

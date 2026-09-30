@@ -138,6 +138,14 @@ Controlled A/B testing isolated the cost to rasterizing the full overlapping lea
 
 A follow-up CMake helper also made GL4ES patch application idempotent, and both repeat-build and fresh-build paths were verified successfully.
 
+### A10. Jump mechanics regression under fixed timestep — resolved for R1 (2026-09-30)
+
+**SOURCE-VERIFIED / RUNTIME-VERIFIED:** Lugaru `1.2`, current upstream, and Loupgarenne immediately before `1db2761` apply jump boost at `multiplier * 6`. Loupgarenne commit `1db2761` introduced `std::max(multiplier * 6.0f, 0.1f)` alongside the fixed 1 ms simulation timestep. At that timestep the floor applies stored jump power about 16.7 times faster than the original time-scaled rate, producing higher jumps and greatly reducing tap-versus-hold height variation.
+
+A one-line A/B restoring `multiplier * 6.0f` while leaving the fixed scheduler unchanged restored the physically observed upstream OSS jump behavior. This confirms the `0.1f` floor as the regression rather than the scheduler itself. B-19 records the fix and validation.
+
+Historical 1.05 binary parity remains unverified. Other multiplier-sensitive changes introduced by `1db2761`, including ragdoll constraint calculations, remain separate follow-up research.
+
 ---
 
 ## B. Gameplay-system seams
