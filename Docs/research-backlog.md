@@ -158,7 +158,7 @@ A repository-wide audit covered bundled campaign clothing references, skin and f
 
 **OPEN — preservation archaeology:** upstream made several Temple and Seven Tasks clothing/content edits during the 2016–17 asset-licensing work, including outfit removal, re-dressing, and tint changes. These changes are already present in Lugaru 1.2 and predate the Web port, so they should be evaluated as historical-preservation questions rather than current port regressions.
 
-**SPECIAL / HISTORICAL:** `darko`, `lizardwolf`, and the orphaned `FurDavid` skin remain useful archaeology targets. `FurWolfLizard` uses the wolf texture layout; `FurDarko` and `FurDavid` use rabbit-layout skins. Their presence does not by itself establish a defect.
+**RUNTIME-VERIFIED — special/historical:** `darko` and `lizardwolf` both render correctly in the Web build. The intentional bloodied full-body skins in `Lugaru5` also render correctly: April, Trixie, and Clover use only their respective full-body `Blood*.png` skins, while Jack additionally receives `FancyPants.png` and `HeadBand.png` overlays from the map data. `FurWolfLizard` remains a valid historical/easter-egg wolf-layout skin, `FurDarko` renders correctly through the `darko` command, and the orphaned `FurDavid` asset remains historical but unreachable through a live command.
 
 Further work should keep content-preservation decisions, devtool safety, and actual bundled-game regressions separate.
 
