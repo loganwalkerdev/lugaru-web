@@ -25,7 +25,6 @@
 :Data:Textures:fancypantscamo.png	Textures/FancyPantsCamo.png
 :Data:Textures:fancypants.png	Textures/FancyPants.png
 :Data:Textures:femaleshirt.png	Textures/ShirtFemale.png
-:Data:Textures:fire.png	Textures/Fire.jpg
 :Data:Textures:footwrap.png	Textures/FootWrap.png
 :Data:Textures:fox.png	Textures/FurFox.png
 :Data:Textures:foxmimablood.png	Textures/BloodFoxHeavy.png

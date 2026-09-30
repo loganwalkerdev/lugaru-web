@@ -3035,12 +3035,6 @@
 						"tintr" : 0.5
 					},
 					{
-						"path" : "Textures/Fire.jpg",
-						"tintb" : 0.5,
-						"tintg" : 0.5,
-						"tintr" : 0.5
-					},
-					{
 						"path" : "Textures/LongSleeve.png",
 						"tintb" : 0.5,
 						"tintg" : 0.5,
@@ -3107,12 +3101,6 @@
 					},
 					{
 						"path" : "Textures/Pants.png",
-						"tintb" : 0.5,
-						"tintg" : 0.5,
-						"tintr" : 0.5
-					},
-					{
-						"path" : "Textures/Fire.jpg",
 						"tintb" : 0.5,
 						"tintg" : 0.5,
 						"tintr" : 0.5

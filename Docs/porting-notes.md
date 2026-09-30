@@ -1001,6 +1001,77 @@ The cleaned normal Web build and diagnostic Web build both passed, as did `git d
 
 ---
 
+## B-17 — Empire Sky Palace NPCs Receive Fire.jpg as Clothing
+
+**Status:** Fixed; R1 Empire visual regression closed
+**Priority:** Medium
+**Fix:** `6142c73` — `fix: restore Empire Sky Palace NPC clothing`; `bf94eca` — `fix: stop remapping missing Empire fire clothing`
+**Evidence:** VERIFIED SOURCE FINDING + HISTORICAL ASSET VERIFICATION + RUNTIME-VERIFIED controlled A/B
+**Provenance:** inherited OSS content-conversion regression, not WebAssembly-specific. The visible defect came from converted Empire map data and shared clothing compositing behavior.
+
+### Observed behavior
+
+In Empire's opening Sky Palace map (`Data/Maps/jendraz1.json`), two NPCs rendered with a dark red patterned texture across much of their bodies instead of the normal clothing visible in historical Empire gameplay.
+
+Both affected players contained:
+
+`Textures/Fire.jpg`, tint `0.5, 0.5, 0.5`.
+
+### Historical asset and map evidence
+
+**VERIFIED HISTORICAL DATA:** the untouched 2008 Empire `jendraz1` binary contains two corresponding references to `:Data:Textures:fire.png`.
+
+The distributed Empire archive does not contain `fire.png`.
+
+A verified Lugaru v1.05 Windows installer (`LugaruSetup.exe`, MD5 `a6a790f4b0e82e9441ff834a7e452a3f`) was extracted with Inno Setup tooling. Its stock textures contain `Data/Textures/Fire.jpg` but no `fire.png`.
+
+The v1.05 `Fire.jpg` is a 512x512 three-channel JPEG. Current OSS `Data/Textures/Fire.jpg` is a different 300x300 three-channel JPEG with a different hash.
+
+The OSS hardcoded-path conversion table contained `:Data:Textures:fire.png -> Textures/Fire.jpg`. This changed a historically unresolved PNG clothing reference into a successfully loadable JPEG.
+
+### Failure mechanism
+
+**VERIFIED SOURCE FINDING:** `Person::addClothes()` composites requested clothing images into the character skin buffer. For three-channel RGB images such as JPEGs, no alpha mask exists and the compositor treats the image as fully opaque.
+
+The conversion therefore changed effective behavior from an unresolved clothing layer into an opaque `Fire.jpg` layer that overwrote the underlying rabbit skin, producing the dark/red full-body corruption.
+
+This is a content-conversion regression rather than a Web texture-upload or GL4ES defect.
+
+### Controlled reproduction
+
+**RUNTIME-VERIFIED:** the two `Textures/Fire.jpg` entries were temporarily changed back to the historically referenced missing `Textures/fire.png`.
+
+After rebuilding the Web package and replaying Sky Palace, both NPCs returned to the normal appearance seen in historical Empire gameplay. This isolated the `Fire.jpg` substitution as sufficient to cause the defect.
+
+### Fix
+
+`6142c73` removes only the two bogus `Textures/Fire.jpg` clothing objects from `Data/Maps/jendraz1.json`.
+
+The final map does not retain the missing `fire.png` paths. Removing the dead layers preserves their original effective behavior without generating missing-resource failures.
+
+`bf94eca` removes the obsolete `:Data:Textures:fire.png -> Textures/Fire.jpg` conversion rule from `Misc/list-hardcoded-paths-fixes.txt`, preventing future conversions from recreating the regression.
+
+No clothing compositor or renderer behavior was changed.
+
+### Review and QA
+
+**RUNTIME-VERIFIED — production fix:**
+
+- Empire Sky Palace loads normally.
+- Both affected NPCs now render with normal clothing.
+- The missing-path diagnostic produced the same corrected appearance.
+- `jendraz1.json` remains valid JSON.
+- No `Fire.jpg` clothing references remain in `jendraz1.json`.
+- Legitimate `Fire.jpg` loading-screen behavior is untouched.
+
+### Residual risk
+
+The exact authoring origin of the historical `fire.png` references is unknown. They may represent stale editor data or an asset that existed only in the campaign author's local environment. Neither the distributed Empire archive nor the verified Lugaru v1.05 installation supplies that PNG.
+
+That uncertainty does not affect the demonstrated regression: mapping the unresolved path to opaque `Fire.jpg` changed the visible result, while removing that substitution restores the historical appearance.
+
+---
+
 ## CI-1 — macOS CI Fails During Dependency Setup
 
 **Status:** Open
