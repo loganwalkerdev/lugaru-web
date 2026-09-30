@@ -1127,6 +1127,12 @@ The original foliage second pass remains intact.
 
 A completely fresh `build-web-clean` directory was configured using Emscripten 6.0.9.
 
+A subsequent rebuild of the same configured build directory exposed a reproducibility issue in the original CMake patch step: `git apply` attempted to apply the GL4ES patch a second time and failed because the source tree was already patched.
+
+A follow-up build-system fix added `cmake/apply-gl4es-patch.cmake`, which checks whether the alpha-to-coverage change is already present before applying the patch. The patch step is therefore idempotent: fresh dependency trees receive the patch, while already-patched trees are accepted without failure.
+
+Both paths were verified: an existing patched `build-web-clean` tree rebuilt successfully, and a separate fresh `build-web-clean-2` tree automatically received the patch and built successfully.
+
 The clean dependency fetch automatically applied `cmake/patches/gl4es-alpha-to-coverage.patch`, producing the expected GL4ES `proxy_GO(GL_SAMPLE_ALPHA_TO_COVERAGE, ...)` path.
 
 The resulting browser context reported antialiasing enabled with four samples.

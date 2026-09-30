@@ -134,6 +134,8 @@ Controlled A/B testing isolated the cost to rasterizing the full overlapping lea
 
 **Decision / RUNTIME-VERIFIED:** `df72be9` keeps all original foliage content while optimizing only the Web path. Web builds request 4x MSAA, render normal-pass tree leaves front-to-back, and use alpha-to-coverage instead of GL4ES legacy alpha testing. A small patch to the pinned GL4ES dependency forwards alpha-to-coverage to WebGL and is applied automatically by CMake. A completely fresh Emscripten 6.0.9 build reproduced the patch, correct foliage cutouts, and smooth Sky Palace performance with no obvious regressions. Native rendering behavior remains unchanged. See [B-18](porting-notes.md#b-18--dense-web-foliage-causes-severe-slowdown).
 
+A follow-up CMake helper also made GL4ES patch application idempotent, and both repeat-build and fresh-build paths were verified successfully.
+
 ---
 
 ## B. Gameplay-system seams
