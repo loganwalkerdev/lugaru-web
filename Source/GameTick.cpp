@@ -4587,7 +4587,7 @@ void Game::Tick()
                                    !editorenabled) ||
                                   !devtools) ||
                                  !Person::players[i]->isPlayerControlled())) {
-                                const float jumpIncrement = std::max(multiplier * 6.0f, 0.1f);
+                                const float jumpIncrement = multiplier * 6.0f;
                                 if (Person::players[i]->jumppower > jumpIncrement) {
                                     Person::players[i]->velocity.y += jumpIncrement;
                                     Person::players[i]->jumppower -= jumpIncrement;
