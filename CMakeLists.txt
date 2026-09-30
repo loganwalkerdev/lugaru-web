@@ -258,8 +258,10 @@ if(EMSCRIPTEN)
     GIT_REPOSITORY https://github.com/ptitSeb/gl4es.git
     GIT_TAG        8b424fa5aeea8a2445961ae98c326dc6061e109a
     PATCH_COMMAND
-        git -C <SOURCE_DIR> apply --whitespace=nowarn
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/gl4es-alpha-to-coverage.patch
+    ${CMAKE_COMMAND}
+    -DGL4ES_SOURCE_DIR=<SOURCE_DIR>
+    -DGL4ES_PATCH=${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/gl4es-alpha-to-coverage.patch
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/apply-gl4es-patch.cmake
 )
     set(STATICLIB ON CACHE BOOL "" FORCE)
     set(NOX11 ON CACHE BOOL "" FORCE)
