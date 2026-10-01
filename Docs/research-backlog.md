@@ -160,6 +160,10 @@ A repository-wide audit covered bundled campaign clothing references, skin and f
 
 **RUNTIME-VERIFIED — special/historical:** `darko` and `lizardwolf` both render correctly in the Web build. The intentional bloodied full-body skins in `Lugaru5` also render correctly: April, Trixie, and Clover use only their respective full-body `Blood*.png` skins, while Jack additionally receives `FancyPants.png` and `HeadBand.png` overlays from the map data. `FurWolfLizard` remains a valid historical/easter-egg wolf-layout skin, `FurDarko` renders correctly through the `darko` command, and the orphaned `FurDavid` asset remains historical but unreachable through a live command.
 
+**VERIFIED HISTORICAL ASSET FINDING — FurBrown provenance / no action:** current `FurBrown.jpg` descends unchanged from the `fur3.jpg` populated by the May 2010 full-demo-content import (`3b2525d`). The earlier demo-data commit `fb47d09` contained only a zero-byte `fur3.jpg` placeholder, as it did for `fur.jpg`, `fur2.jpg`, and `furdarko.jpg`. Later commits only renamed the populated asset (`fur3.jpg` → `Fur3.jpg` → `FurBrown.jpg`) with 100% content-preserving renames, and the current file is byte-identical to the 2010 import.
+
+Comparison against the verified Lugaru v1.05 installation shows that `fur.jpg`, `fur2.jpg`, and `furdarko.jpg` are byte-identical between v1.05 and the 2010 import, while `fur3.jpg` alone differs. The two `fur3` images retain the same 512×512 UV layout and underlying artwork, but the 2010 version contains substantial localized retouching/highlight changes rather than simple JPEG recompression. Because this revised asset entered with the historical OSS content import and has not changed since, there is no evidence of a modern port regression and no asset replacement is warranted.
+
 Further work should keep content-preservation decisions, devtool safety, and actual bundled-game regressions separate.
 
 ---
