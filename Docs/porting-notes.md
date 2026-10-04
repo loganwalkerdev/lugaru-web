@@ -1322,7 +1322,9 @@ Native CI restoration remains lower priority than browser correctness issues.
 
 ### Current state (2026-10-04)
 
-**VERIFIED SOURCE FINDING:** `.github/workflows/` is unchanged since inherited Loupgarenne commit `1db2761`. The workflows build native Linux, macOS and Windows (MinGW cross-compile) targets, name artifacts `lugaru-loupgarenne-*`, and the release workflow triggers on `*-loupgarenne` tags. No workflow builds or tests the Web target, so CI provides no evidence about the Web release. The v1.0 Web build is produced locally; see [build provenance](build-provenance.md#current-v10-release-build). Whether the macOS failure above still reproduces was not re-checked for v1.0.
+**VERIFIED SOURCE FINDING — inherited state:** before the v1.0 release-preparation cleanup, `.github/workflows/` was unchanged since Loupgarenne commit `1db2761`. It built native Linux, macOS and Windows (MinGW cross-compile) targets under `lugaru-loupgarenne-*` names, while the inherited release workflow triggered on `*-loupgarenne` tags.
+
+**CURRENT STATE (2026-10-04):** native comparison artifacts now use `lugaru-web-native-*`, and the inherited tag-driven native release workflow has been removed because v1.0.0 is a Web-only release. The retained workflow still builds only native targets; no workflow currently builds or tests the Web target, so CI provides no evidence about the Web release. The v1.0 Web build is produced locally; see [build provenance](build-provenance.md#current-v10-release-build). Whether the macOS failure above still reproduces was not re-checked for v1.0.
 
 ---
 

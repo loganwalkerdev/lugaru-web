@@ -16,9 +16,9 @@ on Ryan Deering's Loupgarenne WebAssembly baseline
 behavior, campaign and content repairs, performance, persistence, controls and
 documentation rather than on new gameplay.
 
-The in-game/console version string comes from `CMakeLists.txt` and reads
-`1.3-lugaru-web`, continuing the inherited engine numbering. It is separate
-from the Lugaru-Web project release number.
+The in-game/console version string is
+`Lugaru-Web v1.0.0 (Lugaru 1.3)`, explicitly separating the Lugaru-Web
+release number from the inherited Lugaru engine version.
 
 ### Highlights
 

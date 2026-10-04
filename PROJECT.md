@@ -209,7 +209,7 @@ Native builds should remain available as comparison targets where practical. The
 
 A change to shared game code should not knowingly break a supported native target without a documented reason.
 
-The repository's GitHub Actions workflows are inherited unchanged from Loupgarenne: they build native Linux, macOS and Windows targets under `lugaru-loupgarenne-*` names, and none builds the Web target. The inherited macOS workflow was observed failing before compilation because it attempts to install an x86_64 Homebrew environment on an Apple Silicon runner. This is considered a baseline CI configuration issue rather than a source-level regression. See CI-1 in `Docs/porting-notes.md`.
+The retained GitHub Actions build workflow still builds native Linux, macOS and Windows comparison targets only. Its artifact and install names were reconciled for Lugaru-Web as `lugaru-web-native-*`. The inherited tag-driven native release workflow was removed before v1.0.0 because the v1.0 release is Web-only and is packaged and deployed separately. No workflow currently builds or tests the Web target. The inherited macOS workflow was previously observed failing before compilation because it attempts to install an x86_64 Homebrew environment on an Apple Silicon runner; that failure has not been revalidated for v1.0.0. See CI-1 in `Docs/porting-notes.md`.
 
 ---
 
@@ -246,7 +246,7 @@ The original stabilization priorities are complete: build provenance and porting
 ### v1.0.0 release readiness
 
 1. Reconcile release documentation and licensing files with the current source.
-2. Audit and reconcile the inherited GitHub Actions build/release workflows before tagging: they still use Loupgarenne-era `lugaru-loupgarenne-*` naming, trigger releases on `*-loupgarenne` tags, and package native targets only. Lugaru-Web naming, tag behavior, and release packaging must be settled before the v1.0.0 tag is created.
+2. Keep v1.0.0 Web packaging and deployment manual for this release. The inherited native release workflow has been retired, retained native CI now uses `lugaru-web-native-*` naming, and no current workflow builds or publishes the Web target.
 3. Build the final release artifacts with Emscripten 6.0.9 from a clean `build-web-clean` configuration, and record the source commit and artifact hashes in `Docs/build-provenance.md`.
 4. Smoke-test the public deployment, confirming that `lugaru.data` loads from the same origin.
 5. Physically verify the Triangle tutorial advance and tutorial stage-3 right-stick recognition (B-8), or ship them documented as source/automated-validated only.
