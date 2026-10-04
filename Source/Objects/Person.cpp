@@ -7306,6 +7306,19 @@ bool Person::addClothes(const int& clothesId)
     float alphanum;
     // Is it valid?
     if (opened) {
+        // Clothing is composited texel-for-texel into skeleton.skinText, so it
+        // must match the skin's dimensions and the buffer must hold that skin.
+        int bytesPerPixel = texture.bpp / 8;
+        if ((bytesPerPixel != 3 && bytesPerPixel != 4) ||
+            skeleton.skinsize <= 0 ||
+            (unsigned long long)skeleton.skinsize * skeleton.skinsize * 3 > sizeof(skeleton.skinText) ||
+            texture.sizeX != (GLuint)skeleton.skinsize ||
+            texture.sizeY != (GLuint)skeleton.skinsize) {
+            cerr << "Clothes " << fileName << " (" << texture.sizeX << "x" << texture.sizeY << ", " << texture.bpp
+                 << " bpp) do not match the " << skeleton.skinsize << "x" << skeleton.skinsize << " skin; skipping" << endl;
+            return 0;
+        }
+
         float tintr = clothestintr[clothesId];
         float tintg = clothestintg[clothesId];
         float tintb = clothestintb[clothesId];
@@ -7329,8 +7342,6 @@ bool Person::addClothes(const int& clothesId)
         if (tintb < 0) {
             tintb = 0;
         }
-
-        int bytesPerPixel = texture.bpp / 8;
 
         int tempnum = 0;
         alphanum = 255;

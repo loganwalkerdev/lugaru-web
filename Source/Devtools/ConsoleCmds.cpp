@@ -163,6 +163,18 @@ static void set_clothes(int pnum, const char* args)
     Person::players[pnum]->clothestintb.push_back(tintb);
 
     if (!Person::players[pnum]->addClothes(id)) {
+        // Don't keep (or later save) a clothing layer that was not applied.
+        Person::players[pnum]->clothes.pop_back();
+        Person::players[pnum]->clothestintr.pop_back();
+        Person::players[pnum]->clothestintg.pop_back();
+        Person::players[pnum]->clothestintb.pop_back();
+
+        for (int k = 14; k >= 1; k--) {
+            consoletext[k] = consoletext[k - 1];
+        }
+        consoletext[0] = std::string("Could not apply the requested texture '") + args + "' as clothes, aborting.";
+        consoleselected = 0;
+
         return;
     }
 

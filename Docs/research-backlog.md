@@ -146,7 +146,7 @@ A one-line A/B restoring `multiplier * 6.0f` while leaving the fixed scheduler u
 
 Historical 1.05 binary parity remains unverified. Other multiplier-sensitive changes introduced by `1db2761`, including ragdoll constraint calculations, remain separate follow-up research.
 
-### A11. Clothing, skins, and historical asset audit — active (2026-09-30)
+### A11. Clothing, skins, and historical asset audit — resolved (2026-10-03)
 
 A repository-wide audit covered bundled campaign clothing references, skin and fur assets, `Person::addClothes()`, devtool clothing commands, path-conversion rules, historical/easter-egg skins, and lineage from the original source through upstream, Loupgarenne, the WASM baseline, and lugaru-web.
 
@@ -154,7 +154,20 @@ A repository-wide audit covered bundled campaign clothing references, skin and f
 
 **VERIFIED:** the Loupgarenne/WASM lineage introduced no additional clothing regression. Empire clothing is correct after B-17, and intentional RGB full-body skins such as the bundled bloodied-character textures remain valid.
 
-**OPEN — devtool safety:** `addClothes()` has no destination-size validation. The `clothes` command can therefore feed oversized or otherwise incorrectly sized PNG textures into the fixed 512×512 skin buffer. This is a separate hardening issue and should be tested with native sanitizers rather than intentionally triggered in the normal Web build.
+**RESOLVED — devtool safety (2026-10-03):** the `clothes <name>` devtool builds `Textures/<name>.png`, appends it to the player's clothing arrays, and calls `Person::addClothes()`, so any PNG placed in `Data/Textures` reaches the compositor. Two independent memory-safety bugs were found on that path:
+
+1. `load_png()` / `load_jpg()` (`Source/Utils/ImageIO.cpp`) decode into the fixed `ImageRec::data` buffer (`1024 * 1024 * 4` bytes) without checking image size. `load_png()` always stores RGBA, so any PNG over 1024×1024 pixels overflows during decode. `load_jpg()` stores RGB, so a JPEG over that byte count overflows inside libjpeg.
+2. `addClothes()` composites `sizeX * sizeY` source texels, writing three bytes each into `skeleton.skinText` (`GLubyte[512 * 512 * 3]`, embedded in `Skeleton` inside `Person`). It never checks the clothing size against `skeleton.skinsize`. A larger image overruns `skinText` and every later `Skeleton`/`Person` member before leaving the `Person` allocation. A smaller or non-square image stays in bounds but is composited row-misaligned into the start of the skin.
+
+**RUNTIME-VERIFIED (native ASan, pre-fix):** a Debug build with `-fsanitize=address` was driven non-interactively with `--command=` arguments. Note that `-c <cmd>` with a separate argument is not consumed, because the option uses `Arg::Optional`. `clothes` with a 1024×1024 RGBA PNG reported a heap-buffer-overflow in `Person::addClothes()`, 0 bytes past the 791,520-byte `Person` allocation, so the in-object corruption had already completed. A 1025×1024 PNG reported a heap-buffer-overflow in `load_png()` past the 4,194,304-byte `ImageRec` buffer. A standalone harness linking the real `ImageIO.cpp` showed a 2048×2048 JPEG silently corrupting the heap. ASan does not flag this one because libjpeg is not instrumented. A 256×256 PNG was accepted without a memory error.
+
+**FIX:** `load_png()` / `load_jpg()` now fail when the decoded image would exceed the `ImageRec` capacity. `addClothes()` now skips clothing that is not exactly `skeleton.skinsize` square, or not 24/32 bpp, and the `clothes` devtool drops the rejected entry so it is neither kept nor saved into a map. The compositing loop is otherwise unchanged.
+
+**RUNTIME-VERIFIED (native ASan, post-fix):** 512×512 RGBA and RGB PNG clothing still apply. 256×256 and 1024×1024 PNGs are skipped with a stderr message and removed from `clotheslist`. The 1025×1024 PNG fails cleanly at load. Loading all 137 bundled maps in one ASan process produced no clothing rejection and no sanitizer report. All 33 distinct bundled clothing references and all skin/fur textures are 512×512, and the largest bundled image is 1024×1024, so bundled behavior is unchanged. The Web target (`build-web`) builds with the fix. Temporary test images lived only in an ignored `build-asan/Data` symlink tree and were not committed.
+
+**VERIFIED SOURCE FINDING — preserved quirk:** for RGBA clothing, the compositor updates `alphanum` only on each pixel's alpha byte, *after* that pixel's RGB bytes are blended. Each texel is therefore blended with the previous texel's alpha (the first uses 255). This one-texel lag is historical compositor behavior and was intentionally left unchanged.
+
+**OUT OF SCOPE / follow-up candidates:** `TextureRes`'s skin path copies a decoded skin into `skinText` without a size check, but skin filenames are hardcoded and are not reachable through an arbitrary-name devtool. The legacy binary map loaders read clothing paths into `char clothespath[256]` without checking the stored length. Neither was changed here.
 
 **RESOLVED — 2016–17 preservation archaeology:** the Temple and Seven Tasks clothing/content edits made during the upstream licensing and cleanup work were traced back through their original binary maps and asset history.
 
@@ -176,7 +189,7 @@ The rest of `866ceee` was not reverted wholesale. Restoring the earlier `svenroa
 
 Comparison against the verified Lugaru v1.05 installation shows that `fur.jpg`, `fur2.jpg`, and `furdarko.jpg` are byte-identical between v1.05 and the 2010 import, while `fur3.jpg` alone differs. The two `fur3` images retain the same 512×512 UV layout and underlying artwork, but the 2010 version contains substantial localized retouching/highlight changes rather than simple JPEG recompression. Because this revised asset entered with the historical OSS content import and has not changed since, there is no evidence of a modern port regression and no asset replacement is warranted.
 
-Preservation archaeology is now complete. A11 remains active only for the separate `addClothes()` devtool-safety investigation.
+Preservation archaeology is complete, and the `addClothes()` devtool-safety issue is resolved. A11 is closed.
 
 ---
 
