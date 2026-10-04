@@ -156,7 +156,19 @@ A repository-wide audit covered bundled campaign clothing references, skin and f
 
 **OPEN — devtool safety:** `addClothes()` has no destination-size validation. The `clothes` command can therefore feed oversized or otherwise incorrectly sized PNG textures into the fixed 512×512 skin buffer. This is a separate hardening issue and should be tested with native sanitizers rather than intentionally triggered in the normal Web build.
 
-**OPEN — preservation archaeology:** upstream made several Temple and Seven Tasks clothing/content edits during the 2016–17 asset-licensing work, including outfit removal, re-dressing, and tint changes. These changes are already present in Lugaru 1.2 and predate the Web port, so they should be evaluated as historical-preservation questions rather than current port regressions.
+**RESOLVED — 2016–17 preservation archaeology:** the Temple and Seven Tasks clothing/content edits made during the upstream licensing and cleanup work were traced back through their original binary maps and asset history.
+
+Seven Tasks requires no restoration. The original campaign import contained several malformed or hardcoded clothing paths. `331215c` removed bogus references from `task15` and repaired the remaining broken `task18` clothing path after an earlier attempted path conversion had been reverted. Legitimate clothing records were preserved, and the final changes are upstream repairs rather than preservation loss.
+
+Temple's historical `All.png` clothing references also require no restoration. `All.png` does not appear anywhere in the tracked Git object history, and the affected maps already contained those nonexistent references in their earlier historical states. Commit `4caa941` removed the invalid entries and, in `svenredbw3`, reconstructed legitimate Temple clothing in their place. This is likewise an upstream repair.
+
+The replacement Temple assets introduced during the licensing work are intentional and should remain. Commit `5bba986` created the current `ClFeng.png`, `ClHuo.png`, `ClShan.png`, and `ClShui.png` as license-clean replacements for the unavailable original Temple clothing assets. Commit `acadd9e` similarly created the license-clean `FurBW.jpg` replacement for Temple's original `furbw2.png` / `furWB2.png`. Restoring the unlicensed originals is neither necessary nor appropriate.
+
+**RESTORED — Temple FurBW preservation:** commit `866ceee` subsequently removed the licensed `FurBW.jpg` replacement and changed the visible lead rabbit in `svenclimb`, `svenheaven`, and `svenroad` from base skin 0 plus the `FurBW.jpg` clothing layer to skin 8 (`FurBlackWhite.jpg`). The two fur images are not equivalent: decoded comparison showed differences across the full image, affecting approximately 82.3% of pixels. Commit `fef0364` restores the exact licensed `FurBW.jpg` asset and the historical player-0 skin/clothing state in those three maps.
+
+The rest of `866ceee` was not reverted wholesale. Restoring the earlier `svenroad` player-2/Shan state reintroduced the historical multicolored-fur artifact caused by a non-unity-tinted `Fur.jpg` clothing layer, so the later Shan clothing rewrite is retained as a valid visual repair. Likewise, `svenredbwafter` player 1 historically had `scale = 0.0` before and after the clothing cleanup; the character was intentionally invisible, so its removed clothing is not restored.
+
+**INVESTIGATED — `svenroad` terrain / no action:** while validating Shan's appearance, the Web build appeared to place him partly inside the desert terrain instead of cleanly above the nearby rock. Shan's coordinates, the rock's coordinates and scale, the shared `HeightMap.png`, and the map environment are unchanged. Further testing showed that Lugaru applies randomized processing to the shared heightmap during terrain generation, producing small per-launch terrain-height differences. The same variation reproduces in OSS Lugaru 1.2, current native Lugaru, and Web. This is inherited behavior, not a Web regression, and no map or terrain fix is warranted.
 
 **RUNTIME-VERIFIED — special/historical:** `darko` and `lizardwolf` both render correctly in the Web build. The intentional bloodied full-body skins in `Lugaru5` also render correctly: April, Trixie, and Clover use only their respective full-body `Blood*.png` skins, while Jack additionally receives `FancyPants.png` and `HeadBand.png` overlays from the map data. `FurWolfLizard` remains a valid historical/easter-egg wolf-layout skin, `FurDarko` renders correctly through the `darko` command, and the orphaned `FurDavid` asset remains historical but unreachable through a live command.
 
@@ -164,7 +176,7 @@ A repository-wide audit covered bundled campaign clothing references, skin and f
 
 Comparison against the verified Lugaru v1.05 installation shows that `fur.jpg`, `fur2.jpg`, and `furdarko.jpg` are byte-identical between v1.05 and the 2010 import, while `fur3.jpg` alone differs. The two `fur3` images retain the same 512×512 UV layout and underlying artwork, but the 2010 version contains substantial localized retouching/highlight changes rather than simple JPEG recompression. Because this revised asset entered with the historical OSS content import and has not changed since, there is no evidence of a modern port regression and no asset replacement is warranted.
 
-Further work should keep content-preservation decisions, devtool safety, and actual bundled-game regressions separate.
+Preservation archaeology is now complete. A11 remains active only for the separate `addClothes()` devtool-safety investigation.
 
 ---
 
