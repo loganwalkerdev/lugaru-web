@@ -77,8 +77,8 @@ if(LUGARU_VERSION_PATCH)
     set(LUGARU_VERSION_NUMBER "${LUGARU_VERSION_NUMBER}.${LUGARU_VERSION_PATCH}")
 endif()
 
-# Set to "" for stable (tagged) builds, "-dev" for dev builds, "-loupgarenne"
-set(LUGARU_VERSION_SUFFIX "-loupgarenne")  # Loupgarenne fork
+# Set to "" for stable builds, "-dev" for development, "-lugaru-web" for Lugaru-Web
+set(LUGARU_VERSION_SUFFIX "-lugaru-web")  # Lugaru-Web
 #set(LUGARU_VERSION_SUFFIX "-dev")  # development
 #set(LUGARU_VERSION_SUFFIX "")  # stable
 
@@ -243,15 +243,8 @@ endif()
 if(EMSCRIPTEN)
     message(STATUS "Configuring for Emscripten/WebAssembly build with GL4ES")
 
-    # cdn config
-    option(USE_CDN_DATA "Load .data from CDN" OFF)
-    if(USE_CDN_DATA)
-        message(STATUS "Using CDN for data file")
-        file(WRITE ${CMAKE_BINARY_DIR}/pre.js "window['DATA_CDN_URL']='https://dev.ryandeering.ie/lugaru.data';")
-        set(DATA_CDN_FLAG "SHELL:--pre-js ${CMAKE_BINARY_DIR}/pre.js")
-    else()
-        set(DATA_CDN_FLAG "")
-    endif()
+    # Web data is served from the same origin as the generated shell.
+    set(DATA_CDN_FLAG "")
 
     FetchContent_Declare(
     gl4es

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"/>
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAL3UExURQAAAIBqUn9caYZ9Xl9fUGJPTF8wMGc2OTVogGZ9gzBfgE5wgmJygF+AgGuCfmppfF9fgM7p9j48PCo1SRkbQCMoVUJCZl1dUpeUcJOhzIFrYIVlbDo5SQ4QLFVLT3h5aJmGnVBISDYwLy0qLCUtMmU9OiuzxjYuNDVBXf///yE0RBsjKSUtVVFheSopW1BhhBkabUBJhR4reVJfly02gF5plTY4gC04gE9pnVptqP//4D5Oiltxov//Wi1idkBYlVBqkGJ0j3R+kVRzpEhTc3RiUoJ2ampwhJdkfm9vcGJVTCYjIVZOQ29jVG9rVP/jSCQkTSUpTQcORQYOPgQOKgoGLBIVQhwZJyYkIiYkQBUhagsQTwsKKQUPJR4cKxQVEhEMCjMrMRMNDBUSDzg0Lio0WyAxdBoeUQwWOjIrNDIoJBsZFzYyLBkaNSslIigeG1NCODY2STRCfS88eiMuZE1JR1JEODsxLTYvLhUfOwoLLjoyMUM0KFtHPEk+STpGeUJUjD9QhlxRVVtHP0Q5Li4qMhwqWik3bA0UZjAzV1NEPmNQQVRGQFJZbGBqnFprmFlQSl1JPkU7OiovTClFgik9gSo7f0VYjGVwl1tTYnBaSFVDRVZWWY2Tl2lpfVJDP2NTRjk4Qltli1droD9aj0tVhyItdUtch4+TpHN7lVpPVl5QRWhZV3h5fFVMUGRTSFBCP1ZbcZWmqYCItmVvplNqmVJkiYWMppKXpmtugGpZUXBhTW1bTGVUSkU7NEpMXqOls6Orq4KdtGRuojZHg3GCpI2VqnZ1e3BWSnZfTH9nUHFYSTExL4eZoKCuvp+isX2Gr1FmnFhnk4KKm3txZ3NdS4hxVn1wVkU4MDIsNpmgo5yutIWdt2t+qz5TllRklW9fWH1sUoaAYXZeSkE0MFJSV6WurpKir3mGr1dspUBcmU9MWmpZTF5YRy0qICEiGXBoXIZ+f3p3d2htgE1APCYaFxMREmJQQXtlUndhUi0pJFBFO////4WI6wUAAABQdFJOUwAAAAAAAAAAAAAAAAAAAAAAATWc1NScky4BEySJ5aMOCqLo/pwPA62JATXj5TWcnNTU1NScnDXl5TUBiYkBD5ycDw+J5eWJDwE1nNTUnDUBrExt3wAAAAFiS0dEKcq3hSQAAAAHdElNRQfpCxkXNxet41noAAABG0lEQQY0wEQAe/+AAABAhESExRQURUWFxgDBAAAGRobHB1SU1RVVldYHh8FBgAgISIjWVpbXF1eX2BhJCUHACYnYmNkZWZnaGlqa2xtKCkAKitub3BxcnN0dXZ3eHksLQAuent8fX5/gIGCg4SFhocvADCIiYqLjI2Oj5CRkpOUlTEAlpeYmZqbnJ2en6ChoqOkpQCmp6ipqqusra6vsLGys7S1ADK2t7i5uru8vb6/wMHCwzMANMTFxsfIycrLzM3Oz9DRNQA2N9LT1NXW19jZ2tvc3Tg5ADo73t/g4eLj5OXm5+jpPD0ACD4/6uvs7e7v8PHy80BBCQAKC0JDRPT19vf4+UVGRwwNAAANDkhJSkv6+0xNTk8PEADjvXuYVN+TRgAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyNS0xMS0yNVQyMzoyMDoxMSswMDowMDXgfXUAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjUtMTEtMjVUMjM6MjA6MTErMDA6MDBEvcXJAAAAKHRFWHRkYXRlOnRpbWVzdGFtcAAyMDI1LTExLTI1VDIzOjU1OjIzKzAwOjAwxaosGwAAAABJRU5ErkJggg==">
-  <title>Loupgarenne</title>
+  <title>Lugaru-Web</title>
   <style>
     * {
       box-sizing: border-box;
@@ -141,16 +141,8 @@
     var progressElement = document.getElementById('progress-bar');
     var statusTextElement = document.getElementById('status-text');
 
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      window['DATA_CDN_URL'] = 'https://dev.ryandeering.ie/lugaru.data';
-    }
-
     var Module = {
       locateFile: function(path) {
-        // Redirect .data to CDN if DATA_CDN_URL is set (production only)
-        if (path.endsWith('.data') && typeof window['DATA_CDN_URL'] !== 'undefined') {
-          return window['DATA_CDN_URL'];
-        }
         return path;
       },
       canvas: document.getElementById('canvas'),

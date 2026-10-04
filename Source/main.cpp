@@ -370,19 +370,19 @@ bool SetUp()
         sdlflags |= SDL_WINDOW_INPUT_GRABBED;
     }
 
-    sdlwindow = SDL_CreateWindow("Loupgarenne", SDL_WINDOWPOS_CENTERED_DISPLAY(0), SDL_WINDOWPOS_CENTERED_DISPLAY(0), kContextWidth, kContextHeight, sdlflags);
+    sdlwindow = SDL_CreateWindow("Lugaru-Web", SDL_WINDOWPOS_CENTERED_DISPLAY(0), SDL_WINDOWPOS_CENTERED_DISPLAY(0), kContextWidth, kContextHeight, sdlflags);
 
     if (!sdlwindow) {
         fprintf(stderr, "SDL_CreateWindow() failed: %s\n", SDL_GetError());
         fprintf(stderr, "forcing 640x480...\n");
         kContextWidth = 640;
         kContextHeight = 480;
-        sdlwindow = SDL_CreateWindow("Loupgarenne", SDL_WINDOWPOS_CENTERED_DISPLAY(0), SDL_WINDOWPOS_CENTERED_DISPLAY(0), kContextWidth, kContextHeight, sdlflags);
+        sdlwindow = SDL_CreateWindow("Lugaru-Web", SDL_WINDOWPOS_CENTERED_DISPLAY(0), SDL_WINDOWPOS_CENTERED_DISPLAY(0), kContextWidth, kContextHeight, sdlflags);
         if (!sdlwindow) {
             fprintf(stderr, "SDL_CreateWindow() failed: %s\n", SDL_GetError());
             fprintf(stderr, "forcing 640x480 windowed mode...\n");
             sdlflags &= ~SDL_WINDOW_FULLSCREEN;
-            sdlwindow = SDL_CreateWindow("Loupgarenne", SDL_WINDOWPOS_CENTERED_DISPLAY(0), SDL_WINDOWPOS_CENTERED_DISPLAY(0), kContextWidth, kContextHeight, sdlflags);
+            sdlwindow = SDL_CreateWindow("Lugaru-Web", SDL_WINDOWPOS_CENTERED_DISPLAY(0), SDL_WINDOWPOS_CENTERED_DISPLAY(0), kContextWidth, kContextHeight, sdlflags);
 
             if (!sdlwindow) {
                 fprintf(stderr, "SDL_CreateWindow() failed: %s\n", SDL_GetError());
@@ -816,10 +816,10 @@ int main(int argc, char** argv)
 
     // Always start by printing the version and info to the stdout
     std::cout << "--------------------------------------------------------------------------\n"
-              << "Loupgarenne - A fork of Lugaru HD / OSS Lugaru\n"
-              << "Based on work by Wolfire Games and the OSS Lugaru project.\n\n"
+              << "Lugaru-Web - Lugaru in the browser\n"
+              << "Based on Wolfire Games, OSS Lugaru, and Ryan Deering's Loupgarenne WebAssembly work.\n\n"
               << "Licensed under the GPL 2.0+ and CC-BY-SA 3.0 and 4.0 licenses.\n"
-              << "Fork: https://github.com/ryandeering/loupgarenne\n"
+              << "Project: https://github.com/loganwalkerdev/lugaru-web\n"
               << "Upstream: https://gitlab.com/osslugaru/lugaru\n"
               << std::endl;
 
