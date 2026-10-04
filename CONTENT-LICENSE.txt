@@ -24,13 +24,13 @@ Data/Textures/ClShui.png
 Data/Textures/FurBW.jpg
 
 
-## Slib assets (CC-BY-SA 3.0 Unported)
+## Silb assets (CC-BY-SA 3.0 Unported)
 
 https://web.archive.org/web/20161213062413/http://forums.wolfire.com/viewtopic.php?f=7&t=1066
 
-These assets are from the Temple campaign by Slib under CC-BY-SA 3.0 Unported:
+These assets are from the Temple campaign by Silb under CC-BY-SA 3.0 Unported:
 
-Data/Campaign/temple.txt
+Data/Campaigns/temple.txt
 
 Data/Maps/sven*
 
@@ -61,6 +61,29 @@ https://web.archive.org/web/20161214063840/http://forums.wolfire.com/viewtopic.p
 These assets are from the Seven Tasks campaign by Philtron R., licensed under
 CC-BY-SA 4.0 International:
 
-Data/Campaign/seventasks.txt
+Data/Campaigns/seventasks.txt
 
 Data/Maps/task*
+
+## Modifications in Lugaru-Web
+
+Lugaru-Web contains preservation and compatibility changes to assets and maps
+distributed under the licenses above.
+
+Lugaru-Web modifications to bundled CC-licensed content include:
+
+- Empire campaign map fixes to `Data/Maps/jendraz1` and `Data/Maps/jendraz2`.
+- Temple campaign map fixes to:
+  - `Data/Maps/svenclimb`
+  - `Data/Maps/svenheaven`
+  - `Data/Maps/svenroad`
+  - `Data/Maps/svendecoy`
+  - `Data/Maps/svencouncil`
+  - `Data/Maps/svendoor`
+- `Data/Textures/Fur.png`, an RGBA conversion derived from the existing
+  Wolfire `Fur.jpg` artwork for correct clothing tint behavior.
+- Restoration of `Data/Textures/FurBW.jpg`, originally contributed to the
+  OSS Lugaru project and distributed under CC-BY-SA 4.0 International.
+
+These changes were made by the Lugaru-Web project in 2026 for browser
+compatibility, preservation, or restoration of intended historical behavior.
