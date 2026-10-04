@@ -744,6 +744,12 @@
 				"clothes" : 
 				[
 					{
+						"path" : "Textures/FurBW.jpg",
+						"tintb" : 1.0,
+						"tintg" : 1.0,
+						"tintr" : 1.0
+					},
+					{
 						"path" : "Textures/GiTop.png",
 						"tintb" : 1.0,
 						"tintg" : 1.0,
@@ -780,7 +786,7 @@
 				"speedmult" : 1.01,
 				"targetyaw" : -1803.379,
 				"weapons" : [ 1 ],
-				"whichskin" : 8,
+				"whichskin" : 0,
 				"yaw" : -1796.301
 			},
 			{
