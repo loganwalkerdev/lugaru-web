@@ -13,6 +13,24 @@ It has two parts:
 
 **Last updated:** 2026-10-04
 
+### Release-candidate source
+
+A fresh pre-tag v1.0.0 release-candidate build was produced from the clean
+`release/v1.0.0-prep` working tree at:
+
+```text
+917bdbae63c28d91649023e8b374bb4e845d6667
+```
+
+That commit is the exact source for the release-candidate artifacts and hashes
+recorded below.
+
+**OPEN:** this is not yet the final `v1.0.0` tagged source commit. After final
+QA and any remaining release documentation are committed, produce one final
+fresh build from the tag candidate and record its commit/tag and hashes
+separately. Do not treat the release-candidate hashes below as the final
+published artifact hashes until that verification is complete.
+
 ### Toolchain and environment
 
 The v1.0 release build uses the same host environment family as the historical baseline:
@@ -28,25 +46,33 @@ Generator:    Unix Makefiles
 
 Emscripten 6.0.9 is installed and activated through `emsdk` exactly as described in [Emscripten Setup](#emscripten-setup). Do not use `latest`.
 
-The current release-preparation build directory is:
+The verified fresh release-candidate build directory is:
 
 ```text
-build-web-clean
+build-web-release
 ```
-
-**VERIFIED BUILD OBSERVATION (2026-10-04):** the `build-web-clean` CMake cache records `CMAKE_BUILD_TYPE=Release`, the emsdk `Emscripten.cmake` toolchain file (i.e. configuration through `emcmake`), CMake 4.2.3, and the Unix Makefiles generator; the active emsdk reports `6.0.9`. The cache also records `ccache` as the compiler launcher. `ccache` is a local build-speed convenience, is not referenced by `CMakeLists.txt`, and is not required.
-
-The exact command line originally used to configure `build-web-clean` was not recorded. The procedure below is consistent with its cache.
 
 ### Configure and build
 
-From the repository root, with the pinned SDK active:
+From the repository root, with the pinned SDK active, the verified
+release-candidate build was created from a fresh directory with:
 
 ```bash
-emcmake cmake -S . -B build-web-clean \
+source ~/emsdk/emsdk_env.sh
+hash -r
+
+rm -rf build-web-release
+
+emcmake cmake -S . -B build-web-release \
   -DCMAKE_BUILD_TYPE=Release
 
-cmake --build build-web-clean -j$(nproc)
+cmake --build build-web-release -j2
+```
+
+The build completed successfully with:
+
+```text
+[100%] Built target lugaru
 ```
 
 No data-hosting option is required. `USE_CDN_DATA` no longer exists (see [Same-origin game data](#same-origin-game-data)).
@@ -57,35 +83,79 @@ The GL4ES dependency patch (below) is applied idempotently, so both fresh and re
 
 ### Output
 
+The fresh release-candidate build produced:
+
 ```text
-build-web-clean/bin/lugaru.html
-build-web-clean/bin/lugaru.js
-build-web-clean/bin/lugaru.wasm
-build-web-clean/bin/lugaru.data
+build-web-release/bin/lugaru.html
+build-web-release/bin/lugaru.js
+build-web-release/bin/lugaru.wasm
+build-web-release/bin/lugaru.data
 ```
 
 All four files must be deployed together, from the same directory.
 
-Approximate sizes observed in the local `build-web-clean/bin` on 2026-10-04 were:
+Exact artifact sizes observed from the build of
+`917bdbae63c28d91649023e8b374bb4e845d6667` on 2026-10-04 were:
 
 ```text
-lugaru.html     7.6 KB
-lugaru.js       143 KB
-lugaru.wasm     2.0 MB
-lugaru.data     38.4 MB
+lugaru.html       7,785 bytes
+lugaru.js       146,235 bytes
+lugaru.wasm   2,145,378 bytes
+lugaru.data  40,238,437 bytes
 ```
 
-These are observed values, not expectations. **OPEN:** SHA-256 hashes of the final published v1.0.0 artifacts, and the exact source commit/tag they were built from, have not yet been recorded here. Record them when the release is tagged.
+Observed SHA-256 values for those exact release-candidate artifacts:
+
+```text
+13f32c91a51964d9daa4bd8fcfe6345dc4ae7506ec955b6adee989fc378720a8  lugaru.html
+69da9a340f7a83bff5135fc152432178e78089acf57ede577c17d69420dc01a8  lugaru.js
+09e0c72eec29435600b41265c436a07e057b32f76d1757b81bb5a29e03bccef5  lugaru.wasm
+f98c7cb096f5787978787f86a2c0e57a3e764eafada916b2bd30db4942fe9e6c  lugaru.data
+```
+
+The generated WebAssembly contains the expected release identity:
+
+```text
+Lugaru-Web v1.0.0 (Lugaru 1.3)
+```
+
+These hashes identify the verified **pre-tag release candidate** only.
+The final tagged/published build will be hashed again after final QA.
 
 ### Same-origin game data
 
-**VERIFIED SOURCE FINDING:** commit `36407bd` (`fix: make Web release self-contained`) removed the inherited `USE_CDN_DATA` CMake option and the production-hostname redirect in `Misc/shell.html` that loaded `lugaru.data` from `https://dev.ryandeering.ie/lugaru.data`. `Module.locateFile()` now returns the requested path unchanged, so `lugaru.data` is always fetched from the same origin and directory as `lugaru.html`.
+**VERIFIED SOURCE FINDING:** commit `36407bd` (`fix: make Web release self-contained`) removed the inherited `USE_CDN_DATA` CMake option and the production-hostname redirect in `Misc/shell.html` that loaded `lugaru.data` from `https://dev.ryandeering.ie/lugaru.data`. `Module.locateFile()` now returns the requested path unchanged, so `lugaru.data` is fetched from the same origin and directory as `lugaru.html`.
 
 The Web release is therefore self-contained: it does not depend on Ryan Deering's server or any other external data host. The game data is packaged from the repository's `Data/` directory at build time.
 
-**VERIFIED BUILD OBSERVATION:** the generated `build-web-clean/bin/lugaru.html` and `lugaru.js` inspected on 2026-10-04 contain no `DATA_CDN` or `ryandeering` references.
+**VERIFIED RELEASE-CANDIDATE OBSERVATION (2026-10-04):** the generated
+`build-web-release/bin/lugaru.html` and `lugaru.js` contain no
+`dev.ryandeering`, `DATA_CDN_URL`, or `USE_CDN_DATA` references.
 
-The same commit also renamed the shell title, SDL window title and startup banner from Loupgarenne to Lugaru-Web, and set `LUGARU_VERSION_SUFFIX` to `-lugaru-web`.
+The release candidate was served locally on port 8785 and opened through the
+WSL network address. Browser and HTTP-header inspection confirmed:
+
+```text
+lugaru.data   HTTP 200   Content-Length: 40238437   application/octet-stream
+lugaru.wasm   HTTP 200   Content-Length: 2145378    application/wasm
+lugaru.js     HTTP 200   Content-Length: 146235     text/javascript
+```
+
+The browser requested `lugaru.data` from the same host and port as
+`lugaru.html`, and the startup console reported:
+
+```text
+Version Lugaru-Web v1.0.0 (Lugaru 1.3) -- Release build
+```
+
+**OPEN:** repeat the same-origin/MIME smoke test against the final public
+deployment after GitHub Pages is configured.
+
+Commit `36407bd` also renamed the shell title, SDL window title and startup
+banner from Loupgarenne to Lugaru-Web, and set `LUGARU_VERSION_SUFFIX` to
+`-lugaru-web`. Commit `8ba1cc6` then separated the Lugaru-Web project release
+version from the inherited Lugaru engine version, producing the user-facing
+identity `Lugaru-Web v1.0.0 (Lugaru 1.3)`.
 
 ### Current Web build configuration
 
@@ -119,24 +189,45 @@ The inherited `.devcontainer/` (Fedora-based, native/MinGW oriented) and `.devco
 
 ### Local testing
 
-Serve the output over HTTP rather than `file://`:
+Serve the release output over HTTP rather than `file://`:
 
 ```bash
-cd build-web-clean/bin
-python3 -m http.server 8000
+python3 -m http.server 8785 \
+  --bind 0.0.0.0 \
+  --directory build-web-release/bin
+```
+
+For testing from the Windows host through WSL, obtain the current WSL address with:
+
+```bash
+hostname -I
 ```
 
 Then open:
 
 ```text
-http://localhost:8000/lugaru.html
+http://<WSL-IP>:8785/lugaru.html
 ```
+
+The WSL address can change between sessions.
 
 Runtime defects, validation evidence and per-issue QA belong in [`porting-notes.md`](porting-notes.md), not here.
 
 ### CI
 
-The repository's `.github/workflows/` are inherited from Loupgarenne. They build native Linux, macOS and Windows (MinGW cross-compile) targets with `lugaru-loupgarenne-*` artifact names, and the release workflow triggers on `*-loupgarenne` tags. No workflow builds the Web target. The v1.0 Web release build is produced locally with the procedure above. See [porting notes CI-1](porting-notes.md#ci-1--macos-ci-fails-during-dependency-setup).
+The retained GitHub Actions build workflow builds native Linux, macOS and
+Windows comparison targets only. Before v1.0.0, its inherited
+`lugaru-loupgarenne-*` artifact/install names were reconciled to
+`lugaru-web-native-*`.
+
+The inherited tag-driven native release workflow, which triggered on
+`*-loupgarenne` tags, was removed in `8ba1cc6` because v1.0.0 is a Web-only
+release and is being packaged and deployed separately.
+
+No current workflow builds or tests the Web target. The v1.0 Web release is
+therefore built and verified locally using the procedure above. Web CI and
+automated Pages/release deployment remain post-v1.0 work. See
+[porting notes CI-1](porting-notes.md#ci-1--macos-ci-fails-during-dependency-setup).
 
 ---
 
