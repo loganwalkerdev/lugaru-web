@@ -71,13 +71,17 @@ set(LUGARU_VERSION_MAJOR 1)
 set(LUGARU_VERSION_MINOR 3)
 set(LUGARU_VERSION_PATCH 0)
 
+# Lugaru-Web project release version. This is intentionally separate from the
+# inherited Lugaru engine version above.
+set(LUGARU_WEB_VERSION "1.0.0")
+
 # MAJOR.MINOR, or MAJOR.MINOR.PATCH if PATCH != 0
 set(LUGARU_VERSION_NUMBER "${LUGARU_VERSION_MAJOR}.${LUGARU_VERSION_MINOR}")
 if(LUGARU_VERSION_PATCH)
     set(LUGARU_VERSION_NUMBER "${LUGARU_VERSION_NUMBER}.${LUGARU_VERSION_PATCH}")
 endif()
 
-# Set to "" for stable builds, "-dev" for development, "-lugaru-web" for Lugaru-Web
+# Inherited Lugaru/fork suffix, retained separately from the Lugaru-Web release version.
 set(LUGARU_VERSION_SUFFIX "-lugaru-web")  # Lugaru-Web
 #set(LUGARU_VERSION_SUFFIX "-dev")  # development
 #set(LUGARU_VERSION_SUFFIX "")  # stable
@@ -100,9 +104,9 @@ endif()
 
 set(LUGARU_VERSION_RELEASE "" CACHE STRING "Optional release string, e.g. for distro packages release number")
 
-# Final string built from the above constants, following the scheme:
-# MAJOR.MINOR[.PATCH][-dev] [(git HASH)] [[RELEASE]]
-set(LUGARU_VERSION_STRING "${LUGARU_VERSION_NUMBER}${LUGARU_VERSION_SUFFIX}")
+# User-facing Lugaru-Web release identity. The project release version and
+# inherited Lugaru engine version intentionally remain separate.
+set(LUGARU_VERSION_STRING "Lugaru-Web v${LUGARU_WEB_VERSION} (Lugaru ${LUGARU_VERSION_NUMBER})")
 if(NOT LUGARU_VERSION_HASH STREQUAL "")
     set(LUGARU_VERSION_STRING "${LUGARU_VERSION_STRING} (git ${LUGARU_VERSION_HASH})")
 endif()

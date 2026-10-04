@@ -25,21 +25,19 @@ const unsigned int VERSION_MINOR = @LUGARU_VERSION_MINOR@;
 const unsigned int VERSION_PATCH = @LUGARU_VERSION_PATCH@;
 const std::string VERSION_NUMBER = "@LUGARU_VERSION_NUMBER@";
 
-/** Set to "" for stable (tagged) builds, "-dev" for dev builds */
+/** Lugaru-Web project release version, separate from the inherited Lugaru version. */
+const std::string LUGARU_WEB_VERSION = "@LUGARU_WEB_VERSION@";
+
+/** Inherited Lugaru/fork suffix, retained separately from the project release version. */
 const std::string VERSION_SUFFIX = "@LUGARU_VERSION_SUFFIX@";
 /** Set to 7-char git commit hash if available, otherwise "" */
 const std::string VERSION_HASH = "@LUGARU_VERSION_HASH@";
 /** Optional release string, e.g. for distro packages release number */
 const std::string VERSION_RELEASE = "@LUGARU_VERSION_RELEASE@";
 
-/** Final string built from the above constants, following the scheme
- *  defined in CMakeLists.txt, typically:
- *      MAJOR.MINOR[.PATCH][-dev] [(git HASH)] [[RELEASE]]
- *
- *  For example:
- *      "1.2-dev (git ab12c34)"
- *      "1.2-dev (git ab12c34) [Loupgarenne]"
- *      "1.3.1 [Mageia 1.3.1-2.mga6]"
+/** User-facing Lugaru-Web release identity, typically:
+ *      "Lugaru-Web v1.0.0 (Lugaru 1.3)"
+ *  An optional package/distribution release identifier may be appended separately.
  */
 const std::string VERSION_STRING = "@LUGARU_VERSION_STRING@";
 
