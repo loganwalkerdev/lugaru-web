@@ -1,12 +1,14 @@
 # WebAssembly Porting Notes
 
-**Last updated:** 2026-09-29
+**Last updated:** 2026-10-04
 
-This document tracks WebAssembly-specific defects, inherited behavior changes, browser compatibility issues, and related implementation notes for Lugaru Web.
+This document tracks WebAssembly-specific defects, inherited behavior changes, browser compatibility issues, and related implementation notes for Lugaru-Web.
 
 `PROJECT.md` contains the high-level issue summary. This file contains the technical detail needed to investigate, test, and resolve each item.
 
-Issue IDs should remain stable once assigned.
+Issue IDs should remain stable once assigned. IDs run from B-1 to B-20 plus CI-1; no B-21 has been assigned.
+
+**v1.0.0 status:** every issue marked **Fixed** below is committed on the development line; fixing commits are recorded in each entry. B-8 (controller support) is partially complete, and B-9, B-10, B-11 and CI-1 remain open. Dated validation notes inside each entry are preserved as historical evidence of what was tested at that time, including the local build directories used then. The current release build procedure is in [`build-provenance.md`](build-provenance.md#current-v10-release-build).
 
 ---
 
@@ -37,6 +39,7 @@ Source-derived issues should not be described as runtime-confirmed until they ha
 
 **Status:** Fixed
 **Priority:** High
+**Fix:** `abb81d7` — `fix: respect web settings and initialize loop timing` (together with B-2)
 **Evidence:** Source inspection + browser runtime validation
 
 ### Location
@@ -139,6 +142,7 @@ Saved VSync and resolution preferences are respected, while unsupported motion b
 
 **Status:** Fixed
 **Priority:** High
+**Fix:** `abb81d7` — `fix: respect web settings and initialize loop timing` (together with B-1)
 **Evidence:** Source inspection + browser runtime validation
 **Related:** B-1
 
@@ -236,6 +240,7 @@ Browser frame scheduling now follows the user's VSync preference, with animation
 
 **Status:** Fixed
 **Priority:** High
+**Fix:** `3d747d3` — `fix: migrate web persistence to IDBFS`
 **Evidence:** Source inspection and browser runtime testing
 
 ### Location
@@ -314,6 +319,7 @@ This behavior is currently acceptable, but save timing should be revisited durin
 
 **Status:** Fixed
 **Priority:** High
+**Fix:** `b222ddc` — `fix: restore animation frame bounds checking`
 **Evidence:** Source inspection + native build + WebAssembly build + browser runtime comparison
 
 **Location:** `Source/Objects/Person.hpp`
@@ -352,7 +358,9 @@ Models, skeletons, and animations use `openMandatoryFile()`. Images (`load_image
 
 **VERIFIED SOURCE FINDING / static audit:** current tracked Lugaru-Web content has zero confirmed case-only asset-reference mismatches and no duplicate tracked filenames differing only by case. Audited references include source literals, animation/sound definitions, campaign map names, all 1,874 JSON clothing paths, and generated tutorial/configured challenge names. Optional absent campaign world textures use the existing default-world fallback.
 
-**VERIFIED SOURCE FINDING / package audit:** the inspected local Web package contains exactly the 542 tracked asset filenames, preserving case without aliases. CMake preloads `Data` at `/Data`; packaging does not mask a detected mismatch. CDN selection changes the aggregate data-file URL, not internal lookup semantics. Remote CDN contents were not independently validated.
+**VERIFIED SOURCE FINDING / package audit (2026-09-27):** the inspected local Web package contains exactly the 542 tracked asset filenames, preserving case without aliases. CMake preloads `Data` at `/Data`; packaging does not mask a detected mismatch. CDN selection changes the aggregate data-file URL, not internal lookup semantics. Remote CDN contents were not independently validated.
+
+*Later changes (2026-10-04):* the tracked `Data/` count is now 544. The two additions are `Data/Textures/Fur.png` (B-20, `85477f5`) and `Data/Textures/FurBW.jpg` (Temple FurBW restoration, `fef0364`); both are exact-case references from their maps. CDN data loading was removed in `36407bd`, so the Web release always fetches `lugaru.data` from the same origin; the remote-CDN caveat above no longer applies to current builds. The package audit itself was not re-run.
 
 **RUNTIME-VERIFIED — isolated harnesses:** native Linux and Emscripten builds of the actual `Folders.cpp`, tested with the unchanged tracked `World.png`, confirmed exact-case success, raw wrong-case lookup failure, Web-only basename recovery through `openMandatoryFile()`, and failure to repair parent-directory case. The Emscripten harness ran under Node; this was not a full browser gameplay test. No shipped-content runtime failure was reproduced.
 
@@ -366,6 +374,7 @@ Close the active B-5 investigation as a low-priority compatibility note. No sour
 
 **Status:** Fixed; investigation closed
 **Priority:** Low
+**Fix:** `fad80ac` — `fix: disable unsupported blur option on Web`
 **Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED experimental rendering; final menu guard source-validated
 
 ### Findings
@@ -410,7 +419,7 @@ The Web target built successfully after retrying an Emscripten cache-lock sandbo
 
 Chrome runtime testing confirmed normal capture, disappearance of the thread error, keyboard and mouse rebinding, clean Escape cancellation, subsequent control selection, rebound actions in gameplay, and persistence after leaving Options and reloading. Held-hotkey, focus-transition, and browser-reserved-key coverage remains unverified.
 
-Native SDL event-thread portability remains a separate open question in research backlog A4a. Historical origin and investigation details are recorded in research-session section V.
+Native SDL event-thread portability remains a separate open question in research backlog A4a. Earlier origin and investigation notes were kept in the raw September research-session notes, which are no longer part of the maintained documentation set; they remain recoverable from Git history and do not override the conclusions recorded here.
 
 ---
 
@@ -644,6 +653,8 @@ Acceptable during initial stabilization unless testing shows severe stalls.
 
 Revisit only after higher-priority correctness and persistence issues are resolved.
 
+For v1.0.0 this remains open and is documented as a known Web limitation in the root `README.md`; no Asyncify or asynchronous-loading change was made.
+
 ---
 
 ## B-11 — Account Creation Behavior Was Changed Globally
@@ -684,6 +695,7 @@ If automatic first-run account creation is needed only for Web builds, isolate t
 
 **Status:** Fixed
 **Priority:** High
+**Fix:** `7d4349b` — `fix: prevent invalid sprite access after deletion`
 **Evidence:** Runtime debugging and source inspection
 
 ### Location
@@ -797,8 +809,9 @@ B-12 is considered fixed based on the identified unsafe erase pattern, the match
 
 ## B-13 — Player Direction Changes Snap Instead of Rotating
 
-**Status:** Fixed — finalized default source and physical QA; manual commit pending
+**Status:** Fixed — finalized default source and physical QA
 **Priority:** Medium
+**Fix:** `0305947` — `fix: restore classic character behavior` (documentation `2d28dfe`, merged at `d21048e`)
 **Evidence:** VERIFIED SOURCE FINDING / VERIFIED GIT HISTORY / RUNTIME-VERIFIED
 
 ### Original symptom and provenance
@@ -817,7 +830,7 @@ The final head implementation prepares one per-actor pending update after fresh 
 
 **RUNTIME-VERIFIED — user physical QA:** yaw materially improved turning; tilt substantially improved player locomotion presentation; head restoration worked well and resembled original Lugaru. Holding forward while rotating the camera continuously retargeted physical movement correctly. The combined restored build played normally with controller/gameplay behavior intact and no remaining perceptible player-locomotion problem. No verified remaining player-locomotion regression currently warrants another code change.
 
-**Build/source validation:** isolated historical-law and head-equivalence checks preceded physical QA. The final default Release Web target is `build-web-character-final/bin/lugaru.html`, built without character or scheduler experiment definitions. Rebuilding after scheduler separation and `git diff --check` passed; bundled assets remain unchanged. Source behavior matches the physically validated restored character configuration. No fixing commit is recorded yet because staging/committing is reserved for manual review.
+**Build/source validation:** isolated historical-law and head-equivalence checks preceded physical QA. The physically validated Release Web build at the time was the local `build-web-character-final/bin/lugaru.html`, built without character or scheduler experiment definitions. Rebuilding after scheduler separation and `git diff --check` passed; bundled assets remain unchanged. Source behavior matches the physically validated restored character configuration. The restoration was subsequently committed as `0305947` after manual review. (`build-web-character-final` was a validation directory for this milestone, not the current release build directory; see [build provenance](build-provenance.md#current-v10-release-build).)
 
 ### Scheduler investigation closed: low-priority open observation
 
@@ -872,7 +885,7 @@ The local `useMipmaps` decision preserves the requested `hasMipmap` value. No as
 
 ### Asset Audit
 
-All 136 tracked texture images were inspected; exactly four were NPOT:
+All 136 tracked texture images at the time of the fix were inspected; exactly four were NPOT. (*Later, 2026-10-04:* the two texture images added since, `Fur.png` from B-20 and the restored `FurBW.jpg`, are both 512×512 POT, so the NPOT set below is unchanged.)
 
 | Asset | Dimensions / format | Shipped use and mipmap request |
 | --- | --- | --- |
@@ -1155,6 +1168,7 @@ See [backlog A9c](research-backlog.md#a9c-empire-sky-palace-dense-foliage-web-sl
 
 **Status:** Fixed
 **Priority:** High
+**Fix:** `21efae8` — `fix: restore time-scaled jump boost`
 
 ### Symptom
 
@@ -1204,6 +1218,7 @@ Commit `1db2761` also changed other multiplier-sensitive systems, including ragd
 
 **Status:** Fixed
 **Priority:** Medium
+**Fix:** `85477f5` — `fix: restore Temple tinted fur rendering`
 
 ### Symptom
 
@@ -1304,6 +1319,10 @@ There is no current evidence from this failure that the Lugaru source itself fai
 Update the workflow to use an architecture-compatible dependency setup or an appropriate runner.
 
 Native CI restoration remains lower priority than browser correctness issues.
+
+### Current state (2026-10-04)
+
+**VERIFIED SOURCE FINDING:** `.github/workflows/` is unchanged since inherited Loupgarenne commit `1db2761`. The workflows build native Linux, macOS and Windows (MinGW cross-compile) targets, name artifacts `lugaru-loupgarenne-*`, and the release workflow triggers on `*-loupgarenne` tags. No workflow builds or tests the Web target, so CI provides no evidence about the Web release. The v1.0 Web build is produced locally; see [build provenance](build-provenance.md#current-v10-release-build). Whether the macOS failure above still reproduces was not re-checked for v1.0.
 
 ---
 

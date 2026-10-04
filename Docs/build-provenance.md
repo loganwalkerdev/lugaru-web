@@ -1,10 +1,150 @@
 # WebAssembly Build Provenance
 
-This document records the environment and commands used to reproduce the known-good Lugaru Web browser build.
+This document records the environment and commands used to build Lugaru-Web for the browser.
 
-It describes the build verified on **2026-09-16** from Ryan Deering's inherited WebAssembly branch.
+It has two parts:
 
-## Source Baseline
+1. **[Current v1.0 release build](#current-v10-release-build)** — the procedure for the Lugaru-Web v1.0.0 Web release.
+2. **[Historical baseline verification (2026-09-16)](#historical-baseline-verification-2026-09-16)** — the preserved record of the first known-good build of Ryan Deering's inherited WebAssembly branch. Its commands, sizes and hashes describe the baseline tag `baseline/wasm-b340204`, not the current release.
+
+---
+
+## Current v1.0 release build
+
+**Last updated:** 2026-10-04
+
+### Toolchain and environment
+
+The v1.0 release build uses the same host environment family as the historical baseline:
+
+```text
+Host OS:      Windows 11 (WSL2)
+Distribution: Ubuntu 26.04.1 LTS
+Emscripten:   6.0.9
+CMake:        4.2.3
+Git:          2.53.0
+Generator:    Unix Makefiles
+```
+
+Emscripten 6.0.9 is installed and activated through `emsdk` exactly as described in [Emscripten Setup](#emscripten-setup). Do not use `latest`.
+
+The current release-preparation build directory is:
+
+```text
+build-web-clean
+```
+
+**VERIFIED BUILD OBSERVATION (2026-10-04):** the `build-web-clean` CMake cache records `CMAKE_BUILD_TYPE=Release`, the emsdk `Emscripten.cmake` toolchain file (i.e. configuration through `emcmake`), CMake 4.2.3, and the Unix Makefiles generator; the active emsdk reports `6.0.9`. The cache also records `ccache` as the compiler launcher. `ccache` is a local build-speed convenience, is not referenced by `CMakeLists.txt`, and is not required.
+
+The exact command line originally used to configure `build-web-clean` was not recorded. The procedure below is consistent with its cache.
+
+### Configure and build
+
+From the repository root, with the pinned SDK active:
+
+```bash
+emcmake cmake -S . -B build-web-clean \
+  -DCMAKE_BUILD_TYPE=Release
+
+cmake --build build-web-clean -j$(nproc)
+```
+
+No data-hosting option is required. `USE_CDN_DATA` no longer exists (see [Same-origin game data](#same-origin-game-data)).
+
+For final release artifacts, configuring a fresh directory is preferable to reusing an older one. A build directory configured before `36407bd` may still contain a stale `USE_CDN_DATA` cache entry; current `CMakeLists.txt` never reads it, so it has no effect.
+
+The GL4ES dependency patch (below) is applied idempotently, so both fresh and repeated builds of the same directory succeed. Both paths were verified during B-18: an existing `build-web-clean` tree rebuilt successfully, and a separate fresh `build-web-clean-2` tree received the patch automatically. See [porting notes B-18](porting-notes.md#b-18--dense-web-foliage-causes-severe-slowdown).
+
+### Output
+
+```text
+build-web-clean/bin/lugaru.html
+build-web-clean/bin/lugaru.js
+build-web-clean/bin/lugaru.wasm
+build-web-clean/bin/lugaru.data
+```
+
+All four files must be deployed together, from the same directory.
+
+Approximate sizes observed in the local `build-web-clean/bin` on 2026-10-04 were:
+
+```text
+lugaru.html     7.6 KB
+lugaru.js       143 KB
+lugaru.wasm     2.0 MB
+lugaru.data     38.4 MB
+```
+
+These are observed values, not expectations. **OPEN:** SHA-256 hashes of the final published v1.0.0 artifacts, and the exact source commit/tag they were built from, have not yet been recorded here. Record them when the release is tagged.
+
+### Same-origin game data
+
+**VERIFIED SOURCE FINDING:** commit `36407bd` (`fix: make Web release self-contained`) removed the inherited `USE_CDN_DATA` CMake option and the production-hostname redirect in `Misc/shell.html` that loaded `lugaru.data` from `https://dev.ryandeering.ie/lugaru.data`. `Module.locateFile()` now returns the requested path unchanged, so `lugaru.data` is always fetched from the same origin and directory as `lugaru.html`.
+
+The Web release is therefore self-contained: it does not depend on Ryan Deering's server or any other external data host. The game data is packaged from the repository's `Data/` directory at build time.
+
+**VERIFIED BUILD OBSERVATION:** the generated `build-web-clean/bin/lugaru.html` and `lugaru.js` inspected on 2026-10-04 contain no `DATA_CDN` or `ryandeering` references.
+
+The same commit also renamed the shell title, SDL window title and startup banner from Loupgarenne to Lugaru-Web, and set `LUGARU_VERSION_SUFFIX` to `-lugaru-web`.
+
+### Current Web build configuration
+
+`CMakeLists.txt` currently configures the Emscripten target with:
+
+```text
+Emscripten ports: SDL2, libpng, libjpeg, Ogg, Vorbis
+GL4ES 8b424fa5aeea8a2445961ae98c326dc6061e109a, patched (see below)
+jsoncpp 1.9.5 (FetchContent)
+-Oz, -flto, --closure 1
+-fexceptions, DISABLE_EXCEPTION_CATCHING=0
+FULL_ES2=1, MAX_WEBGL_VERSION=2
+ALLOW_MEMORY_GROWTH=1
+ASSERTIONS=0, GL_ASSERTIONS=0
+ENVIRONMENT=web
+-lidbfs.js
+--preload-file Data@/Data
+--pre-js Misc/web-persistence.js
+--shell-file Misc/shell.html
+```
+
+Changes from the historical baseline configuration that affect the build:
+
+* **GL4ES patch:** `cmake/patches/gl4es-alpha-to-coverage.patch` forwards `GL_SAMPLE_ALPHA_TO_COVERAGE` to WebGL (B-18, `df72be9`). `cmake/apply-gl4es-patch.cmake` applies it only when the change is not already present (`9012637`). The GL4ES pin itself is unchanged.
+* **Persistence:** IDBFS (`-lidbfs.js`) and `Misc/web-persistence.js` replace the inherited `localStorage` path (B-3, `3d747d3`). `web-persistence.js` is a `LINK_DEPENDS` of the `lugaru` target so edits trigger relinking.
+* **Data hosting:** the CDN option was removed (`36407bd`), as described above.
+
+The optimization profile still favors binary size; see [porting notes B-9](porting-notes.md#b-9--webassembly-build-is-optimized-primarily-for-size).
+
+The inherited `.devcontainer/` (Fedora-based, native/MinGW oriented) and `.devcontainer/toolchain-emscripten.cmake` were not used for the release build; see [Emscripten Toolchain Selection](#emscripten-toolchain-selection).
+
+### Local testing
+
+Serve the output over HTTP rather than `file://`:
+
+```bash
+cd build-web-clean/bin
+python3 -m http.server 8000
+```
+
+Then open:
+
+```text
+http://localhost:8000/lugaru.html
+```
+
+Runtime defects, validation evidence and per-issue QA belong in [`porting-notes.md`](porting-notes.md), not here.
+
+### CI
+
+The repository's `.github/workflows/` are inherited from Loupgarenne. They build native Linux, macOS and Windows (MinGW cross-compile) targets with `lugaru-loupgarenne-*` artifact names, and the release workflow triggers on `*-loupgarenne` tags. No workflow builds the Web target. The v1.0 Web release build is produced locally with the procedure above. See [porting notes CI-1](porting-notes.md#ci-1--macos-ci-fails-during-dependency-setup).
+
+---
+
+## Historical baseline verification (2026-09-16)
+
+> **Historical record.** Everything below describes the build verified on **2026-09-16** from Ryan Deering's inherited WebAssembly branch, before any Lugaru-Web changes. It is preserved as provenance for `baseline/wasm-b340204`. Its commands are correct **for that tag** (including `-DUSE_CDN_DATA=OFF`, which existed then), and its sizes and hashes identify the baseline artifacts. They are not the current release procedure; see [Current v1.0 release build](#current-v10-release-build).
+
+### Source Baseline
 
 Verified source commit:
 
@@ -29,7 +169,7 @@ Later documentation commits do not change the source state used for this initial
 
 ---
 
-## Host Environment
+### Host Environment
 
 The successful build was produced on:
 
@@ -63,7 +203,7 @@ Because browser behavior can affect WebAssembly, input handling, focus behavior,
 
 ---
 
-## Development Tools
+### Development Tools
 
 The verified environment included:
 
@@ -81,7 +221,7 @@ Host GCC was installed through the base development environment but is not treat
 
 ---
 
-## Base Development Packages
+### Base Development Packages
 
 The initial WSL environment was prepared with:
 
@@ -91,9 +231,9 @@ sudo apt install -y git build-essential cmake pkg-config
 
 ---
 
-## Emscripten Setup
+### Emscripten Setup
 
-The verified build uses **Emscripten 6.0.9**.
+The verified build uses **Emscripten 6.0.9**. The v1.0 release build uses the same version and setup.
 
 Install and activate that exact version:
 
@@ -138,7 +278,7 @@ Using `latest` is intentionally avoided because it would allow the toolchain to 
 
 ---
 
-## Repository Configuration
+### Repository Configuration
 
 The working repository was originally cloned from Loupgarenne and configured with separate remotes for the inherited fork and Wolfire reference repository.
 
@@ -162,7 +302,7 @@ baseline/wasm-b340204
 
 ---
 
-## Emscripten Toolchain Selection
+### Emscripten Toolchain Selection
 
 The inherited WebAssembly branch contains:
 
@@ -178,9 +318,9 @@ This was deliberate because the inherited toolchain file manually constructs Ems
 
 ---
 
-## Configure
+### Configure
 
-From the repository root:
+From the repository root, at the baseline tag:
 
 ```bash
 rm -rf build-web
@@ -190,13 +330,13 @@ emcmake cmake -S . -B build-web \
   -DUSE_CDN_DATA=OFF
 ```
 
-`USE_CDN_DATA=OFF` packages the Lugaru data with the local WebAssembly build rather than using the inherited external CDN configuration.
+`USE_CDN_DATA=OFF` packaged the Lugaru data with the local WebAssembly build rather than using the inherited external CDN configuration. Even with the option off, the baseline `Misc/shell.html` still redirected `lugaru.data` to `https://dev.ryandeering.ie/lugaru.data` on any hostname other than `localhost`/`127.0.0.1`; local testing was therefore unaffected. Both the option and the redirect were removed in `36407bd`.
 
 Configuration completed successfully.
 
 ---
 
-## CMake Warning
+### CMake Warning
 
 CMake 4.2.3 emitted the following warning repeatedly during configuration:
 
@@ -211,7 +351,7 @@ It should be reevaluated if the project's library structure changes, the CMake v
 
 ---
 
-## Build
+### Build
 
 The configured project was compiled with:
 
@@ -227,11 +367,11 @@ The build completed successfully with:
 
 ---
 
-## Browser Build Dependencies
+### Browser Build Dependencies
 
 The inherited WebAssembly configuration uses Emscripten-provided or fetched versions of the project's dependencies.
 
-### GL4ES
+#### GL4ES
 
 GL4ES provides the compatibility layer used by Lugaru's legacy fixed-function OpenGL renderer.
 
@@ -241,9 +381,9 @@ The inherited branch pins GL4ES to:
 8b424fa5aeea8a2445961ae98c326dc6061e109a
 ```
 
-The pin should remain fixed until an update is deliberately tested.
+The pin should remain fixed until an update is deliberately tested. (The current build keeps this pin and applies a small local patch; see [Current Web build configuration](#current-web-build-configuration).)
 
-### jsoncpp
+#### jsoncpp
 
 The inherited branch fetches:
 
@@ -251,7 +391,7 @@ The inherited branch fetches:
 jsoncpp 1.9.5
 ```
 
-### Emscripten Ports
+#### Emscripten Ports
 
 The Web build uses Emscripten support for dependencies including:
 
@@ -265,7 +405,7 @@ Vorbis
 
 ---
 
-## Relevant Web Build Configuration
+### Relevant Web Build Configuration
 
 The inherited WebAssembly branch enables or configures behavior including:
 
@@ -281,13 +421,13 @@ size-oriented optimization
 asset preloading
 ```
 
-The current optimization profile primarily favors binary size.
+The optimization profile primarily favors binary size.
 
 Performance-oriented alternatives should only replace it after measurement.
 
 ---
 
-## Output
+### Output
 
 The successful build produced:
 
@@ -311,7 +451,7 @@ These sizes are recorded as observed baseline values rather than strict expectat
 
 ---
 
-## Observed Artifact Hashes
+### Observed Artifact Hashes
 
 The hashes were recorded from `build-web/bin` with:
 
@@ -319,7 +459,7 @@ The hashes were recorded from `build-web/bin` with:
 sha256sum lugaru.html lugaru.js lugaru.wasm lugaru.data
 ```
 
-Observed SHA-256 values from the verified local build:
+Observed SHA-256 values from the verified local baseline build:
 
 ```text
 de9ec90017b947abdcc4f8c12f0ae9347ee423349ce5204863ccf2de17b22d04  lugaru.html
@@ -328,13 +468,13 @@ a0ddc434e0c160e51ee5ba3d957bf41eecacc51a1453b7b78dcd03e4fa847b21  lugaru.js
 0e466ec74170e2690b2aa91180f9f217d1c671b29fd49f225c53e3905433b563  lugaru.data
 ```
 
-These hashes identify the exact artifacts produced by the verified build.
+These hashes identify the exact artifacts produced by the 2026-09-16 baseline build. They do not describe any Lugaru-Web release build.
 
 They are **not** treated as guaranteed future outputs. Changes in source, toolchain behavior, dependency state or build metadata may produce different hashes even when the resulting build is functionally equivalent.
 
 ---
 
-## Local Testing
+### Local Testing
 
 The generated files were served from:
 
@@ -353,7 +493,7 @@ The files should be served over HTTP rather than opened directly through a `file
 
 ---
 
-## Initial Verification
+### Initial Verification
 
 On **2026-09-16**, the baseline build successfully demonstrated at least:
 
@@ -376,12 +516,12 @@ Subsequent testing found that some gameplay inputs may stop responding after bro
 Detailed runtime defects belong in:
 
 ```text
-docs/porting-notes.md
+Docs/porting-notes.md
 ```
 
 ---
 
-## Reproducing the Baseline
+### Reproducing the Baseline
 
 First activate and verify the pinned Emscripten SDK:
 
@@ -444,14 +584,16 @@ git switch main
 
 ## Updating This Document
 
-Update this file when a change affects the reproducible build environment, including:
+Update the [current release build](#current-v10-release-build) section when a change affects the reproducible build environment, including:
 
 * required tool versions,
-* dependency revisions,
+* dependency revisions or local dependency patches,
 * CMake configuration,
 * Emscripten flags,
 * generated output structure,
-* asset packaging,
+* asset packaging or data hosting,
 * or the supported build procedure.
 
-Runtime defects, implementation investigations and issue resolutions should be recorded in `docs/porting-notes.md` instead.
+Do not rewrite the historical baseline section; it records what was verified on 2026-09-16.
+
+Runtime defects, implementation investigations and issue resolutions should be recorded in `Docs/porting-notes.md` instead.

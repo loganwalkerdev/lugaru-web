@@ -1,7 +1,123 @@
+# Release Notes
+
+This file contains Lugaru-Web release notes, followed by the inherited release
+notes of the OSS Lugaru project.
+
+Issue IDs such as B-13 refer to entries in
+[`Docs/porting-notes.md`](Docs/porting-notes.md); IDs such as A11 refer to
+[`Docs/research-backlog.md`](Docs/research-backlog.md). Those documents hold
+the evidence, provenance and validation limits for each change.
+
+## Lugaru-Web v1.0.0 - release date to be set when tagged
+
+Lugaru-Web v1.0.0 is a preservation and browser-stabilization release built
+on Ryan Deering's Loupgarenne WebAssembly baseline
+(`baseline/wasm-b340204`). It concentrates on browser reliability, historical
+behavior, campaign and content repairs, performance, persistence, controls and
+documentation rather than on new gameplay.
+
+The in-game/console version string comes from `CMakeLists.txt` and reads
+`1.3-lugaru-web`, continuing the inherited engine numbering. It is separate
+from the Lugaru-Web project release number.
+
+### Highlights
+
+- Self-contained Web build: `lugaru.data` is served from the same origin as the
+  page. The inherited CDN option and the redirect to Ryan Deering's server
+  were removed (`36407bd`).
+- Built with Emscripten 6.0.9; see `Docs/build-provenance.md`.
+- Browser saves and settings persist through IndexedDB (IDBFS), with safe
+  migration of older `localStorage` saves.
+- Restored historical character turning, body tilt, head tracking and jump
+  timing.
+- Major Web performance fixes for dense fire effects and dense foliage,
+  without reducing historical content.
+- Campaign progression and map/clothing content repairs for Empire and
+  Temple, with provenance recorded.
+- Controller support for gameplay, camera, menus, campaign/world map and
+  challenges.
+
+### Detailed changes
+
+**Browser platform (Web-specific):**
+
+- Saved resolution and VSync settings are no longer overwritten on load;
+  selectable 16:9 Web render resolutions (B-1, `abb81d7`)
+- Main-loop timing initialized after loop creation; animation-frame
+  scheduling when VSync is on (B-2, `abb81d7`)
+- IDBFS persistence with conservative legacy migration (B-3, `3d747d3`)
+- Motion blur shown as `Unavailable on Web` instead of a misleading toggle;
+  native unchanged (B-6, `fad80ac`)
+- Key and mouse rebinding fixed with non-blocking Web capture (B-7, `a7bfd51`)
+- NPOT textures requesting mipmaps no longer render black on Web (B-14,
+  `eea54f4`)
+- Dense fire/smoke sprite rendering optimized on Web (B-15, `592e158`)
+- Dense foliage rendering optimized on Web with 4x MSAA alpha-to-coverage and
+  a small pinned-GL4ES patch (B-18, `df72be9`, `9012637`)
+
+**Shared engine fixes (also affect native builds):**
+
+- Animation frame bounds checking restored (B-4, `b222ddc`)
+- Out-of-bounds crash after sprite deletion fixed (B-12, `7d4349b`)
+- Historical yaw, body tilt and head behavior restored (B-13, `0305947`)
+- Delayed spatial exits no longer lose campaign progression; campaign death
+  reloads use the current node (B-16, `97121db`)
+- Time-scaled jump boost restored under the fixed physics timestep (B-19,
+  `21efae8`)
+- PNG/JPEG images too large for the fixed image buffer now fail to load
+  instead of overflowing it, and clothing that does not match the skin size
+  is skipped instead of overrunning the skin buffer (A11, `babb5d0`,
+  `117b2ec`)
+
+**Game content:**
+
+- Empire Sky Palace: removed two converted `Fire.jpg` clothing layers that
+  corrupted NPC appearance, and the conversion rule that created them (B-17,
+  `6142c73`, `bf94eca`)
+- Empire Sky Palace exit trigger widened and Throne Room Emperor dialogue
+  trigger made reachable from the floor (map-local polish; `ab3f0a0`,
+  `2ae4c5e`, `79f4bfc`)
+- Temple: tinted fur no longer renders with RGB striping, via a
+  pixel-equivalent `Fur.png` (B-20, `85477f5`)
+- Temple: licensed `FurBW.jpg` appearance restored in `svenclimb`,
+  `svenheaven` and `svenroad` (`fef0364`)
+
+**Controller support (new):**
+
+- SDL GameController support for movement, gameplay actions, camera look,
+  pause, and pointer-based menu navigation including campaign/world map and
+  challenge flows (B-8)
+- Most extensively physically tested with a wired DualSense in Firefox.
+  Wired DualSense input has also been observed working in current Chrome.
+- Tutorial Triangle advance and tutorial stage-3 right-stick recognition are
+  implemented and validated by source review and automated harnesses; they
+  have not yet been reported as physically verified.
+
+**Project:**
+
+- Project, attribution and licensing documentation for public release:
+  `README.md`, `PROJECT.md`, `Docs/`, `COPYING.txt`, `AUTHORS`,
+  `CONTENT-LICENSE.txt`, `THIRD-PARTY-NOTICES.txt`
+- Shell title, window title and startup banner renamed to Lugaru-Web
+  (`36407bd`)
+
+### Known limitations
+
+- Motion blur is unavailable in the Web build (B-6).
+- Level loading is synchronous and can briefly block the browser (B-10).
+- A default `"Player"` account is auto-created in all builds, a behavior
+  inherited from the WebAssembly baseline (B-11).
+- Controller support has not been exhaustively tested across browsers,
+  operating systems, Bluetooth and controller models; controller rebinding,
+  prompts and sensitivity settings are not implemented, and account-name
+  entry requires a keyboard (B-8).
+- Native builds are comparison targets only and were not release-validated.
+  The inherited CI workflows build native targets only.
+
 # OSS Lugaru Release Notes
 
-This file contains the subsequent release notes for each version of Lugaru as
-released by the OSS Lugaru team, in reverse chronological order.
+The following are the release notes for each version of Lugaru as released by
+the OSS Lugaru team, in reverse chronological order.
 
 The numbers preceded by a hash (e.g. #9) reference GitLab issue numbers on
 the [OSS Lugaru repository](https://gitlab.com/osslugaru/lugaru).
