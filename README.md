@@ -1,114 +1,219 @@
-# Loupgarenne
+# Lugaru-Web
 
-**A modern fork of Lugaru HD**
+**Lugaru in the browser — preserved, stabilized, and playable with no original game files required.**
 
-Loupgarenne is a fork of [OSS Lugaru](https://gitlab.com/osslugaru/lugaru) focused on
-technical improvements and modern platform support. The goal is to add enhancements to Lugaru while preserving the original gameplay experience.
+### [▶ Play Lugaru-Web in your browser](https://loganwalkerdev.github.io/lugaru-web/)
 
-## Features implemented
+Lugaru-Web is an independent open-source browser version of **Lugaru**, built on the
+OSS Lugaru codebase and Ryan Deering's Loupgarenne WebAssembly work.
 
-- Unlocked framerate with variable timestep physics
-- Fully frame-rate independent animations, timers, and visual effects
-- Apple Silicon (ARM64) support for macOS builds
-- UI fixes
-- Build pipeline improvements and refactoring
+The goal of the project is to preserve the original Lugaru experience while making
+it reliable, maintainable, and easy to play in a modern browser.
 
-## Features I'd like to see implemented
+Version **1.0.0** is the project's preservation-focused first release. It concentrates
+on browser compatibility, historical behavior, campaign reliability, rendering and
+performance fixes, persistence, controls, and documentation rather than adding a new
+gameplay layer.
 
-- Anisotropic texture filtering
-- Proper anti-aliasing
-- Enhanced shadows
-- Settings to improve view distance
-- Enhanced font rendering
-- More builds: Linux ARM64, FreeBSD, CentOS etc. Nintendo Switch?
-- Wasm compilation (playable in browser)
-- Controller support (probably model from Lugaru's controls) 
-- Lever editor tweaks (priority is low)
+## Play
 
-## Credits
+No installation or original commercial game files are required.
 
-- **Original game**: [Wolfire Games](http://www.wolfire.com) - Lugaru HD
-- **Open source project**: [OSS Lugaru team](https://gitlab.com/osslugaru/lugaru)
-- **This fork**: Loupgarenne
+**Browser build:**
 
-## Getting the game data
+https://loganwalkerdev.github.io/lugaru-web/
 
-This repository includes the complete source code along with all required game data files.  
-• The source code is released under the GNU General Public License version 2 or any later version (GPL v2+).
-• The game assets (models, textures, audio, campaigns, etc.) found in the Data folder are distributed under the Creative Commons Attribution‑ShareAlike 3.0 Unported (CC BY-SA 3.0) and/or the Creative Commons Attribution‑ShareAlike 4.0 International (CC BY-SA 4.0) licences, as specified in the CONTENT-LICENSE.txt file
+The complete open-source game data required by this build is included with the project.
 
-You can play the game directly without purchasing additional assets.
+### Browser support
 
-If you enjoy the game, please consider supporting the original developers by buying Lugaru HD:  
-- [Steam](https://store.steampowered.com/app/25010/Lugaru_HD/)  
-- [Humble Bundle](https://www.humblebundle.com/store/lugaru)
+The current Web build has been tested primarily in:
 
-## Installation
+- **Google Chrome**
+- **Mozilla Firefox**
 
-Download the latest release for your platform from the [Releases page](https://github.com/ryandeering/loupgarenne/releases):
+Firefox with a wired DualSense controller is the most extensively tested controller
+configuration. Current Chrome testing has also successfully exposed and used the
+controller through the browser Gamepad API.
 
-- **Windows**: `loupgarenne-x.x-windows-x64.zip` (64-bit) or `loupgarenne-x.x-windows-x86.zip` (32-bit)
-- **macOS**: `loupgarenne-x.x-macos-universal.zip` (Intel and Apple Silicon)
-- **Linux**: `loupgarenne-x.x-linux-x64.tar.gz`
+Other modern browsers may work, but they have not received the same level of release
+validation. Safari has not yet been release-tested.
 
-- Extract the archive and run the executable (`lugaru.exe` on Windows, `lugaru` on Linux, or the app bundle on macOS) 
+## Included content
 
-## Project links
+Lugaru-Web includes the open-source Lugaru game and its bundled campaign and challenge content:
 
-**Upstream OSS Lugaru:**
-- GitLab repository: https://gitlab.com/osslugaru/lugaru
-- Project website: https://osslugaru.gitlab.io
+- **Original Campaign**
+- **Tutorial**
+- **Challenges**
+- **Temple**
+- **Empire**
+- **Seven Tasks**
 
-## The game
+The project also restores and repairs historical content where repository archaeology
+showed that later changes had unintentionally altered its intended appearance or
+behavior.
 
-Lugaru (pronounced Loo-GAH-roo) is a cross-platform third-person action game.
-The main character, Turner, is an anthropomorphic rebel bunny rabbit with
-impressive combat skills. In his quest to find those responsible for
-slaughtering his village, he uncovers a far-reaching conspiracy involving the
-corrupt leaders of the rabbit republic and the starving wolves from a nearby
-den. Turner takes it upon himself to fight against their plot and save his
-fellow rabbits from slavery.
+## What v1.0 adds
 
-## Name
+Lugaru-Web keeps the original game at its core while repairing and modernizing the
+browser port.
 
-Loupgarenne takes inspiration from the French loup-garou, meaning werewolf, which is also the origin of the name Lugaru.
-Garenne is, in modern French, a word for a rabbit warren - making it a fitting double meaning for a game centred on rabbits and wolves.
+Highlights include:
 
-## History
+- WebAssembly/WebGL browser build
+- browser save persistence through IndexedDB
+- persistent settings and keyboard/mouse rebinding
+- fullscreen and browser-friendly resolution handling
+- keyboard and mouse gameplay
+- controller gameplay, camera, menu, and campaign navigation support
+- restored historical character turning, body tilt, and head behavior
+- fixes for browser-specific texture and rendering problems
+- major Web performance fixes for dense fire effects and foliage
+- campaign progression and map-content repairs
+- restored historical Temple clothing/fur assets and behavior
+- safer image and clothing compositing
+- self-contained Web deployment with game data served from the same origin
+- extensive preservation, architecture, and browser-port documentation
 
-Lugaru was originally developed by David Rosen of [Wolfire Games](http://www.wolfire.com)
-and was [open sourced in 2010](http://blog.wolfire.com/2010/05/Lugaru-goes-open-source).
-It was made cross-platform with the help of [Ryan C. Gordon](http://icculus.org).
+Many of these changes intentionally affect only the Web build when the original native
+behavior should remain unchanged.
 
-Various forks were made at that time, and the most interesting developments
-were put back together under the OSS Lugaru organization, originally on
-[Google Code](https://code.google.com/p/lugaru) and then on
-[Bitbucket](https://bitbucket.org/osslugaru/lugaru).
+## Controls
 
-The OSS Lugaru repository on [GitLab](https://gitlab.com/osslugaru/lugaru) is run
-by the OSS Lugaru team, aiming to revitalise the development effort, clean
-things up, ensure the code base builds and runs fine on all supported
-platforms, and ease packaging of Lugaru in Linux distributions.
+### Keyboard and mouse
 
-Loupgarenne is a fork of OSS Lugaru focused on enhancements, technical improvements and modern platform support.
+Lugaru's existing keyboard and mouse controls remain supported and can be rebound from
+the in-game **Options → Controls** menu.
 
-## Compiling
+Mouse movement controls the camera and the existing pointer-based menus.
 
-See the `COMPILING.md` for compilation instructions on all supported
-platforms.
+### Controller
 
-## Support
+Lugaru-Web adds controller support while preserving keyboard and mouse input.
 
-This is a passion project, not a profit project! If you'd like to buy me a coffee:
+The currently implemented layout includes:
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/ryandeering)
+| Control | Action |
+| --- | --- |
+| Left stick | Movement |
+| Right stick | Camera |
+| Cross / A | Jump / Confirm |
+| Circle / B | Crouch / contextual Back |
+| Square / X | Draw or sheath weapon |
+| Triangle / Y | Advance supported Tutorial stages |
+| L1 / Left shoulder | Throw / pick up / contextual weapon action |
+| R1 / Right shoulder | Attack |
+| Options / Start | Pause / resume |
+| D-pad | Precision menu cursor movement |
+
+Controller support currently uses SDL's standardized GameController interface. Broader
+controller, Bluetooth, sensitivity, glyph/prompt, and controller-rebinding work remains
+future polish rather than part of the v1.0 compatibility guarantee.
+
+Account-name entry still requires a keyboard.
+
+## Known Web limitations
+
+Lugaru-Web intentionally documents remaining browser limitations instead of hiding them.
+
+- The original motion-blur effect is currently unavailable in the Web build because the
+  inherited implementation does not render correctly through the current WebGL path.
+- Level loading remains synchronous and can briefly block the browser while a level is
+  being loaded.
+- Controller support has not yet been exhaustively tested across browsers, operating
+  systems, Bluetooth configurations, and controller models.
+- Some controller-oriented UI polish, including controller-specific prompts and
+  rebinding, is still future work.
+
+See [`Docs/porting-notes.md`](Docs/porting-notes.md) for detailed evidence, implementation
+notes, and remaining browser-specific work.
+
+## About Lugaru
+
+**Lugaru** is a third-person action game originally created by David Rosen of
+Wolfire Games.
+
+The player controls Turner, an anthropomorphic rabbit whose search for those responsible
+for the destruction of his village leads into a larger conflict involving the rabbit
+republic and neighboring wolves.
+
+Lugaru was open-sourced in 2010, leading to years of community maintenance, ports,
+fixes, campaigns, and preservation work.
+
+## Project lineage
+
+Lugaru-Web exists because of several layers of previous work:
+
+1. **Lugaru / Lugaru HD** — originally developed by David Rosen and Wolfire Games.
+2. **OSS Lugaru** — community open-source maintenance and cross-platform development.
+3. **Loupgarenne** — Ryan Deering's fork, including the WebAssembly work that provided
+   the known-good browser baseline used by this project.
+4. **Lugaru-Web** — preservation, browser stabilization, restoration, documentation,
+   controller support, and continued development maintained by Logan Walker.
+
+The existing Git history is retained so inherited work remains attributed to its
+original authors.
+
+Lugaru-Web is an independent community project and is **not affiliated with or endorsed
+by Wolfire Games**.
+
+## Documentation
+
+The repository contains extensive documentation for both development and preservation
+work:
+
+- [`PROJECT.md`](PROJECT.md) — project scope, principles, status, and development direction
+- [`Docs/README.md`](Docs/README.md) — documentation index
+- [`Docs/build-provenance.md`](Docs/build-provenance.md) — reproducible Web build environment and dependency provenance
+- [`Docs/porting-notes.md`](Docs/porting-notes.md) — browser defects, fixes, runtime evidence, and compatibility notes
+- [`Docs/architecture.md`](Docs/architecture.md) — codebase and subsystem architecture
+- [`Docs/history-and-lineage.md`](Docs/history-and-lineage.md) — project ancestry and historical research
+- [`Docs/preservation-and-modding.md`](Docs/preservation-and-modding.md) — content preservation and modding research
+- [`Docs/design-direction.md`](Docs/design-direction.md) — long-term design principles and possible future directions
+- [`Docs/research-backlog.md`](Docs/research-backlog.md) — unresolved research and engineering questions
+
+## Building from source
+
+The Web build currently uses **Emscripten 6.0.9**, WebAssembly, SDL2, GL4ES, and WebGL.
+
+For the exact tested browser build environment, dependency revisions, and reproducible
+build information, see:
+
+**[`Docs/build-provenance.md`](Docs/build-provenance.md)**
+
+[`COMPILING.md`](COMPILING.md) also contains inherited/native compilation information.
 
 ## Licensing
 
-The source code is distributed under the GNU General Public License version 2
-or (at your option) any later version (GPLv2+).
+The Lugaru source code is distributed under the **GNU General Public License version 2
+or, at your option, any later version (GPLv2+)**.
 
-The assets (campaigns, graphical and audio assets, etc.) in the `Data` folder
-are distributed under the Creative Commons Attribution - Share Alike license,
-some in version 3.0 Unported (CC-BY-SA 3.0) and others in version 4.0
-International (CC-BY-SA 4.0) as described in the `CONTENT-LICENSE.txt` file.
+See:
+
+- [`COPYING.txt`](COPYING.txt) — GPLv2 license text
+- [`CONTENT-LICENSE.txt`](CONTENT-LICENSE.txt) — game asset licenses, campaign attribution, and Lugaru-Web content modifications
+- [`THIRD-PARTY-NOTICES.txt`](THIRD-PARTY-NOTICES.txt) — notices and licenses for third-party software used by the Web build
+- [`AUTHORS`](AUTHORS) — project authorship and lineage
+
+Game assets in `Data/` are distributed under their applicable
+**CC BY-SA 3.0** and **CC BY-SA 4.0** licenses as documented in
+`CONTENT-LICENSE.txt`.
+
+## Upstream projects
+
+**Loupgarenne:**
+
+- https://github.com/ryandeering/loupgarenne
+
+**OSS Lugaru:**
+
+- https://gitlab.com/osslugaru/lugaru
+- https://osslugaru.gitlab.io
+
+**Wolfire Games:**
+
+- http://www.wolfire.com
+
+If you enjoy Lugaru, consider supporting its original developers through the official
+commercial release of Lugaru HD.
