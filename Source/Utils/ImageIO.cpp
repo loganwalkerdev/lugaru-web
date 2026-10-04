@@ -47,9 +47,12 @@ static bool load_png(const char* fname, ImageRec& tex);
 static bool load_jpg(const char* fname, ImageRec& tex);
 static bool save_screenshot_png(const char* fname);
 
+/* Fixed capacity of ImageRec::data; decoders must not write past it. */
+static const unsigned long long imageRecBytes = 1024 * 1024 * 4;
+
 ImageRec::ImageRec()
 {
-    data = (GLubyte*)malloc(1024 * 1024 * 4);
+    data = (GLubyte*)malloc(imageRecBytes);
 }
 
 ImageRec::~ImageRec()
@@ -137,6 +140,13 @@ static bool load_jpg(const char* file_name, ImageRec& tex)
     (void)jpeg_calc_output_dimensions(&cinfo);
     (void)jpeg_start_decompress(&cinfo);
 
+    if ((unsigned long long)cinfo.output_width * cinfo.output_height * cinfo.output_components > imageRecBytes) {
+        std::cerr << "Image " << file_name << " is too large to load" << std::endl;
+        jpeg_destroy_decompress(&cinfo);
+        fclose(infile);
+        return false;
+    }
+
     row_stride = cinfo.output_width * cinfo.output_components;
     tex.sizeX = cinfo.output_width;
     tex.sizeY = cinfo.output_height;
@@ -203,6 +213,10 @@ static bool load_png(const char* file_name, ImageRec& tex)
     }
 
     if ((color_type & PNG_COLOR_MASK_COLOR) == 0) { // !!! FIXME?
+        goto png_done;
+    }
+
+    if ((unsigned long long)width * height * 4 > imageRecBytes) { // always stored as RGBA
         goto png_done;
     }
 
