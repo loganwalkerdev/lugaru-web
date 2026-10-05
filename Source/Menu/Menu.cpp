@@ -369,7 +369,16 @@ void Menu::Load() {
             addImage(0, Mainmenuitems[0], 150, 480 - 128, 256, 128);
             addButtonImage(1, Mainmenuitems[mainmenu == 1 ? 1 : 5], 18, 480 - 152 - 32, 128, 32);
             addButtonImage(2, Mainmenuitems[2], 18, 480 - 228 - 32, 112, 32);
+#ifdef __EMSCRIPTEN__
+            // Browsers own the lifetime of the page. Keep End Game in the pause
+            // menu, but omit Quit from the Web main menu to avoid terminating
+            // the Emscripten runtime and leaving a dead canvas.
+            if (mainmenu == 2) {
+                addButtonImage(3, Mainmenuitems[6], 18, 480 - 306 - 32, 132, 32);
+            }
+#else
             addButtonImage(3, Mainmenuitems[mainmenu == 1 ? 3 : 6], 18, 480 - 306 - 32, mainmenu == 1 ? 68 : 132, 32);
+#endif
             // addLabel(-1, VERSION_NUMBER + VERSION_SUFFIX, 640 - 100, 10);
             break;
         case 3:
@@ -726,8 +735,10 @@ void Menu::Tick() {
                             gameon = 0;
                             mainmenu = 1;
                         } else { //quit
+#ifndef __EMSCRIPTEN__
                             tryquit = 1;
                             pause_sound(stream_menutheme);
+#endif
                         }
                         break;
                 }
