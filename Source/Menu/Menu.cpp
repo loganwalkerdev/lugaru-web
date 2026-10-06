@@ -671,6 +671,7 @@ void Menu::Tick() {
     if ((mainmenu == 5) && (endgame == 2)) {
         Account::active().endGame();
         endgame = 0;
+        Load();
     }
     if (mainmenu == 10) {
         endgame = 2;
