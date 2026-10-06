@@ -1170,6 +1170,11 @@ int Game::DrawGLScene(StereoSide side)
                 }
             }
             for (unsigned i = 0; i < Person::players.size(); i++) {
+                if (Person::players[i]->scale <= 0.001f ||
+                    Person::players[i]->scale >= 1000.0f) {
+                    continue;
+                }
+
                 distcheck = distsq(&Person::players[0]->coords, &Person::players[i]->coords);
                 if (distcheck < mapviewdist) {
                     glPushMatrix();
