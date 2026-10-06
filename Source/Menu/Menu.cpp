@@ -671,6 +671,7 @@ void Menu::Tick() {
     if ((mainmenu == 5) && (endgame == 2)) {
         Account::active().endGame();
         endgame = 0;
+        Load();
     }
     if (mainmenu == 10) {
         endgame = 2;
@@ -697,7 +698,11 @@ void Menu::Tick() {
                         if (gameon) { //resume
                             mainmenu = 0;
                             pause_sound(stream_menutheme);
-                            resume_stream(leveltheme);
+                            if (musictype == stream_fighttheme) {
+                                resume_stream(stream_fighttheme);
+                            } else {
+                                resume_stream(leveltheme);
+                            }
                         } else { //new game
                             fireSound(firestartsound);
                             flash();
@@ -732,6 +737,12 @@ void Menu::Tick() {
                         fireSound();
                         flash();
                         if (gameon) { //end game
+                            pause_sound(leveltheme);
+                            pause_sound(stream_fighttheme);
+                            musicvolume[0] = 0;
+                            musicvolume[1] = 0;
+                            oldmusicvolume[0] = 0;
+                            oldmusicvolume[1] = 0;
                             gameon = 0;
                             mainmenu = 1;
                         } else { //quit

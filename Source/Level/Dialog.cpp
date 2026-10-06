@@ -205,7 +205,21 @@ void Dialog::tick(int id)
         (playerId > 0) &&
         ((gonethrough == 0) || !special) &&
         (special || Input::isAttackPressed())) {
-        if ((distsq(&Person::players[0]->coords, &Person::players[playerId]->coords) < 6) ||
+        float interactionDistanceSq = 6.0f;
+
+        const float targetScale = Person::players[playerId]->scale;
+        if (targetScale > 0.001f && targetScale < 10.0f) {
+            const float combinedScale =
+                (Person::players[0]->scale + targetScale) * 2.5f;
+            const float scaledInteractionDistanceSq =
+                1.5f * combinedScale * combinedScale;
+
+            if (scaledInteractionDistanceSq > interactionDistanceSq) {
+                interactionDistanceSq = scaledInteractionDistanceSq;
+            }
+        }
+
+        if ((distsq(&Person::players[0]->coords, &Person::players[playerId]->coords) < interactionDistanceSq) ||
             (Person::players[playerId]->howactive >= typedead1) ||
             (type > 40) && (type < 50)) {
             whichdialogue = id;

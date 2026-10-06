@@ -1229,11 +1229,16 @@ void Game::ProcessInput()
             OPENAL_SetFrequency(OPENAL_ALL);
             emit_stream_np(stream_menutheme);
             pause_sound(leveltheme);
+            pause_sound(stream_fighttheme);
         }
-        // On resume, play level music
+        // On resume, restore the gameplay music that was active before pausing.
         if (!mainmenu) {
             pause_sound(stream_menutheme);
-            resume_stream(leveltheme);
+            if (musictype == stream_fighttheme) {
+                resume_stream(stream_fighttheme);
+            } else {
+                resume_stream(leveltheme);
+            }
         }
     }
 
