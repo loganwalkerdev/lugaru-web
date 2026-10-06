@@ -2,7 +2,7 @@ Campaign Levels: 18
 
 Level 1:
 Name: task1
-Description: The_Last_Castle_-_start_campaign
+Description: The_Last_Castle_-_start_new_campaign!
 ChooseNext: 1
 NumNext: 1
 NextLevel: 2

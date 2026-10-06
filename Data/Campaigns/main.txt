@@ -2,7 +2,7 @@ Campaign Levels: 27
 
 Level 1:
 Name: Lugaru1
-Description: Village_-_start_campaign!
+Description: Village_-_start_new_campaign!
 ChooseNext: 2
 NumNext: 1
 NextLevel: 2
