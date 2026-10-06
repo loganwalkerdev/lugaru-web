@@ -2,9 +2,11 @@
 
 These documents capture the technical, historical, preservation, and design understanding of Lugaru-Web, including maintained findings from the September 23 archaeology continuation, controller implementation, character restoration, the Web rendering/performance fixes, Empire and Temple content repairs, and the clothing/image audit completed for v1.0.
 
-## Current status (v1.0.0 release preparation, 2026-10-04)
+## Current status (v1.0.0 release preparation, 2026-10-06)
 
-Lugaru-Web v1.0.0 is the preservation and browser-stabilization release. Every B-series issue currently marked **Fixed**, as listed in [`PROJECT.md`](../PROJECT.md#known-browser-issues), is committed, with fixing commits recorded in [`porting-notes.md`](porting-notes.md). The Web release is built with Emscripten 6.0.9 in `build-web-clean` and serves its game data from the same origin; see [`build-provenance.md`](build-provenance.md#current-v10-release-build). Open items are summarized in [`PROJECT.md`](../PROJECT.md#near-term-priorities).
+Lugaru-Web v1.0.0 is the preservation and browser-stabilization release. Every B-series issue currently marked **Fixed**, as listed in [`PROJECT.md`](../PROJECT.md#known-browser-issues), is committed, with fixing commits recorded in [`porting-notes.md`](porting-notes.md). The current v1.0 Web build procedure uses Emscripten 6.0.9 and `build-web-release`, and the Web build serves its game data from the same origin; the final clean release rebuild is still pending. See [`build-provenance.md`](build-provenance.md#current-v10-release-build). Open items are summarized in [`PROJECT.md`](../PROJECT.md#near-term-priorities).
+
+Release campaign QA has completed full playthroughs of Original, Seven Tasks and Temple. The resulting fixes are merged into `release/v1.0.0-prep` at `87c182a`. The full 41-map Empire playthrough is next and has not yet been run.
 
 ## Documents in this directory
 
@@ -13,9 +15,9 @@ They are intentionally separated by purpose:
 - `history-and-lineage.md` — project ancestry, authorship, Lugaru 2/Overgrowth research, and what each lineage layer contributed.
 - `architecture.md` — a living mental map of the current codebase, including the campaign/world-map/dialogue/hotspot objective machinery, important couplings, and likely extension seams.
 - `design-direction.md` — preservation/product principles, Classic/Expanded/Arena rulesets, UI direction, mechanics, multiplayer, and long-term product identity.
-- `preservation-and-modding.md` — historical community content, archaeological leads, mod/tool preservation, licensing workflow, and restored-edition policy.
+- `preservation-and-modding.md` — historical community content, archaeological leads, mod/tool preservation, licensing workflow, restored-edition policy, and the evidence rule for changing inherited campaign data.
 - `research-backlog.md` — unresolved questions and concrete research/code-reading tasks, plus dated closure records for resolved investigations.
-- `porting-notes.md` — browser-port issues B-1 to B-20 and CI-1: implementation, build and runtime evidence, fixing commits, and validation limits, including controller gameplay/menu UI and tutorial validation limits.
+- `porting-notes.md` — browser-port issues B-1 to B-20 and CI-1, plus the release campaign QA fixes: implementation, build and runtime evidence, fixing commits, and validation limits, including controller gameplay/menu UI and tutorial validation limits.
 - `build-provenance.md` — the current v1.0 Web release build procedure and the preserved 2026-09-16 baseline build record (toolchain, dependency pins, commands, historical artifact hashes).
 
 Historical and upstream documentation also lives here and should not automatically override current source or the documents above:
@@ -78,3 +80,7 @@ The Temple tinted-fur striping (B-20, `85477f5`), FurBW restoration (`fef0364`),
 ### Self-contained Web release
 
 `36407bd` removed the inherited CDN option and the shell redirect to Ryan Deering's server; the Web release now loads `lugaru.data` from its own origin. See [build provenance](build-provenance.md#same-origin-game-data).
+
+### Release campaign QA
+
+Full Original, Seven Tasks and Temple playthroughs produced fixes for the Long-ten Giant encounter, minimap helper markers, combat music after End Game, and the post-completion campaign map. They also removed stale or duplicated dialogue from Temple and `task9`. [Porting notes](porting-notes.md#release-campaign-qa-fixes-2026-10-05--2026-10-06) hold the fixes and validation. [Preservation 19](preservation-and-modding.md#19-changing-inherited-campaign-data-v10-campaign-qa-review) records the evidence rule and the data deliberately left unchanged, including `svencouncil`, `svenskip`, helper actors and awkward but authored dialogue. Empire QA is still open.

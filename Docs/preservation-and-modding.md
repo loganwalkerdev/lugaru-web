@@ -594,3 +594,96 @@ behavioral modernization
 ```
 
 A compatibility repair such as restoring a broken hotspot reference is historically different from redesigning the map around a new objective system.
+
+---
+
+# 19. Changing inherited campaign data: v1.0 campaign QA review
+
+Release campaign QA in October 2026 removed demonstrably bad data from the bundled campaigns. It also kept several things that first looked broken. This section records the rule that was applied and the evidence for each case. Fixing commits, implementation details and runtime validation are in [porting notes](porting-notes.md#release-campaign-qa-fixes-2026-10-05--2026-10-06). Evidence below comes from the pre-fix data at `e1cfb2e` and the current tree, unless stated otherwise.
+
+## Rule
+
+**Decision:** preserve original authored content unless there is strong evidence that it is:
+
+- corrupted;
+- an accidental duplicate or stale copy;
+- attached to the wrong actor or map;
+- unreachable because of broken data;
+- technically malfunctioning;
+- otherwise demonstrably erroneous.
+
+None of the following is enough by itself: awkward writing, age, strangeness, apparent redundancy, absence from normal campaign progression, or unusual actor metadata. Before classifying data as broken, check its runtime launch path (see [architecture 20.4–20.5](architecture.md#204-hotspots-tiny-invisible-script-volumes)) and the campaign's own documentation.
+
+## Authored dialogue is not rewritten for style
+
+Some Temple lines read oddly, for example Shan's `I am dead. Soon.` in `svenshan` and Sven's `...glad to see you alive in spite of the rumors.` in `svencouncil`. Rewriting them was considered and rejected. They are legitimate authored dialogue, with no evidence of corruption, and they are not open bugs.
+
+The only text change inside retained Temple dialogue fixes a wrong name. In `svenshan`, Sven's opening line said `Garett!` in a conversation whose only other speaker is Shan. It now reads `Shan!` (`744c7de`).
+
+## Temple: stale copied dialogue (removed)
+
+| Maps | Removed dialogue | Evidence |
+| --- | --- | --- |
+| `svenninja`, `svenruins` (five each); `sventemple`, `sventemple2` (one each) — `20be11c` | Turner's village conversations with April, Sarah, Skipper, Clover and Jack | Original-campaign characters in Temple maps. The Clover conversation is identical to one in `Lugaru1`, and the April conversation is identical in `svenninja`, `sventemple` and `sventemple2`. |
+| `svenfireice`, `svenforest`, `svenfort` (two each); `svenredbwafter`, `svenshan` (one each) — `744c7de` | Turner/Ray, Skipper/Turner and Jack/Turner conversations | `svenfort`, `svenshan`, `svenredbwafter` and `svenfireice` blocks are identical to dialogues in Original `Lugaru5` and `Lugaru12`. `svenforest` carries the same conversations (same speakers and opening lines) but is not byte-identical. |
+| `svenclimb`, `svenheaven`, `svenchasm`, `sventhrone` (two each) — `488aae6` | Turner/Ray `Where's Shan? I must speak with him.` and Skipper/Turner `Where did Shan go?` | Identical blocks in four different normal Temple maps. `svenclimb` is a combat map (`hostile = 1`, six armed enemies) with none of the friendly-NPC setup the conversation implies, and ordinary `Dialog::tick()` only starts these types while `hostile == 0`. |
+
+Legitimate Temple dialogue in these maps, such as the Sven/Niels conversation in `svenredbwafter` and the Sven/Shan conversation in `svenshan`, was retained.
+
+## `sventemple2`: unreachable stale blocks (removed)
+
+Before `488aae6`, `sventemple2` held four dialogues. D0 (type `2`, Sven and Silb, beginning `I'm glad to see the temple is still safe.`) is legitimate and was kept unchanged. D1–D3 (types `3`, `5` and `4`) targeted Persons 3, 5 and 4, but the map has only Persons 0–2. No hotspot launches them, so they could never start. They carried legacy Original-campaign speaker names (Turner, Skipper, Clover, Jack) over Temple-like text, and one of them has exactly the same text as `sventemple`'s Lenore conversation. They were removed as stale, unreachable copies.
+
+A nonexistent target was not the deciding evidence on its own; see `svencouncil` below.
+
+## `svencouncil`: apparently invalid target, left unchanged
+
+**No change.** D0 is the Sven/Shan/Niels council conversation, with type `35`. Its last digit selects Person 5, but the map has only Persons 0–4, so ordinary `Dialog::tick()` can never start it. However, the map's type `20` hotspot launches dialogue 0 directly, and type `30–39` sets `windialogue` when the conversation finishes, which completes the level.
+
+The same arrangement (a type-`35` dialogue, no Person 5, a type-`20` hotspot) appears in Original `Lugaru13` and `Lugaru14`. All ten bundled type-`30` dialogues, including those in `svenmeeting` and `svendoor`, are also hotspot-launched. Changing the type to `34` because Person 4 wears `ClShan.png` was considered and rejected: the existing launch path works, and the change would add a proximity trigger the original data does not have.
+
+## `svenskip`: documented fallback, preserved
+
+**HISTORICAL EVIDENCE:** `README.Temple.txt` says: "If a level crashes, replace it with the map 'svenskip' in the Data/Maps folder- or, more elegant, in the campaign file (Data/Campaigns/temple.txt)." `svenskip` is not part of any bundled campaign route.
+
+Current data has only the player Person, a type `-1` exit hotspot, and five dialogues whose targets do not exist. These are the Turner/April conversation plus copies or close variants of `sventemple`'s conversations. **Decision:** the map and its contents are preserved unchanged. Being outside normal progression is not evidence for removal; this map's role is documented by the campaign itself.
+
+## Helper actors with zero or extreme scale
+
+| Map | Persons |
+| --- | --- |
+| `jendraz41` (Empire) | P1 scale `0.0` |
+| `svencouncil` | P1, P2 scale `0.0` |
+| `svenfireice` | P7, P8 scale `20000.0`, `howactive` 7 |
+| `svenmeeting` | P1–P5 scale `0.0` |
+| `svenredbwafter` | P1 scale `0.0` |
+| `svenshan` | P5 scale `20000.0`, `howactive` 7 |
+| `sventemple`, `sventemple2` | P1 scale `0.0` |
+
+**INFERENCE:** these are consistent with cutscene/staging helpers rather than corrupt actors. For example, `svencouncil`'s council dialogue focuses participants 0–2, and Persons 1 and 2 are its scale-0 actors. Their purpose is not documented, and the data is unchanged. Only their minimap markers were suppressed (`f23faa2`). Backlog A11 separately records `svenredbwafter` Person 1 as historically invisible.
+
+Unusual scale alone does not mean an actor is a helper. The `2.0`-scale Long-ten Giant in Seven Tasks `task9` is legitimate content, and both the minimap filter and the dialogue-distance change were bounded so that it is treated as an ordinary actor.
+
+## Seven Tasks `task9`: wrong-actor duplicate
+
+`task9` contained the giant encounter twice: once as a type-`12` dialogue on the giant, and once as a type-`11` dialogue whose target is Wort. The Wort-attached copy was removed. The giant's own encounter and Wort's type-`31` ending were kept, and the giant's speaker name was normalized from `Longten Giant` to `Long-ten Giant`, matching the removed copy's spelling (`d997ab3`).
+
+## Campaign labels and ending text
+
+- Structural labels were normalized: first-node `..._start_new_campaign!` labels in `main.txt`, `empire.txt` and `seventasks.txt` (Temple already used this form), and Temple's final node `Ice_Cave_(Last_Level)` → `Ice_Cave` (`4d27256`). The parenthetical had been in the campaign file since it was added to OSS in `200ab5f` (2011).
+- Seven Tasks `Bonus_Level_-_ZOMBIES!` was deliberately kept. It reads as authored presentation, and `README.SevenTasks.txt` describes the "Bonus Zombie Level". Not every unusual campaign label was normalized.
+- Empire's ending wording `Lugaru's island` became `Lugaru Island`.
+- **VERIFIED GIT HISTORY — Temple ending:** the previous Temple `EndText` was an explicit OSS placeholder added in `217da32` (Rémi Verschelde, 2017-02-11, "Improve end texts for existing campaigns"), inviting players to "propose a cool ending text upstream". `744c7de` replaced it with three lines beginning `Sven has slain the Water Temple master.` This is newly authored Lugaru-Web completion text, not recovered original Temple campaign prose.
+
+## Editing method for map JSON
+
+Earlier automated editing attempts reformatted the map JSON and were reverted before commit. The committed `488aae6` cleanup used a text-preserving edit and was checked by:
+
+- JSON parsing;
+- exact expected dialogue counts per map;
+- semantic comparison of all non-dialogue map data;
+- confirmation that `sventemple2` D0 is unchanged;
+- `git diff --check`;
+- a full Emscripten data rebuild and direct browser smoke tests of each changed map.
+
+A Lugaru dialogue object serializes ten participant slots plus per-scene speaker, text, colour, location, sound, focus, facing and camera data. Removing eleven stale objects in `488aae6` therefore deleted 2,117 JSON lines. For map-data changes, judge correctness by semantic comparison, not by diff line count.

@@ -180,6 +180,8 @@ That lineage comparison located the cause in Loupgarenne commit `1db2761`, which
 
 Work completed for v1.0 after the first fixes includes Web key rebinding (B-7), controller support (B-8; tutorial physical QA still open), Web NPOT texture handling (B-14), Web sprite and foliage performance (B-15, B-18), Empire progression and clothing repairs (B-16, B-17), Temple fur restoration (B-20 and the FurBW restoration `fef0364`), image/clothing compositing hardening (backlog A11), and removal of the inherited external data host so the Web release serves `lugaru.data` from its own origin (`36407bd`). Several of these defects were inherited from OSS content conversion or shared game logic rather than introduced by the browser port; each porting-notes entry records its provenance.
 
+Release campaign QA (2026-10-05/06) fixed inherited shared behavior in dialogue interaction, minimap markers, pause/End Game music and the post-completion campaign map, and removed demonstrably stale copied dialogue from Temple maps and Seven Tasks `task9`. Unusual inherited content was deliberately kept, including the Temple-documented fallback map `svenskip`. See [porting notes](porting-notes.md#release-campaign-qa-fixes-2026-10-05--2026-10-06) and [preservation 19](preservation-and-modding.md#19-changing-inherited-campaign-data-v10-campaign-qa-review). For attribution: the current Temple ending is Lugaru-Web-authored text that replaced an explicit 2017 OSS placeholder (`217da32`). It is not recovered original Temple campaign prose.
+
 ---
 
 ## 5. Redagito/Lugaru as a reference implementation

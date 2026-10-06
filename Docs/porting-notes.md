@@ -1,6 +1,6 @@
 # WebAssembly Porting Notes
 
-**Last updated:** 2026-10-04
+**Last updated:** 2026-10-06
 
 This document tracks WebAssembly-specific defects, inherited behavior changes, browser compatibility issues, and related implementation notes for Lugaru-Web.
 
@@ -8,7 +8,7 @@ This document tracks WebAssembly-specific defects, inherited behavior changes, b
 
 Issue IDs should remain stable once assigned. IDs run from B-1 to B-20 plus CI-1; no B-21 has been assigned.
 
-**v1.0.0 status:** every issue marked **Fixed** below is committed on the development line; fixing commits are recorded in each entry. B-8 (controller support) is partially complete, and B-9, B-10, B-11 and CI-1 remain open. Dated validation notes inside each entry are preserved as historical evidence of what was tested at that time, including the local build directories used then. The current release build procedure is in [`build-provenance.md`](build-provenance.md#current-v10-release-build).
+**v1.0.0 status:** every issue marked **Fixed** below is committed on the development line; fixing commits are recorded in each entry. B-8 (controller support) is partially complete, and B-9, B-10, B-11 and CI-1 remain open. Shared gameplay and campaign-data fixes found during release campaign QA are recorded without new IDs under [Release campaign QA fixes](#release-campaign-qa-fixes-2026-10-05--2026-10-06). Dated validation notes inside each entry are preserved as historical evidence of what was tested at that time, including the local build directories used then. The current release build procedure is in [`build-provenance.md`](build-provenance.md#current-v10-release-build).
 
 ---
 
@@ -1280,6 +1280,68 @@ This runtime A/B agrees with the source analysis and isolates the format-sensiti
 ### Scope
 
 B-20 intentionally uses a narrow data restoration rather than globally changing the historical `addClothes()` compositor. The broader clothing audit found additional historical, devtool, and preservation issues that are tracked separately under backlog A11.
+
+---
+
+## Release campaign QA fixes (2026-10-05 – 2026-10-06)
+
+**Status:** Fixed; merged into `release/v1.0.0-prep` at `87c182a`
+**Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (project-owner campaign playthroughs and targeted map tests)
+**Provenance:** shared game code and inherited campaign data, not WebAssembly-specific. The pre-fix code paths below are present unchanged in `baseline/wasm-b340204`. Like B-16, these were found during Web campaign QA and are recorded here; no B-number was assigned.
+
+Full campaign playthroughs during release QA are complete for Original (27/27 levels), Seven Tasks (18/18) and Temple (31/31). **OPEN:** the full 41-map Empire campaign playthrough has not yet been run. The intended method is to play the real campaign route, record suspicious behavior, avoid changing data mid-run unless progression is blocked, and investigate confirmed issues afterwards. Challenge-map coverage and browser/release edge testing also remain.
+
+The data-cleanup evidence and the decisions not to change suspicious-looking data are recorded in [preservation and modding section 19](preservation-and-modding.md#19-changing-inherited-campaign-data-v10-campaign-qa-review); the dialogue launch rules involved are in [architecture 20.5](architecture.md#205-dialogue-is-the-games-cutscene-system-and-a-tiny-script-vm).
+
+### Minimap markers for helper actors (`f23faa2`)
+
+Several Temple maps and Empire `jendraz41` contain Persons with scale `0.0` or `20000.0` that appear to serve cutscene/staging roles. The minimap loop in `Game::DrawGLScene()` (`Source/GameDraw.cpp`) drew a marker for every Person, producing misleading markers for these helpers.
+
+The loop now skips Persons with `scale <= 0.001` or `scale >= 1000.0`. Ordinary actors (bundled scales around `0.2`) and the `2.0`-scale Long-ten Giant in Seven Tasks `task9` are drawn as before. No actor data was changed.
+
+**RUNTIME-VERIFIED — project-owner QA:** after a rebuild, affected maps containing helper/sentinel actors were checked, and `task9` was checked to confirm that the legitimate Long-ten Giant minimap marker remained visible while extreme-scale helper markers were suppressed.
+
+### Long-ten Giant encounter, Seven Tasks `task9` (`d997ab3`)
+
+**VERIFIED SOURCE FINDING — data:** `task9` contained three dialogues. D0 (type `31`) is Wort's level-ending dialogue. D2 (type `12`, target Person 2, the `2.0`-scale giant) is the giant encounter. D1 (type `11`) contained the same giant encounter, but its type targets Person 1 (Wort), so it was attached to the wrong actor.
+
+**VERIFIED SOURCE FINDING — mechanism:** `Dialog::tick()` started proximity dialogue only when `distsq` between character centres was below a fixed `6` (about 2.45 units). The giant's size prevented the player from reliably getting close enough to trigger D2.
+
+**Fix:**
+
+- `task9.json`: remove D1; keep D0 and D2 unchanged apart from normalizing D2's speaker name from `Longten Giant` to `Long-ten Giant`. All non-dialogue map data is unchanged.
+- `Source/Level/Dialog.cpp`: when the target's scale is between `0.001` and `10`, the squared interaction distance becomes the larger of `6` and `1.5 × ((player scale + target scale) × 2.5)²`. Default-sized pairs keep the historical `6`, and helper-scale targets (`0.0`, `20000.0`) are excluded. In bundled data, the giant is the only dialogue target that this enlarges.
+- `Source/GameDraw.cpp`: dialogue speaker names that would overflow the left edge of the dialogue box are scaled down to fit. Names that already fit are drawn as before.
+
+**RUNTIME-VERIFIED — project-owner QA:** approaching the giant triggers the correct encounter once, the full `LONG-TEN GIANT:` speaker label fits, Wort gives only his level-ending dialogue, and ordinary NPC dialogue interaction is unchanged.
+
+### Combat music survives Pause → End Game (`d07fea4`)
+
+**Symptom:** after Pause → End Game during combat, the fight theme could continue playing in the menu.
+
+**VERIFIED SOURCE FINDING:** the pause and resume paths in `Game::ProcessInput()` and the Pause-menu Resume button in `Menu::Tick()` paused and resumed only `leveltheme`, not `stream_fighttheme`. End Game also left gameplay music state in place.
+
+**Fix:** pausing now also pauses `stream_fighttheme`, and resuming restores whichever stream `musictype` records (fight theme or level theme). End Game pauses both gameplay streams and zeroes their `musicvolume` / `oldmusicvolume` entries before returning to the main menu.
+
+**RUNTIME-VERIFIED — project-owner QA:** combat Pause → Resume through the menu button and through Esc/Back, combat Pause → End Game, peaceful Pause → Resume, and starting another level after End Game all behaved correctly.
+
+### Campaign map shows final state after completion (`3363eae`)
+
+**Symptom:** after completing a campaign and leaving the ending screen, the campaign map could keep showing the completed final state, even though progress had been reset internally.
+
+**VERIFIED SOURCE FINDING:** `Menu::Tick()` calls `Account::active().endGame()`, which clears campaign progress, but the campaign menu had already been built from the previous state.
+
+**Fix:** `Menu::Load()` is now called immediately after `Account::active().endGame(); endgame = 0;`, so the visible menu reflects the reset state. This is a menu/state synchronization fix. Account data and save format are unchanged.
+
+### Campaign data and text (`20be11c`, `744c7de`, `4d27256`, `488aae6`)
+
+- Removed stale copied dialogue objects from Temple maps (`svenninja`, `svenruins`, `sventemple`, `sventemple2`, `svenfireice`, `svenforest`, `svenfort`, `svenredbwafter`, `svenshan`, `svenclimb`, `svenheaven`, `svenchasm`, `sventhrone`). Legitimate Temple dialogue is retained unchanged, except one wrong name reference (`Garett!` → `Shan!` in `svenshan`).
+- Normalized first campaign-node labels to `..._start_new_campaign!` in `main.txt`, `empire.txt` and `seventasks.txt`; Temple already used that form.
+- Changed the Temple final node label from `Ice_Cave_(Last_Level)` to `Ice_Cave`.
+- Changed the Empire ending text from `Lugaru's island` to `Lugaru Island`.
+- Replaced the Temple ending text, an OSS placeholder, with a three-line ending.
+
+**VERIFIED SOURCE FINDING (re-checked against the commits):** in every changed map, the JSON parses, all non-dialogue map data is identical, and retained dialogues are unchanged apart from the `svenshan` and `task9` name fixes. Large diff line counts come from deleting whole serialized dialogue objects. **RUNTIME-VERIFIED — project-owner QA:** after a full data rebuild, `svenclimb`, `svenheaven`, `svenchasm`, `sventhrone` and `sventemple2` each loaded directly and played normally. The stale Shan dialogue no longer appeared, and `sventemple2`'s Sven/Silb conversation still played.
 
 ---
 

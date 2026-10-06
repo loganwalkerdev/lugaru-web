@@ -805,6 +805,16 @@ Because `41–49` bypass distance and `Dialog::tick()` iterates all dialogues ev
 
 Types whose last digit is `0` do not pass `playerId > 0`, so they cannot start through ordinary `Dialog::tick()`. The only bundled example is `jendraz1` dialogue type `10`; that map has no dialogue-launch hotspot for it, making this specific dialogue appear to be unreachable/stale duplicate data in the current source path.
 
+### Launch paths, missing targets, and interaction distance
+
+**VERIFIED SOURCE FINDING (2026-10-06):** `Dialog::tick()` also requires `playerId < Person::players.size()`. A dialogue whose last digit names a nonexistent Person therefore never starts through ordinary ticking, and it does not read out of bounds. A type `20–40` hotspot (section 20.4) can still launch it: the hotspot path selects `Dialog::dialogs[type - 20]` directly and checks neither the dialogue's target digit nor `hostile`. The dialogue's own type still determines what happens when it finishes.
+
+Bundled data relies on this. `svencouncil` (Temple) and `Lugaru13` / `Lugaru14` (Original) each pair a type-`35` dialogue, whose target Person 5 does not exist, with a type-`20` hotspot. The hotspot starts the conversation, and type `30–39` sets `windialogue` when it ends. All ten type-`30` dialogues (target digit `0`) are launched by type-`20` hotspots in the same way. A zero or missing target therefore does not by itself make a dialogue unreachable; check for a launching hotspot first. See [preservation 19](preservation-and-modding.md#19-changing-inherited-campaign-data-v10-campaign-qa-review) for how this affected the release data review.
+
+Participant indices can also refer to helper Persons. Several Temple maps contain Persons with scale `0.0` or `20000.0`, and `svencouncil`'s council dialogue focuses its two scale-`0.0` Persons. These Persons count toward `Person::players` indexing like any other.
+
+The proximity test was historically a fixed `distsq < 6` between character centres. Since `d997ab3`, when the target's scale is between `0.001` and `10`, the squared threshold becomes the larger of `6` and `1.5 × ((player scale + target scale) × 2.5)²`. Default-sized pairs keep `6`, and helper-scale targets are excluded. In bundled data, the only dialogue target this enlarges is the `2.0`-scale giant in Seven Tasks `task9`. See [porting notes](porting-notes.md#long-ten-giant-encounter-seven-tasks-task9-d997ab3).
+
 ### Bundled-dialogue census
 
 Across all bundled JSON maps, the used dialogue types are:
@@ -820,6 +830,20 @@ Across all bundled JSON maps, the used dialogue types are:
 ```
 
 No other type values are used.
+
+*Later change (2026-10-06):* the census above records the 2026-09-23 data: 143 dialogues and 862 scenes. Release campaign QA then removed 32 stale dialogue objects from Temple maps and Seven Tasks `task9`, leaving 111 dialogues and 668 scenes:
+
+```text
+1:3   2:5   3:4   4:4   5:4
+10:1
+11:6  12:2  13:1  14:1
+21:12 23:1  25:1  26:2
+30:10 31:13 32:7  34:3  35:3  36:3
+41:23
+51:2
+```
+
+Every type value listed above is still used. The scene-level observations below (no `-5`/`-6` sounds, `participantaction = 0`) still hold for the reduced set.
 
 ### Scene-level script hooks
 
