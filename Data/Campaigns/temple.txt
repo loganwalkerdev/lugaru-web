@@ -272,7 +272,7 @@ LocationY: 258
 
 Level 31:
 Name: svenfireice
-Description: Ice_Cave_(Last_Level)
+Description: Ice_Cave
 ChooseNext: 1
 NumNext: 0
 LocationX: 343
