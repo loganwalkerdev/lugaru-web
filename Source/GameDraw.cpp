@@ -721,12 +721,21 @@ int Game::DrawGLScene(StereoSide side)
                 string = Dialog::currentScene().name + ": ";
                 string.erase(std::remove(string.begin(), string.end(), '#'), string.end());
 
+                /* Keep long speaker names inside the left side of the dialog box. */
+                float nameWidth = 2.0f * 7.6f * string.size() * screenwidth / 1024.0f;
+                const float nameLeftMargin = 8.0f * screenwidth / 1024.0f;
+                float nameScale = 1.0f;
+                if (nameWidth > startx - nameLeftMargin) {
+                    nameScale = (startx - nameLeftMargin) / nameWidth;
+                }
+                const float nameX = startx - nameWidth * nameScale;
+
                 /* Print speaker name in dialog box. */
                 if (Dialog::currentScene().color[0] + Dialog::currentScene().color[1] + Dialog::currentScene().color[2] < 1.5) {
-                    text->glPrintOutlined(0.7, 0.7, 0.7, tutorialopac, startx - 2 * 7.6 * string.size() * screenwidth / 1024, starty, string, 1, 1.4 * screenwidth / 1024, screenwidth, screenheight);
+                    text->glPrintOutlined(0.7, 0.7, 0.7, tutorialopac, nameX, starty, string, 1, 1.4 * nameScale * screenwidth / 1024, screenwidth, screenheight);
                 } else {
                     glColor4f(0, 0, 0, tutorialopac);
-                    text->glPrintOutline(startx - 2 * 7.6 * string.size() * screenwidth / 1024 - 4, starty - 4, string, 1, 1.4 * 1.25 * screenwidth / 1024, screenwidth, screenheight);
+                    text->glPrintOutline(nameX - 4, starty - 4, string, 1, 1.4 * 1.25 * nameScale * screenwidth / 1024, screenwidth, screenheight);
                 }
 
                 /* Get dialog text, and remove potential '#' chars hardcoded in it.' */
