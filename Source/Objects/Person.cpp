@@ -2801,6 +2801,54 @@ void Person::DoAnimations()
                             rotationpoint = 0;
                             whichtri = victim->skeleton.drawmodel.LineCheck(&startpoint, &endpoint, &colpoint, &movepoint, &rotationpoint);
 
+                            // The original knife ground-stab test samples a single
+                            // vertical line 60% along the weapon. That point can
+                            // narrowly miss a ragdolled victim even when another
+                            // part of the knife overlaps the collision mesh.
+                            //
+                            // Preserve the original test first, then sample
+                            // additional points along the knife only as fallbacks.
+                            if (whichtri == -1 &&
+                                weapons[weaponids[weaponactive]].getType() == knife) {
+                                const float knifeProbeWeights[] = {
+                                    .4f, .8f, .2f, 1.0f
+                                };
+
+                                for (unsigned probe = 0;
+                                     probe < sizeof(knifeProbeWeights) / sizeof(knifeProbeWeights[0]);
+                                     ++probe) {
+                                    const float weight = knifeProbeWeights[probe];
+
+                                    where =
+                                        weapons[weaponids[weaponactive]].tippoint * weight +
+                                        weapons[weaponids[weaponactive]].position * (1.0f - weight);
+                                    where -= victim->coords;
+
+                                    if (!victim->skeleton.free) {
+                                        where = DoRotation(where, 0, -victim->yaw, 0);
+                                    }
+
+                                    startpoint = where;
+                                    startpoint.y += 100;
+                                    endpoint = where;
+                                    endpoint.y -= 100;
+
+                                    movepoint = 0;
+                                    rotationpoint = 0;
+
+                                    whichtri = victim->skeleton.drawmodel.LineCheck(
+                                        &startpoint,
+                                        &endpoint,
+                                        &colpoint,
+                                        &movepoint,
+                                        &rotationpoint);
+
+                                    if (whichtri != -1) {
+                                        break;
+                                    }
+                                }
+                            }
+
                             if (whichtri != -1) {
                                 if (victim->dead != 2) {
                                     victim->DoDamage(abs((victim->damagetolerance - victim->permanentdamage) * 2));
