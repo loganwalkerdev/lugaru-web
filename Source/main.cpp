@@ -217,14 +217,19 @@ void initGL()
 
 void toggleFullscreen()
 {
-    fullscreen = !fullscreen;
     Uint32 flags = SDL_GetWindowFlags(sdlwindow);
-    if (flags & SDL_WINDOW_FULLSCREEN) {
-        flags &= ~SDL_WINDOW_FULLSCREEN;
-    } else {
+    const bool enableFullscreen = (flags & SDL_WINDOW_FULLSCREEN) == 0;
+
+    if (enableFullscreen) {
         flags |= SDL_WINDOW_FULLSCREEN;
+    } else {
+        flags &= ~SDL_WINDOW_FULLSCREEN;
     }
-    SDL_SetWindowFullscreen(sdlwindow, flags);
+
+    if (SDL_SetWindowFullscreen(sdlwindow, flags) == 0) {
+        fullscreen = enableFullscreen;
+    }
+
     updateMouseState(true);
 }
 
@@ -235,6 +240,17 @@ SDL_bool sdlEventProc(const SDL_Event& e)
             return SDL_FALSE;
 
         case SDL_WINDOWEVENT:
+#ifdef __EMSCRIPTEN__
+            // Browsers can leave fullscreen independently, such as when the
+            // user switches tabs or applications. Keep the menu setting in
+            // sync with SDL's actual window state.
+            fullscreen = (SDL_GetWindowFlags(sdlwindow) & SDL_WINDOW_FULLSCREEN) != 0;
+
+            if (mainmenu == 3) {
+                Menu::updateSettingsMenu();
+            }
+#endif
+
             if (e.window.event == SDL_WINDOWEVENT_CLOSE) {
                 return SDL_FALSE;
             } else if (e.window.event == SDL_WINDOWEVENT_MINIMIZED ||
