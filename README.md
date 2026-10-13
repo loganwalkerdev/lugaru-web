@@ -1,6 +1,6 @@
 # Lugaru-Web
 
-**Lugaru in the browser — preserved, stabilized, and playable with no original game files required.**
+**Lugaru in the browser: preserved, stabilized, and playable with no original game files required.**
 
 ### [▶ Play Lugaru-Web in your browser](https://loganwalkerdev.github.io/lugaru-web/)
 
@@ -184,11 +184,11 @@ fixes, campaigns, and preservation work.
 
 Lugaru-Web exists because of several layers of previous work:
 
-1. **Lugaru / Lugaru HD** — originally developed by David Rosen and Wolfire Games.
-2. **OSS Lugaru** — community open-source maintenance and cross-platform development.
-3. **Loupgarenne** — Ryan Deering's fork, including the WebAssembly work that provided
+1. **Lugaru / Lugaru HD**: originally developed by David Rosen and Wolfire Games.
+2. **OSS Lugaru**: community open-source maintenance and cross-platform development.
+3. **Loupgarenne**: Ryan Deering's fork, including the WebAssembly work that provided
    the known-good browser baseline used by this project.
-4. **Lugaru-Web** — preservation, browser stabilization, restoration, documentation,
+4. **Lugaru-Web**: preservation, browser stabilization, restoration, documentation,
    controller support, and continued development maintained by Logan Walker.
 
 The existing Git history is retained so inherited work remains attributed to its
@@ -202,17 +202,17 @@ by Wolfire Games**.
 The repository contains extensive documentation for both development and preservation
 work:
 
-- [`PROJECT.md`](PROJECT.md) — project scope, principles, status, and development direction
-- [`RELEASE-NOTES.md`](RELEASE-NOTES.md) — Lugaru-Web release notes and inherited OSS Lugaru release history
-- [`COMPILING.md`](COMPILING.md) — Web build commands and inherited native build instructions
-- [`Docs/README.md`](Docs/README.md) — documentation index
-- [`Docs/build-provenance.md`](Docs/build-provenance.md) — reproducible Web build environment and dependency provenance
-- [`Docs/porting-notes.md`](Docs/porting-notes.md) — browser defects, fixes, runtime evidence, and compatibility notes
-- [`Docs/architecture.md`](Docs/architecture.md) — codebase and subsystem architecture
-- [`Docs/history-and-lineage.md`](Docs/history-and-lineage.md) — project ancestry and historical research
-- [`Docs/preservation-and-modding.md`](Docs/preservation-and-modding.md) — content preservation and modding research
-- [`Docs/design-direction.md`](Docs/design-direction.md) — long-term design principles and possible future directions
-- [`Docs/research-backlog.md`](Docs/research-backlog.md) — unresolved research and engineering questions
+- [`PROJECT.md`](PROJECT.md): project scope, principles, status, and development direction
+- [`RELEASE-NOTES.md`](RELEASE-NOTES.md): Lugaru-Web release notes and inherited OSS Lugaru release history
+- [`COMPILING.md`](COMPILING.md): Web build commands and inherited native build instructions
+- [`Docs/README.md`](Docs/README.md): documentation index
+- [`Docs/build-provenance.md`](Docs/build-provenance.md): reproducible Web build environment and dependency provenance
+- [`Docs/porting-notes.md`](Docs/porting-notes.md): browser defects, fixes, runtime evidence, and compatibility notes
+- [`Docs/architecture.md`](Docs/architecture.md): codebase and subsystem architecture
+- [`Docs/history-and-lineage.md`](Docs/history-and-lineage.md): project ancestry and historical research
+- [`Docs/preservation-and-modding.md`](Docs/preservation-and-modding.md): content preservation and modding research
+- [`Docs/design-direction.md`](Docs/design-direction.md): long-term design principles and possible future directions
+- [`Docs/research-backlog.md`](Docs/research-backlog.md): unresolved research and engineering questions
 
 ## Building from source
 
@@ -234,10 +234,10 @@ or, at your option, any later version (GPLv2+)**.
 
 See:
 
-- [`COPYING.txt`](COPYING.txt) — GPLv2 license text
-- [`CONTENT-LICENSE.txt`](CONTENT-LICENSE.txt) — game asset licenses, campaign attribution, and Lugaru-Web content modifications
-- [`THIRD-PARTY-NOTICES.txt`](THIRD-PARTY-NOTICES.txt) — notices and licenses for third-party software used by the Web build
-- [`AUTHORS`](AUTHORS) — project authorship and lineage
+- [`COPYING.txt`](COPYING.txt): GPLv2 license text
+- [`CONTENT-LICENSE.txt`](CONTENT-LICENSE.txt): game asset licenses, campaign attribution, and Lugaru-Web content modifications
+- [`THIRD-PARTY-NOTICES.txt`](THIRD-PARTY-NOTICES.txt): notices and licenses for third-party software used by the Web build
+- [`AUTHORS`](AUTHORS): project authorship and lineage
 
 Game assets in `Data/` are distributed under their applicable
 **CC BY-SA 3.0** and **CC BY-SA 4.0** licenses as documented in

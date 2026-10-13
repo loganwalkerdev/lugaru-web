@@ -46,13 +46,13 @@ Use git history when authorship, provenance, regressions, or behavioral lineage 
 
 Use these documents contextually:
 
-* `Docs/architecture.md` — current engine mental model, important couplings, gameplay/source archaeology, and extension seams.
-* `Docs/research-backlog.md` — investigation log: open technical and historical questions, plus records of resolved investigations.
-* `Docs/history-and-lineage.md` — project ancestry and historical attribution.
-* `Docs/design-direction.md` — preservation/product principles and Classic/Expanded/Arena direction.
-* `Docs/preservation-and-modding.md` — historical community content, licensing, provenance, and restoration.
-* `Docs/build-provenance.md` — current build ancestry/provenance.
-* `Docs/porting-notes.md` — browser-port implementation and validation notes.
+* `Docs/architecture.md`: current engine mental model, important couplings, gameplay/source archaeology, and extension seams.
+* `Docs/research-backlog.md`: investigation log of open technical and historical questions, plus records of resolved investigations.
+* `Docs/history-and-lineage.md`: project ancestry and historical attribution.
+* `Docs/design-direction.md`: preservation/product principles and Classic/Expanded/Arena direction.
+* `Docs/preservation-and-modding.md`: historical community content, licensing, provenance, and restoration.
+* `Docs/build-provenance.md`: current build ancestry/provenance.
+* `Docs/porting-notes.md`: browser-port implementation and validation notes.
 
 Cite maintained findings from the documents above.
 

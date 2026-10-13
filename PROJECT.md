@@ -143,7 +143,7 @@ This file tracks only the current high-level state. Fixing commits, evidence and
 | B-2  | Browser main loop uses timeout scheduling as a consequence of B-1 (`abb81d7`)     | Fixed  | High     |
 | B-3  | Browser persistence migrated from localStorage to IDBFS with safe legacy migration (`3d747d3`) | Fixed  | High     |
 | B-4  | Animation bounds checking removed in shared code (`b222ddc`)                      | Fixed  | High     |
-| B-5  | Asset case fallback: latent external-content compatibility risk                    | Closed — note retained | Low |
+| B-5  | Asset case fallback: latent external-content compatibility risk                    | Closed (note retained) | Low |
 | B-6  | Web blur intentionally disabled; Options row unavailable (`fad80ac`)              | Fixed  | Low      |
 | B-7  | Browser key rebinding replaced with Web-only nonblocking capture (`a7bfd51`)      | Fixed  | Medium   |
 | B-8  | Controller gameplay/camera/menu UI Firefox/wired DualSense verified; tutorial physical QA and compatibility/tuning open | Partial | Medium |
@@ -207,7 +207,7 @@ The retained GitHub Actions workflow builds native Linux, macOS and Windows comp
 
 ## Current Development Phase
 
-### v1.0.0 — Preservation and Browser Stabilization Release
+### v1.0.0: Preservation and Browser Stabilization Release
 
 The baseline-preservation and stabilization work that began from `baseline/wasm-b340204` is complete for v1.0.0:
 

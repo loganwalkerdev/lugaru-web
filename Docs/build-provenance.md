@@ -4,8 +4,8 @@ This document records the environment and commands used to build Lugaru-Web for 
 
 It has two parts:
 
-1. **[Current v1.0 release build](#current-v10-release-build)** — the procedure for the Lugaru-Web v1.0.0 Web release.
-2. **[Historical baseline verification (2026-09-16)](#historical-baseline-verification-2026-09-16)** — the preserved record of the first known-good build of Ryan Deering's inherited WebAssembly branch. Its commands, sizes and hashes describe the baseline tag `baseline/wasm-b340204`, not the current release.
+1. **[Current v1.0 release build](#current-v10-release-build)**: the procedure for the Lugaru-Web v1.0.0 Web release.
+2. **[Historical baseline verification (2026-09-16)](#historical-baseline-verification-2026-09-16)**: the preserved record of the first known-good build of Ryan Deering's inherited WebAssembly branch. Its commands, sizes and hashes describe the baseline tag `baseline/wasm-b340204`, not the current release.
 
 ---
 
@@ -76,7 +76,7 @@ No data-hosting option is required. `USE_CDN_DATA` no longer exists (see [Same-o
 
 For final release artifacts, configuring a fresh directory is preferable to reusing an older one. A build directory configured before `36407bd` may still contain a stale `USE_CDN_DATA` cache entry; current `CMakeLists.txt` never reads it, so it has no effect.
 
-The GL4ES dependency patch (below) is applied idempotently, so both fresh and repeated builds of the same directory succeed. Both paths were verified during B-18: an existing build tree rebuilt successfully, and a separate fresh build tree received the patch automatically. See [porting notes B-18](porting-notes.md#b-18--dense-web-foliage-causes-severe-slowdown).
+The GL4ES dependency patch (below) is applied idempotently, so both fresh and repeated builds of the same directory succeed. Both paths were verified during B-18: an existing build tree rebuilt successfully, and a separate fresh build tree received the patch automatically. See [porting notes B-18](porting-notes.md#b-18-dense-web-foliage-causes-severe-slowdown).
 
 ### Output
 
@@ -138,7 +138,7 @@ belongs in [`porting-notes.md`](porting-notes.md).
 
 The Web release is therefore self-contained: it does not depend on Ryan Deering's server or any other external data host. The game data is packaged from the repository's `Data/` directory at build time.
 
-**HISTORICAL EVIDENCE — earlier release-candidate build (2026-10-04):** the
+**HISTORICAL EVIDENCE (earlier release-candidate build, 2026-10-04):** the
 following same-origin/MIME inspection was performed on an earlier
 release-candidate build from `917bdbae63c28d91649023e8b374bb4e845d6667`, not
 on the final v1.0.0 artifacts. Its sizes therefore differ from the final
@@ -201,7 +201,7 @@ Changes from the historical baseline configuration that affect the build:
 * **Persistence:** IDBFS (`-lidbfs.js`) and `Misc/web-persistence.js` replace the inherited `localStorage` path (B-3, `3d747d3`). `web-persistence.js` is a `LINK_DEPENDS` of the `lugaru` target so edits trigger relinking.
 * **Data hosting:** the CDN option was removed (`36407bd`), as described above.
 
-The optimization profile still favors binary size; see [porting notes B-9](porting-notes.md#b-9--webassembly-build-is-optimized-primarily-for-size).
+The optimization profile still favors binary size; see [porting notes B-9](porting-notes.md#b-9-webassembly-build-is-optimized-primarily-for-size).
 
 The inherited `.devcontainer/` (Fedora-based, native/MinGW oriented) and `.devcontainer/toolchain-emscripten.cmake` were not used for the release build; see [Emscripten Toolchain Selection](#emscripten-toolchain-selection).
 
@@ -245,7 +245,7 @@ release and is being packaged and deployed separately.
 No current workflow builds or tests the Web target. The v1.0 Web release is
 therefore built and verified locally using the procedure above. Web CI and
 automated Pages/release deployment remain post-v1.0 work. See
-[porting notes CI-1](porting-notes.md#ci-1--macos-ci-fails-during-dependency-setup).
+[porting notes CI-1](porting-notes.md#ci-1-macos-ci-fails-during-dependency-setup).
 
 ---
 
