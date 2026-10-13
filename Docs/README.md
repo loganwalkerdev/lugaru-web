@@ -2,11 +2,11 @@
 
 These documents capture the technical, historical, preservation, and design understanding of Lugaru-Web, including maintained findings from the September 23 archaeology continuation, controller implementation, character restoration, the Web rendering/performance fixes, Empire and Temple content repairs, and the clothing/image audit completed for v1.0.
 
-## Current status (v1.0.0 release preparation, 2026-10-06)
+## Current status (v1.0.0 release preparation, 2026-10-13)
 
 Lugaru-Web v1.0.0 is the preservation and browser-stabilization release. Every B-series issue currently marked **Fixed**, as listed in [`PROJECT.md`](../PROJECT.md#known-browser-issues), is committed, with fixing commits recorded in [`porting-notes.md`](porting-notes.md). The current v1.0 Web build procedure uses Emscripten 6.0.9 and `build-web-release`, and the Web build serves its game data from the same origin; the final clean release rebuild is still pending. See [`build-provenance.md`](build-provenance.md#current-v10-release-build). Open items are summarized in [`PROJECT.md`](../PROJECT.md#near-term-priorities).
 
-Release campaign QA has completed full playthroughs of Original, Seven Tasks and Temple. The resulting fixes are merged into `release/v1.0.0-prep` at `87c182a`. The full 41-map Empire playthrough is next and has not yet been run.
+Full release QA has covered all bundled campaigns (Original, Seven Tasks, Temple and Empire) and the challenges; Chrome and Firefox were separately browser smoke/performance tested. Fixes through `87c182a` are recorded in porting notes; later release fixes are summarized in [`PROJECT.md`](../PROJECT.md#v100-release-qa-fixes).
 
 ## Documents in this directory
 
@@ -83,4 +83,4 @@ The Temple tinted-fur striping (B-20, `85477f5`), FurBW restoration (`fef0364`),
 
 ### Release campaign QA
 
-Full Original, Seven Tasks and Temple playthroughs produced fixes for the Long-ten Giant encounter, minimap helper markers, combat music after End Game, and the post-completion campaign map. They also removed stale or duplicated dialogue from Temple and `task9`. [Porting notes](porting-notes.md#release-campaign-qa-fixes-2026-10-05--2026-10-06) hold the fixes and validation. [Preservation 19](preservation-and-modding.md#19-changing-inherited-campaign-data-v10-campaign-qa-review) records the evidence rule and the data deliberately left unchanged, including `svencouncil`, `svenskip`, helper actors and awkward but authored dialogue. Empire QA is still open.
+Full Original, Seven Tasks and Temple playthroughs produced fixes for the Long-ten Giant encounter, minimap helper markers, combat music after End Game, and the post-completion campaign map. They also removed stale or duplicated dialogue from Temple and `task9`. [Porting notes](porting-notes.md#release-campaign-qa-fixes-2026-10-05--2026-10-06) hold the fixes and validation. [Preservation 19](preservation-and-modding.md#19-changing-inherited-campaign-data-v10-campaign-qa-review) records the evidence rule and the data deliberately left unchanged, including `svencouncil`, `svenskip`, helper actors and awkward but authored dialogue. Later release QA, including Empire, is summarized in [`PROJECT.md`](../PROJECT.md#v100-release-qa-fixes).

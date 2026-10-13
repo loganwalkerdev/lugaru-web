@@ -4,14 +4,14 @@
 
 The Lugaru-Web release target is the WebAssembly build. It is built with
 **Emscripten 6.0.9** through `emcmake`; the current release build directory
-is `build-web-clean`:
+is `build-web-release`:
 
 ```
-emcmake cmake -S . -B build-web-clean -DCMAKE_BUILD_TYPE=Release
-cmake --build build-web-clean -j$(nproc)
+emcmake cmake -S . -B build-web-release -DCMAKE_BUILD_TYPE=Release
+cmake --build build-web-release -j$(nproc)
 ```
 
-The output in `build-web-clean/bin/` (`lugaru.html`, `lugaru.js`,
+The output in `build-web-release/bin/` (`lugaru.html`, `lugaru.js`,
 `lugaru.wasm`, `lugaru.data`) must be served over HTTP, with all four files
 together. Game data is always loaded from the same origin; there is no CDN
 option.
