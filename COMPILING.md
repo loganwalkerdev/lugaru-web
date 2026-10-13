@@ -22,16 +22,14 @@ toolchain setup, dependency revisions, the GL4ES patch, and the preserved
 
 ## Native builds (inherited instructions)
 
-The rest of this file is inherited from OSS Lugaru, with notes from the
-Loupgarenne fork. Lugaru-Web uses native builds as comparison targets; they are
-not part of the v1.0 release and these instructions have not been revalidated
-for it. The inherited `.devcontainer/` mentioned below is a Fedora-based
-native/MinGW environment and was not used for the Lugaru-Web Web build.
+The rest of this file is inherited from OSS Lugaru. Lugaru-Web uses native
+builds as comparison targets; they are not part of the v1.0 release and these
+instructions have not been revalidated for it.
 
-Notes left by Ryan Deering in the Loupgarenne fork:
-
-> (contents of this are outdated. I'll update later. - RD)
-> (if you're that bothered, use the devcontainer. i'll add for Apple later as i'm just building natively on mac)
+Ryan Deering noted in the Loupgarenne fork that these inherited instructions
+were already out of date, and pointed to the fork's `.devcontainer/` as the
+practical native build environment. That `.devcontainer/` is a Fedora-based
+native/MinGW environment; it was not used for the Lugaru-Web Web build.
 
 As it stands, the version of Lugaru in this repository supports Linux, OSX
 and Windows. Not all toolchains are tested, thus we would welcome help from

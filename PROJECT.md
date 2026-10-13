@@ -135,7 +135,7 @@ Detailed investigation notes belong in:
 Docs/porting-notes.md
 ```
 
-This file tracks only the current high-level state. Every item marked **Fixed** is committed; fixing commits are recorded in `Docs/porting-notes.md`. Issue IDs are stable; B-21 has not been assigned.
+This file tracks only the current high-level state. Fixing commits, evidence and validation limits for each issue are recorded in `Docs/porting-notes.md`.
 
 | ID   | Summary                                                                           | Status | Priority |
 | ---- | --------------------------------------------------------------------------------- | ------ | -------- |
@@ -159,14 +159,6 @@ This file tracks only the current high-level state. Every item marked **Fixed** 
 | B-18 | Dense Web foliage slowdown caused by GL4ES alpha-test rendering (`df72be9`) | Fixed | High |
 | B-19 | Jump boost applied too quickly under fixed physics timestep (`21efae8`) | Fixed | High |
 | B-20 | Temple tinted JPEG fur rendered with RGB striping (`85477f5`) | Fixed | Medium |
-
-B-14 preserves native and Web POT behavior; only Web NPOT images requesting mipmaps fall back to `GL_LINEAR` without automatic generation. SnowFlake retains its original mipmap request and assets are unchanged. See [B-14 evidence](Docs/porting-notes.md#b-14--web-npot-textures-render-black-with-mipmapped-sampling). The separate fire/sprite slowdown is [resolved in backlog A8](Docs/research-backlog.md#a8-dense-fire-spawner-web-slowdown--resolved-for-r1-2026-09-28): B-15 uses client arrays on Web, preserves native rendering and historical particles, and passed project-owner production QA. See [B-15 evidence](Docs/porting-notes.md#b-15--dense-fire-sprite-rendering-slows-web).
-
-B-16 closes the Empire progression blocker found during Web campaign QA: leaving the Sky Palace bridge exit during the completion delay no longer stalls routing or causes count-based death reloads to skip Rebel Outpost. The defect was inherited shared logic, not WASM-specific. See [B-16 evidence](Docs/porting-notes.md#b-16--delayed-spatial-exit-loses-campaign-progression-empire-sky-palace) and [backlog A9](Docs/research-backlog.md#a9-empire-sky-palace-campaign-progression--resolved-for-r1-2026-09-29).
-
-B-17 closes an inherited OSS Empire content-conversion regression: two historically unresolved `fire.png` clothing references in Sky Palace had been remapped to the opaque `Fire.jpg` loading texture, corrupting two NPC appearances. The shipped map now omits those dead clothing layers and the obsolete conversion rule has been removed so the defect cannot be recreated. See [B-17 evidence](Docs/porting-notes.md#b-17--empire-sky-palace-npcs-receive-firejpg-as-clothing) and [backlog A9b](Docs/research-backlog.md#a9b-empire-sky-palace-npc-clothing-corruption--resolved-for-r1-2026-09-30).
-
-B-18 closes a Web-specific dense-foliage performance regression exposed by Empire's Sky Palace tree cluster. Controlled A/B testing isolated the bottleneck to overlapping alpha-tested leaf triangles rather than object count or vertex submission. The Web renderer now sorts normal-pass tree leaves front-to-back and uses 4x MSAA alpha-to-coverage instead of GL4ES's legacy alpha-test discard path; the pinned GL4ES dependency is patched during CMake configuration so that alpha-to-coverage reaches WebGL. Native rendering and all original Empire foliage content remain unchanged. A fresh Emscripten 6.0.9 build reproduced the fix with correct cutouts and smooth runtime behavior. See [B-18 evidence](Docs/porting-notes.md#b-18--dense-web-foliage-causes-severe-slowdown) and [backlog A9c](Docs/research-backlog.md#a9c-empire-sky-palace-dense-foliage-web-slowdown--resolved-for-r1-2026-09-30).
 
 ---
 
@@ -193,7 +185,7 @@ lugaru.wasm
 lugaru.data
 ```
 
-The four files must be deployed together. The current source and local build load `lugaru.data` from the same origin and directory as `lugaru.html`, not from Ryan Deering's server (`36407bd`); this has not yet been smoke-tested on the public deployment. The files must be served over HTTP rather than opened through `file://`.
+The four files must be deployed together. The Web build loads `lugaru.data` from the same origin and directory as `lugaru.html`, not from Ryan Deering's server (`36407bd`); the public deployment has not yet been smoke-tested. The files must be served over HTTP rather than opened through `file://`.
 
 Exact environment information, dependency revisions, build commands, compiler configuration, known warnings, and the preserved 2026-09-16 baseline record are maintained in:
 
@@ -201,7 +193,7 @@ Exact environment information, dependency revisions, build commands, compiler co
 Docs/build-provenance.md
 ```
 
-Per-issue runtime validation is recorded in `Docs/porting-notes.md`. SHA-256 hashes and the source commit of the final published v1.0.0 artifacts are still to be recorded in `Docs/build-provenance.md` when the release is tagged.
+Final v1.0.0 artifact sizes and SHA-256 hashes, built from source commit `1b81e1d`, are recorded in `Docs/build-provenance.md`. Per-issue runtime validation is recorded in `Docs/porting-notes.md`.
 
 ### Native Builds
 
@@ -209,7 +201,7 @@ Native builds should remain available as comparison targets where practical. The
 
 A change to shared game code should not knowingly break a supported native target without a documented reason.
 
-The retained GitHub Actions build workflow still builds native Linux, macOS and Windows comparison targets only. Its artifact and install names were reconciled for Lugaru-Web as `lugaru-web-native-*`. The inherited tag-driven native release workflow was removed before v1.0.0 because the v1.0 release is Web-only and is packaged and deployed separately. No workflow currently builds or tests the Web target. The inherited macOS workflow was previously observed failing before compilation because it attempts to install an x86_64 Homebrew environment on an Apple Silicon runner; that failure has not been revalidated for v1.0.0. See CI-1 in `Docs/porting-notes.md`.
+The retained GitHub Actions workflow builds native Linux, macOS and Windows comparison targets only; no workflow builds or tests the Web target, and v1.0.0 Web packaging and deployment are manual. See [build provenance](Docs/build-provenance.md#ci) and CI-1 in `Docs/porting-notes.md`.
 
 ---
 
@@ -223,75 +215,34 @@ The baseline-preservation and stabilization work that began from `baseline/wasm-
 * historical character turning, tilt, head behavior, and jump timing are restored;
 * Web sprite and foliage performance regressions are fixed without reducing historical content;
 * Empire progression/clothing and Temple fur/clothing content are repaired or restored, with provenance recorded;
-* the audited PNG/JPEG image-decode and clothing-compositing paths are hardened with size/dimension validation; known unchecked paths outside that audit remain documented, and unfixed, in backlog A11;
+* the audited PNG/JPEG image-decode and clothing-compositing paths are hardened with size/dimension validation; known unchecked paths outside that audit remain documented, and unfixed, in investigation-log entry A11;
 * controller support covers gameplay, camera, menus, campaign/world map, and challenges;
-* the current source and local build are configured to load `lugaru.data` from the same origin as the page (`36407bd`); smoke testing of the public deployment is still pending;
-* full release QA covered all bundled campaigns (Original, Seven Tasks, Temple and Empire) and the challenges, and Chrome and Firefox were separately browser smoke/performance tested; the resulting fixes are summarized in **v1.0.0 Release QA Fixes** below;
+* the Web build loads `lugaru.data` from the same origin as the page (`36407bd`);
+* full release QA covered all bundled campaigns (Original, Seven Tasks, Temple and Empire) and the challenges, and Chrome and Firefox were separately browser smoke/performance tested;
 * Web defaults were tuned, and browser fullscreen now starts windowed and stays in sync with the browser.
 
-The remaining work before publishing is release packaging and verification, not new gameplay. Major gameplay additions continue to wait until after v1.0.0; see **Near-Term Priorities**.
+The complete list of v1.0.0 changes, including the fixes found during release QA, is in [`RELEASE-NOTES.md`](RELEASE-NOTES.md). Evidence, fixing commits and validation limits for each issue are in [`Docs/porting-notes.md`](Docs/porting-notes.md).
+
+Major gameplay additions continue to wait until after v1.0.0; see **Near-Term Priorities**.
 
 ---
-
-## v1.0.0 Release QA Fixes
-
-Found during release QA (2026-10-04 – 2026-10-13) and verified by project-owner testing. These have no B-numbers. Fixes up to `b8ee78d` are recorded in detail in [porting notes](Docs/porting-notes.md#release-campaign-qa-fixes-2026-10-05--2026-10-06) and [preservation 19](Docs/preservation-and-modding.md#19-changing-inherited-campaign-data-v10-campaign-qa-review).
-
-### Shared gameplay and engine fixes (all builds)
-
-* **Knife-catch crash** (`e95844f`, `Weapon::doStuff()`): catching a thrown knife now resets `frameCurrent` to 0 when switching to `removeknifeanim`, instead of carrying over the previous animation's frame index.
-* **Grounded knife finisher hit detection** (`8f25ff1`, `Person::DoAnimations()`): the original single vertical test at 60% along the knife runs first, unchanged. If it misses, the test is repeated at 40%, 80%, 20% and 100%. This only adds hits the original test narrowly missed; it is a deliberate leniency improvement, not a historical restoration.
-* **Long-ten Giant encounter** (`d997ab3`): dialogue interaction distance now scales with character size (default-sized pairs keep the historical `distsq < 6`; helper-scale actors are excluded). Long speaker names are scaled to fit the dialogue box.
-* **Combat music** (`d07fea4`): pausing also pauses the fight theme, resuming restores whichever theme was active, and End Game stops both gameplay streams.
-* **Campaign map after completion** (`3363eae`): the campaign menu is rebuilt after `Account::endGame()` resets progress, so it no longer shows the completed final state.
-* **Minimap** (`f23faa2`): Persons with scale `<= 0.001` or `>= 1000` (cutscene/staging helpers) are no longer drawn; no actor data changed.
-* **Fullscreen toggle** (`09cea07`, shared part): `toggleFullscreen()` updates the fullscreen setting only if SDL actually changes the window state.
-
-### Campaign data and text
-
-* **Empire throne dialogue** (`d51f9d5`): `jendraz11` gains a type-20 dialogue-launch hotspot at the throne, matching the position and size of the existing `jendraz2` trigger.
-* **Temple dialogue cleanup** (`20be11c`, `744c7de`, `488aae6`): stale Original-campaign dialogue copies and unreachable blocks were removed from 13 Temple maps; legitimate Temple dialogue is unchanged apart from one wrong name (`Garett!` → `Shan!` in `svenshan`). Non-dialogue map data is identical.
-* **`task9`** (`d997ab3`): a duplicate giant dialogue attached to Wort was removed; the speaker name was normalized to `Long-ten Giant`.
-* **Campaign labels** (`744c7de`, `4d27256`): first-level labels normalized to `..._start_new_campaign!`; Temple `Ice_Cave_(Last_Level)` → `Ice_Cave`.
-* **Ending text** (`744c7de`): Empire `Lugaru's island` → `Lugaru Island`. The Temple ending is new Lugaru-Web text replacing a 2017 OSS placeholder (`217da32`), not recovered original text.
-
-### Browser-specific fixes (Web build only)
-
-* **Fullscreen sync** (`09cea07`): on every SDL window event, the fullscreen setting is re-read from the actual window state, and the Options menu is refreshed if open, so leaving fullscreen through the browser is reflected in-game.
-* **Fullscreen at startup** (`501e2ef`): the Web build always starts windowed, because browsers require a user gesture to enter fullscreen.
-* **Default settings** (`6e51b9d`): Web defaults are Blood on (low detail) and Unlock FPS off. Combined with existing defaults, a first launch uses 1920×1080, High detail, VSync on, and fullscreen off. Native defaults are unchanged.
-* **Quit and logging** (`e1cfb2e`): Quit is omitted from the Web main menu to avoid terminating the runtime and leaving a dead canvas; End Game remains. Per-event controller diagnostic logging is suppressed on Web.
-
----
-
-## Character restoration milestone — completed (2026-09-27)
-
-**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** bounded yaw, bounded body tilt, and historical head tracking adapted to fresh-simulation/draw ordering are now default behavior, committed as `0305947` (merged at `d21048e`). The user reports normal combined gameplay with controller behavior intact and no perceptible remaining player-locomotion problem. No verified remaining player-locomotion regression currently warrants another code change.
-
-No experiment definitions are needed in normal builds. Current OSS rabbit TalkIdle is preserved. The unresolved OSS-scheduler experiment is saved separately outside the repository; the normal fixed scheduler is unchanged. See [B-13](Docs/porting-notes.md#b-13--player-direction-changes-snap-instead-of-rotating) for provenance, build evidence, and patch location, and [backlog A2a](Docs/research-backlog.md#a2a-npc-slopeseam-and-scheduler-comparison--open) for the remaining NPC observation. Camera follow is a separate subsystem only to revisit if a meaningful discrepancy is observed.
 
 ## Near-Term Priorities
 
-### Completed stabilization sequence
+### Remaining v1.0.0 publication steps
 
-The original stabilization priorities are complete: build provenance and porting notes are documented; inherited animation bounds checking is restored; Web settings, frame scheduling, persistence, and key rebinding are fixed; the asset-case investigation is closed as a low-priority compatibility note (B-5); and controller support is implemented — foundation (`e5939fe`), Classic digital movement (`4b8af1d`), gameplay actions (`2387ebf`), camera look (`ab46b53`), pause/menu UI (`8d549e4`), Triangle tutorial advance (`bd7b207`), and stage-3 right-stick recognition (`f00ec72`). See the issue table above and [B-8](Docs/porting-notes.md#b-8--controller-gameplay-menuui-and-tutorial-support) for evidence and limits.
-
-### v1.0.0 release readiness
-
-1. Reconcile release documentation and licensing files with the current source.
-2. Keep v1.0.0 Web packaging and deployment manual for this release. The inherited native release workflow has been retired, retained native CI now uses `lugaru-web-native-*` naming, and no current workflow builds or publishes the Web target.
-3. Final v1.0.0 Web artifact provenance, exact sizes, and SHA-256 hashes are recorded in `Docs/build-provenance.md` from source commit `1b81e1d`.
-4. Smoke-test the public deployment, confirming that `lugaru.data` loads from the same origin.
-5. Physically verify the Triangle tutorial advance and tutorial stage-3 right-stick recognition (B-8), or ship them documented as source/automated-validated only.
-6. Optionally confirm the final Web `Blur Effects: Unavailable on Web` Options row physically (B-6 notes this as a short remaining manual UI check).
+1. Deploy the Web build to GitHub Pages and smoke-test it there, confirming that `lugaru.data` loads from the same origin with the expected MIME types. This has not yet been done.
+2. Tag the v1.0.0 release. The final Web artifacts were built from source commit `1b81e1d`; the release has not yet been tagged.
+3. Physically verify the Triangle tutorial advance and tutorial stage-3 right-stick recognition (B-8), or keep them documented as source/automated-validated only.
+4. Optionally confirm the final Web `Blur Effects: Unavailable on Web` Options row physically (B-6).
 
 ### After v1.0.0
 
 1. Isolate the inherited global `"Player"` auto-account behavior to Web builds, or document why it should remain shared (B-11).
-2. Controller compatibility and feel: broader browser/Bluetooth coverage, sensitivity/threshold tuning, settings/prompts (B-8, backlog A6). True analog locomotion remains a separate design question; Classic digital intent is unchanged.
+2. Controller compatibility and feel: broader browser/Bluetooth coverage, sensitivity/threshold tuning, settings/prompts (B-8, investigation log A6). True analog locomotion remains a separate design question; Classic digital intent is unchanged.
 3. Benchmark WebAssembly optimization settings (B-9).
 4. Improve browser loading behavior if testing shows it is necessary (B-10).
-5. Broader CI modernization beyond the pre-tag workflow audit: restore useful native CI coverage, fix the macOS dependency setup, add a Web build job, and add caching where practical (CI-1, backlog A5).
+5. CI modernization: restore useful native CI coverage, fix the macOS dependency setup, add a Web build job, and add caching where practical (CI-1, investigation log A5).
 
 Items not listed here remain tracked but are not currently scheduled.
 
@@ -405,7 +356,7 @@ Docs/architecture.md
     Current engine mental model, important couplings, source archaeology and extension seams.
 
 Docs/research-backlog.md
-    Unresolved technical and historical questions.
+    Investigation log: resolved investigation records and open technical and historical questions.
 
 COMPILING.md
     Build entry points for the Web build and inherited native instructions.

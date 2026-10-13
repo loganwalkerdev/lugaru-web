@@ -8,7 +8,11 @@ Issue IDs such as B-13 refer to entries in
 [`Docs/research-backlog.md`](Docs/research-backlog.md). Those documents hold
 the evidence, provenance and validation limits for each change.
 
-## Lugaru-Web v1.0.0 - release date to be set when tagged
+## Lugaru-Web v1.0.0 - not yet tagged
+
+As of 2026-10-13, the final v1.0.0 Web artifacts have been built from source
+commit `1b81e1d` (see `Docs/build-provenance.md`), but the release has not yet
+been tagged or published. The release date will be recorded here when it is.
 
 Lugaru-Web v1.0.0 is a preservation and browser-stabilization release built
 on Ryan Deering's Loupgarenne WebAssembly baseline

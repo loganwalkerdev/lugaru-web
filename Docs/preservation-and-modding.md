@@ -90,7 +90,7 @@ Historical Wolfire/wiki/forum evidence points to more content than the three bun
 - `Map Pack 1`
 - `Map Pack 2`
 - also associated with other historical mods such as `Space Lugaru`.
-- file/license/contact status: investigate.
+- file/license status: investigate.
 
 ## rudel_ic / Wolf Mathwig
 
@@ -106,7 +106,7 @@ Known nine-map pack:
 - Coward
 - Stairs
 
-Identity is unusually well established: Wolfire published a 2010 guest article identifying **Wolf Mathwig aka rudel_ic**, a German software developer and long-time forum member.
+Wolfire published a 2010 guest article by **Wolf Mathwig aka rudel_ic**, a long-time forum member (see section 5).
 
 His importance is broader than maps: he reverse-engineered Lugaru binary formats and created tooling for 3D models, animations, and skeletons.
 
@@ -120,7 +120,7 @@ Known maps include:
 - Desert Wanderers
 - Cave
 
-File/license/contact status: investigate through forum identity/history.
+File/license status: investigate.
 
 ## Philtron R. challenge maps
 
@@ -163,8 +163,7 @@ Research goals:
 - recover original archives/file names;
 - determine whether items were model/texture replacements or involved later code modifications;
 - identify original readmes and credits;
-- determine license status;
-- find a current public contact channel for Lotus Wolf.
+- determine license status.
 
 Historical context matters because before the source release, Wolfire documentation said normal modding was largely limited to maps/textures. Custom weapons therefore often worked by replacing an existing model/asset slot rather than introducing an entirely new gameplay type.
 
@@ -263,47 +262,15 @@ Systematically search:
 - historical Linux/game-community mirrors;
 - exact ZIP filenames;
 - old videos/descriptions;
-- old downloader catalogs;
-- forum signatures/profile website links.
+- old downloader catalogs.
 
 Avoid relying on a single surviving index. Triangulate authorship and dates from multiple sources where possible.
 
 ---
 
-# 9. Contact leads
+# 9. Contacting rights holders
 
-## rudel_ic
-
-- Real identity publicly established as Wolf Mathwig.
-- Historical forum profile listed Hamburg and a website field.
-- High-priority contact/relicensing candidate.
-
-## Lotus Wolf
-
-- Reluctant Assassin author.
-- Weapon Shop author/maintainer.
-- Major forum presence and old site/video/contest breadcrumbs.
-- OSS team reported difficulty establishing contact.
-
-## tannim
-
-- Historical campaign preserved.
-- OSS issue suggests the problem was obtaining a public license statement rather than total loss of identity/contact.
-- Historical Wolfire contest posts provide additional account/activity breadcrumbs.
-
-## BunnyWithStick
-
-- Forum identity and several known maps survive.
-- Requires profile/signature/URL archaeology.
-
-## Levbot / eyeCube
-
-- Current public identity/contact remains weak.
-- Work outward from original threads, filenames, profile IDs, archived pages, and linked sites rather than generic username searches.
-
-## Rémi Verschelde
-
-A useful meta-contact: he coordinated much of the 2016 OSS mod-preservation/relicensing work and may remember private/public leads not obvious from the surviving issue.
+When a historical creator's rights need to be clarified, contact should go through public channels that the creator has published themselves, and requests should follow the relicensing workflow in section 11. This document records works, public attributions and license status; it does not track individuals' identities or contact details.
 
 ---
 
@@ -444,7 +411,6 @@ Suggested metadata fields:
 ```text
 Title
 Author / handle
-Real identity (only if publicly established and relevant)
 Approximate date
 Type
 Original thread/page
@@ -472,7 +438,7 @@ Potential rights statuses:
 GREEN   cleared for redistribution
 YELLOW  survives, rights unresolved
 RED     known artifact, surviving copy not yet recovered
-WHITE   author/contact research in progress
+WHITE   rights research in progress
 ```
 
 ---
@@ -677,7 +643,7 @@ Unusual scale alone does not mean an actor is a helper. The `2.0`-scale Long-ten
 
 ## Editing method for map JSON
 
-Earlier automated editing attempts reformatted the map JSON and were reverted before commit. The committed `488aae6` cleanup used a text-preserving edit and was checked by:
+The committed `488aae6` cleanup used a text-preserving edit and was checked by:
 
 - JSON parsing;
 - exact expected dialogue counts per map;

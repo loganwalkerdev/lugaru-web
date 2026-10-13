@@ -76,7 +76,7 @@ No data-hosting option is required. `USE_CDN_DATA` no longer exists (see [Same-o
 
 For final release artifacts, configuring a fresh directory is preferable to reusing an older one. A build directory configured before `36407bd` may still contain a stale `USE_CDN_DATA` cache entry; current `CMakeLists.txt` never reads it, so it has no effect.
 
-The GL4ES dependency patch (below) is applied idempotently, so both fresh and repeated builds of the same directory succeed. Both paths were verified during B-18: an existing `build-web-clean` tree rebuilt successfully, and a separate fresh `build-web-clean-2` tree received the patch automatically. See [porting notes B-18](porting-notes.md#b-18--dense-web-foliage-causes-severe-slowdown).
+The GL4ES dependency patch (below) is applied idempotently, so both fresh and repeated builds of the same directory succeed. Both paths were verified during B-18: an existing build tree rebuilt successfully, and a separate fresh build tree received the patch automatically. See [porting notes B-18](porting-notes.md#b-18--dense-web-foliage-causes-severe-slowdown).
 
 ### Output
 
@@ -648,7 +648,7 @@ Confirm that the reported version is **6.0.9**.
 Then switch to the preserved source baseline:
 
 ```bash
-cd ~/projects/lugaru-web
+cd /path/to/lugaru-web
 
 git checkout baseline/wasm-b340204
 ```
@@ -685,7 +685,7 @@ http://localhost:8000/lugaru.html
 After baseline verification, stop the local server and return to the active development branch:
 
 ```bash
-cd ~/projects/lugaru-web
+cd /path/to/lugaru-web
 git switch main
 ```
 

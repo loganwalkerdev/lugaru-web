@@ -1,12 +1,12 @@
 # WebAssembly Porting Notes
 
-**Last updated:** 2026-10-06
+**Last updated:** 2026-10-13
 
 This document tracks WebAssembly-specific defects, inherited behavior changes, browser compatibility issues, and related implementation notes for Lugaru-Web.
 
 `PROJECT.md` contains the high-level issue summary. This file contains the technical detail needed to investigate, test, and resolve each item.
 
-Issue IDs should remain stable once assigned. IDs run from B-1 to B-20 plus CI-1; no B-21 has been assigned.
+Issue IDs remain stable once assigned. Current IDs run from B-1 to B-20, plus CI-1.
 
 **v1.0.0 status:** every issue marked **Fixed** below is committed on the development line; fixing commits are recorded in each entry. B-8 (controller support) is partially complete, and B-9, B-10, B-11 and CI-1 remain open. Shared gameplay and campaign-data fixes found during release campaign QA are recorded without new IDs under [Release campaign QA fixes](#release-campaign-qa-fixes-2026-10-05--2026-10-06). Dated validation notes inside each entry are preserved as historical evidence of what was tested at that time, including the local build directories used then. The current release build procedure is in [`build-provenance.md`](build-provenance.md#current-v10-release-build).
 
@@ -383,7 +383,7 @@ Close the active B-5 investigation as a low-priority compatibility note. No sour
 
 `Settings.cpp` defaults Web blur off and forces `ismotionblur = 0` / `alwaysblur = 0` after settings loading. Previously, Options could toggle the live `ismotionblur` value and save it, despite the reload override. The control was therefore misleading, not a universal no-op: some effect paths remained reachable during that session.
 
-**RUNTIME-VERIFIED — user physical A/B:** the experimental Web ON build reproduced visibly malformed slow-motion rendering: an apparent resolution/viewport change and a washed-out gray/white composite. Enabling the historical effect as-is is unacceptable. The precise rendering fault was not isolated further; no unsupported-feature or crash claim is inferred from these symptoms.
+**RUNTIME-VERIFIED — maintainer physical A/B:** the experimental Web ON build reproduced visibly malformed slow-motion rendering: an apparent resolution/viewport change and a washed-out gray/white composite. Enabling the historical effect as-is is unacceptable. The precise rendering fault was not isolated further; no unsupported-feature or crash claim is inferred from these symptoms.
 
 ### Resolution and Preservation Decision
 
@@ -419,7 +419,7 @@ The Web target built successfully after retrying an Emscripten cache-lock sandbo
 
 Chrome runtime testing confirmed normal capture, disappearance of the thread error, keyboard and mouse rebinding, clean Escape cancellation, subsequent control selection, rebound actions in gameplay, and persistence after leaving Options and reloading. Held-hotkey, focus-transition, and browser-reserved-key coverage remains unverified.
 
-Native SDL event-thread portability remains a separate open question in research backlog A4a. Earlier origin and investigation notes were kept in the raw September research-session notes, which are no longer part of the maintained documentation set; they remain recoverable from Git history and do not override the conclusions recorded here.
+Native SDL event-thread portability remains a separate open question in the investigation log (A4a).
 
 ---
 
@@ -538,7 +538,7 @@ Controller press edges and `syncControllerContext()` consume held buttons throug
 
 **RUNTIME-VERIFIED — isolated SDL/input harnesses:** cursor scaling, deadzone, 30/60/120/144/240 Hz and irregular timing, D-pad precision/diagonals, boundary clamping and slow movement away from edges; confirm edges; contextual Back destinations; pause/audio transitions; challenge results; modal cancellation; release suppression; raw-input isolation; disconnect/reconnect. Gameplay-action handoff and held-button regression checks also passed. These are not full native gameplay tests or physical browser measurements at those refresh rates.
 
-**RUNTIME-VERIFIED — supplied physical QA:** Firefox, wired DualSense, DS4Windows disabled. Milestone 5 QA passed: pause/resume, virtual cursor, confirmation/contextual Back, campaign switching, world-map interaction, and challenge/menu flows. Earlier movement, actions/dialogue, camera, simultaneous keyboard/mouse use, and disconnect/reconnect remain physically verified. This report does not extend physical verification to the subsequent tutorial changes.
+**RUNTIME-VERIFIED — maintainer QA:** Firefox, wired DualSense, DS4Windows disabled. Milestone 5 QA passed: pause/resume, virtual cursor, confirmation/contextual Back, campaign switching, world-map interaction, and challenge/menu flows. Earlier movement, actions/dialogue, camera, simultaneous keyboard/mouse use, and disconnect/reconnect remain physically verified. This report does not extend physical verification to the subsequent tutorial changes.
 
 ### Tutorial compatibility — source and automated validation; physical QA pending
 
@@ -554,7 +554,7 @@ Controller press edges and `syncControllerContext()` consume held buttons throug
 
 **OPEN QUESTION — Bluetooth:** raw Bluetooth DualSense support is not verified. Exposure was inconsistent/not successfully established during the final runtime test.
 
-**RUNTIME-VERIFIED — Chrome, updated 2026-09-27:** earlier tests on this development machine repeatedly returned null `navigator.getGamepads()` entries, including after renderer focus/fullscreen testing. The user now reports working wired DualSense input in current Chrome with the final character-restored Web build. The cause of the discrepancy is unknown: character restoration changed no controller/browser-input code, so no causal link is established. Firefox/wired DualSense remains the most extensively validated setup. This one Chrome result does not establish Bluetooth, other Chromium versions, other operating systems, or other controllers. No WebHID or Chrome-specific workaround was added.
+**RUNTIME-VERIFIED — Chrome, updated 2026-09-27:** earlier tests on this development machine repeatedly returned null `navigator.getGamepads()` entries, including after renderer focus/fullscreen testing. Maintainer QA now confirms working wired DualSense input in current Chrome with the final character-restored Web build. The cause of the discrepancy is unknown: character restoration changed no controller/browser-input code, so no causal link is established. Firefox/wired DualSense remains the most extensively validated setup. This one Chrome result does not establish Bluetooth, other Chromium versions, other operating systems, or other controllers. No WebHID or Chrome-specific workaround was added.
 
 ### Historical context and remaining scope
 
@@ -828,9 +828,9 @@ The final head implementation prepares one per-actor pending update after fresh 
 
 ### Validation
 
-**RUNTIME-VERIFIED — user physical QA:** yaw materially improved turning; tilt substantially improved player locomotion presentation; head restoration worked well and resembled original Lugaru. Holding forward while rotating the camera continuously retargeted physical movement correctly. The combined restored build played normally with controller/gameplay behavior intact and no remaining perceptible player-locomotion problem. No verified remaining player-locomotion regression currently warrants another code change.
+**RUNTIME-VERIFIED — maintainer physical QA:** yaw materially improved turning; tilt substantially improved player locomotion presentation; head restoration worked well and resembled original Lugaru. Holding forward while rotating the camera continuously retargeted physical movement correctly. The combined restored build played normally with controller/gameplay behavior intact and no remaining perceptible player-locomotion problem. No verified remaining player-locomotion regression currently warrants another code change.
 
-**Build/source validation:** isolated historical-law and head-equivalence checks preceded physical QA. The physically validated Release Web build at the time was the local `build-web-character-final/bin/lugaru.html`, built without character or scheduler experiment definitions. Rebuilding after scheduler separation and `git diff --check` passed; bundled assets remain unchanged. Source behavior matches the physically validated restored character configuration. The restoration was subsequently committed as `0305947` after manual review. (`build-web-character-final` was a validation directory for this milestone, not the current release build directory; see [build provenance](build-provenance.md#current-v10-release-build).)
+**Build/source validation:** isolated historical-law and head-equivalence checks preceded physical QA. The physically validated Release Web build at the time was a local validation build made without character or scheduler experiment definitions. Rebuilding after scheduler separation and `git diff --check` passed; bundled assets remain unchanged. Source behavior matches the physically validated restored character configuration. The restoration was subsequently committed as `0305947` after manual review. That validation build is not the current release build; see [build provenance](build-provenance.md#current-v10-release-build).
 
 ### Scheduler investigation closed: low-priority open observation
 
@@ -838,13 +838,13 @@ The final head implementation prepares one per-actor pending update after fresh 
 
 **VERIFIED SOURCE FINDING:** movement and contact correction run before AI steering within `Game::Tick()`. Corrected NPC coordinates can feed subsequent steering. Terrain/velocity reconstruction, contact projection, pathpoint arrival checks, avoidance-timer ordering, and animation/state transitions are subdivision-sensitive. Ordinary pursuit heading updates are timer-gated; path-following can retarget each tick. Core `Person::doAI()`, `DoStuff()`, `DoAnimations()`, and `SphereCheck()` match OSS `42f148d033358925d1e31cec68ad02ee03ec64c2` ignoring comments/whitespace. Surrounding orchestration differs, including collision/avoidance decay using full-frame time on the first Web tick. These findings identify possible mechanisms, not the cause of a demonstrated runtime failure.
 
-**RUNTIME-VERIFIED — user physical A/B at approximately 60 Hz:** fixed `1 ms` and experimental OSS-style scheduling showed no clear or substantial overall difference. OSS-style scheduling appeared possibly slightly smoother when NPCs traversed slopes/seams, but the user could not reliably distinguish the builds. No reproducible gameplay failure or meaningful player-facing regression was established. No diagnostic trace established causation.
+**RUNTIME-VERIFIED — maintainer physical A/B at approximately 60 Hz:** fixed `1 ms` and experimental OSS-style scheduling showed no clear or substantial overall difference. OSS-style scheduling appeared possibly slightly smoother when NPCs traversed slopes/seams, but the maintainer could not reliably distinguish the builds. No reproducible gameplay failure or meaningful player-facing regression was established. No diagnostic trace established causation.
 
 **Decision / OPEN:** classification remains **no verified causal bug**. Close the active investigation and retain a low-priority open observation, pending a concrete reproduction. Keep the fixed scheduler and NPC gameplay unchanged. Neither scheduler equivalence nor OSS superiority has been established; no scheduler-wide or local gameplay fix is warranted by this evidence.
 
-**Validation / cleanup:** both Release comparison builds (`build-web-scheduler-fixed`, `build-web-scheduler-oss`) passed with identical bundled data. The extracted scheduler harness checked 540 frames per variant, modifiers, stalls, resets, and outer-frame invariants. Temporary bounded diagnostics sampled one NPC; they were not a deterministic replay. After the physical comparison, all scheduler-switch and diagnostic changes in `Source/main.cpp` and `Source/GameTick.cpp` were removed, restoring committed source exactly. Temporary instrumentation was discarded; the original external scheduler patch remains unchanged. No character, controller, asset, or NPC gameplay change is part of this closure.
+**Validation / cleanup:** both Release comparison builds (fixed and OSS-style scheduling) passed with identical bundled data. The extracted scheduler harness checked 540 frames per variant, modifiers, stalls, resets, and outer-frame invariants. Temporary bounded diagnostics sampled one NPC; they were not a deterministic replay. After the physical comparison, all scheduler-switch and diagnostic changes in `Source/main.cpp` and `Source/GameTick.cpp` were removed, restoring committed source exactly. Temporary instrumentation was discarded. No character, controller, asset, or NPC gameplay change is part of this closure.
 
-The exact `Source/main.cpp` experiment was preserved as `/home/logan/projects/lugaru-web-oss-scheduler-experiment.patch`, outside the repository. It uses `LUGARU_EXPERIMENT_OSS_SCHEDULER`, selects `max(2, int(T * 200))` before gameplay modifiers, and preserves the current outer-frame/controller integration and `250 ms` stall cap. Its base is `8820f6125030127b1c7e8c328511c72a71d9299b`; patch SHA-256 is `e259a2f61248792b250462923666162b66182c8778dd333178ea4b2f58935448`. Application was checked against that baseline and reproduced the experimental file exactly. The patch was then reversed from the working tree and checked for clean reapplication. This local artifact is not part of the character commit; preserve it separately when moving the workspace.
+The exact `Source/main.cpp` experiment was kept as a patch outside the repository and is not part of any commit. It used `LUGARU_EXPERIMENT_OSS_SCHEDULER`, selected `max(2, int(T * 200))` before gameplay modifiers, and preserved the current outer-frame/controller integration and `250 ms` stall cap. Its base is `8820f6125030127b1c7e8c328511c72a71d9299b`; patch SHA-256 is `e259a2f61248792b250462923666162b66182c8778dd333178ea4b2f58935448`.
 
 See [backlog A2a](research-backlog.md#a2a-npc-slopeseam-and-scheduler-comparison--open). Camera follow remains separate and is not an unfinished locomotion blocker.
 
@@ -856,13 +856,13 @@ See [backlog A2a](research-backlog.md#a2a-npc-slopeseam-and-scheduler-comparison
 **Status:** Fixed; investigation closed
 **Priority:** Medium
 **Fix:** `eea54f4b7e079c27964b7decde3d6c7f56e0a5fd` — `fix: handle NPOT mipmapped textures on Web`
-**Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (project-owner QA)
+**Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (maintainer QA)
 
 ### Reproduction and Validation
 
-**RUNTIME-VERIFIED — project-owner tests:** the shipped 40×40 RGBA `Data/Textures/SnowFlake.png` rendered as solid black squares when requested with mipmaps. Changing only its load argument from `1` to `0` restored correct snow. Restoring `1` and replacing Web automatic generation with explicit `glGenerateMipmap()` did not fix the black squares. The generic Web-only NPOT fallback then restored correct snow while keeping the original `Sprite::snowflaketexture.load("Textures/SnowFlake.png", 1)` call. Final manual QA also confirmed correct rendering of the 300×300 `Fire.jpg` loading-screen texture.
+**RUNTIME-VERIFIED — maintainer QA:** the shipped 40×40 RGBA `Data/Textures/SnowFlake.png` rendered as solid black squares when requested with mipmaps. Changing only its load argument from `1` to `0` restored correct snow. Restoring `1` and replacing Web automatic generation with explicit `glGenerateMipmap()` did not fix the black squares. The generic Web-only NPOT fallback then restored correct snow while keeping the original `Sprite::snowflaketexture.load("Textures/SnowFlake.png", 1)` call. Final manual QA also confirmed correct rendering of the 300×300 `Fire.jpg` loading-screen texture.
 
-The Release Web build and `git diff --check` passed during implementation. Native preprocessing was equivalent apart from the local boolean alias; extracted policy checks covered 168 dimension/request combinations per native/Web variant. These automated checks supplement, not replace, the owner's physical rendering results.
+The Release Web build and `git diff --check` passed during implementation. Native preprocessing was equivalent apart from the local boolean alias; extracted policy checks covered 168 dimension/request combinations per native/Web variant. These automated checks supplement, not replace, the maintainer's physical rendering results.
 
 ### Compatibility Finding and Preservation
 
@@ -898,20 +898,20 @@ All 13 shipped character skins are POT, as are the 18 shipped skybox faces and r
 
 ### Separate Performance Observation
 
-**RUNTIME-VERIFIED — project-owner observation:** many active fire spawners caused noticeable Web slowdown. This was investigated and fixed separately in [B-15](#b-15--dense-fire-sprite-rendering-slows-web); no causal link to the B-14 NPOT fallback was established.
+**RUNTIME-VERIFIED — maintainer observation:** many active fire spawners caused noticeable Web slowdown. This was investigated and fixed separately in [B-15](#b-15--dense-fire-sprite-rendering-slows-web); no causal link to the B-14 NPOT fallback was established.
 
 ---
 
 ## B-15 — Dense Fire Sprite Rendering Slows Web
 
-**Status:** Fixed; R1 shipped-content blocker closed
+**Status:** Fixed; release blocker for shipped content closed
 **Priority:** High
 **Fix:** `592e158` — `fix: optimize Web sprite rendering with client arrays`
 **Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (manual browser QA)
 
 ### Shipped Reproduction and Mechanism
 
-**RUNTIME-VERIFIED:** Seven Tasks `Data/Maps/task3.json`, "Desert Village - evening," contains six historical fire objects. A temporary exact copy, `Data/Maps/task3_nofire.json`, removed only those six objects and ran smoothly. This A/B establishes that the fire-generated sprite population was sufficient to trigger the Web slowdown; the control is untracked test equipment, not shipped content.
+**RUNTIME-VERIFIED:** Seven Tasks `Data/Maps/task3.json`, "Desert Village - evening," contains six historical fire objects. A temporary exact copy, `Data/Maps/task3_nofire.json`, removed only those six objects and ran smoothly. This A/B establishes that the fire-generated sprite population was sufficient to trigger the Web slowdown; the control was temporary test equipment and was never committed.
 
 **VERIFIED SOURCE FINDING:** fire emits many flame particles, which also produce smoke. The historical `Source/Graphic/Sprite.cpp::Sprite::Draw()` path rendered each sprite individually with per-particle matrix work and immediate-mode geometry. Web/GL4ES paid substantial CPU overhead for that path. The fire objects and their spawn behavior are historical; this was not a new Web spawn regression. Reducing particle counts, rates, lifetimes, or visual fidelity was unnecessary.
 
@@ -938,17 +938,17 @@ The change preserves particle counts, spawn and lifetime behavior, motion, opaci
 
 **RUNTIME-VERIFIED — manual browser tests:** fire/smoke-heavy task3 looked normal and was dramatically smoother. The no-fire control remained smooth with ~17–25 incidental sprites and ~0.03–0.05 ms draw CPU, showing no pathological fixed overhead. Map1 snow looked normal with ~300 active particles, ~20 snow spawns/s, and ~0.28 ms draw CPU; the prior Web NPOT snow fix remained intact. Mixed combat effects during heavy fire showed cloud, blood, impact, bloodflame, shine, flame, and smoke with normal-looking visuals and ~1.7–2.2 ms draw CPU.
 
-The cleaned normal Web build and diagnostic Web build both passed, as did `git diff --check` during implementation. The project owner then ran `build-web-character-final/bin/lugaru.html` with no experimental query parameters, reported that the production build felt good, and accepted the fix. These are manual scene-specific results, not a cross-browser or native runtime benchmark.
+The cleaned normal Web build and diagnostic Web build both passed, as did `git diff --check` during implementation. Maintainer QA then ran the production build with no experimental query parameters; it felt good, and the fix was accepted. These are manual scene-specific results, not a cross-browser or native runtime benchmark.
 
 ---
 
 ## B-16 — Delayed Spatial Exit Loses Campaign Progression (Empire Sky Palace)
 
-**Status:** Fixed; R1 Empire progression blocker closed
+**Status:** Fixed; Empire progression release blocker closed
 **Priority:** High
 **Fix:** `97121db` — `fix: preserve campaign progression across delayed exits` (`Source/GameTick.cpp` only)
 **Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (controlled diagnostic runs and manual production QA)
-**Provenance:** shared game logic, not WebAssembly-specific. The susceptibility is inherited from upstream/historical completion and death-reload code; it is **not** established as a Web-introduced regression. Tracked here because it was found during Web R1 campaign QA.
+**Provenance:** shared game logic, not WebAssembly-specific. The susceptibility is inherited from upstream/historical completion and death-reload code; it is **not** established as a Web-introduced regression. Tracked here because it was found during Web campaign QA.
 
 ### State semantics
 
@@ -994,7 +994,7 @@ The cleaned normal Web build and diagnostic Web build both passed, as did `git d
 
 ### Review and QA
 
-**Independent review:** Claude Code reviewed the final production diff after runtime QA. Verdict: **CLEAN WITH MINOR RESIDUAL RISK**; no blocker or high-severity defects; `Source/GameTick.cpp` recommended as-is. It verified in source that `acceptedSpatialWin` resets through the common load path; campaign wins cannot be recorded twice through the new path; death-before-win and death-after-recorded-win are mutually exclusive; loader state reset makes the cached coords/yaw/targetyaw sufficient for the `ChooseNext == 2` case; non-campaign `loading == 2` handling remains intact; and `changedelay = -999` matches the existing `winfreeze` convention.
+**Independent review:** an AI-assisted review with Claude Code examined the final production diff after runtime QA and found no blocking or high-severity defects; minor residual risk is recorded below. The review confirmed in source that `acceptedSpatialWin` resets through the common load path; campaign wins cannot be recorded twice through the new path; death-before-win and death-after-recorded-win are mutually exclusive; loader state reset makes the cached coords/yaw/targetyaw sufficient for the `ChooseNext == 2` case; non-campaign `loading == 2` handling remains intact; and `changedelay = -999` matches the existing `winfreeze` convention.
 
 **RUNTIME-VERIFIED — production fix, all passed:**
 
@@ -1010,14 +1010,14 @@ The cleaned normal Web build and diagnostic Web build both passed, as did `git d
 
 - **OPEN:** the post-win/pre-route death path is source-verified only.
 - **VERIFIED SOURCE FINDING / OPEN:** campaign menu entry still derives `actuallevel` from `campaignlevels[getCampaignChoicesMade() - 1].nextlevel[whichchoice]` (`Source/Menu/Menu.cpp`), i.e. it treats the choice count as the predecessor node. This is correct for the linear bundled campaigns but unproven for branching campaigns; out of scope for `97121db` and tracked under [backlog H7](research-backlog.md#h7-campaign-branching-testhistory).
-- **RESOLVED — separate polish:** the Throne Room Emperor dialogue activation area was improved with a map-local type `21` hotspot; see [backlog A9a](research-backlog.md#a9a-throne-room-emperor-dialogue-activation-area--resolved-for-r1-2026-09-29). This was localized polish rather than part of B-16 or a Web-specific regression.
+- **RESOLVED — separate polish:** the Throne Room Emperor dialogue activation area was improved with a map-local type `21` hotspot; see [backlog A9a](research-backlog.md#a9a-throne-room-emperor-dialogue-activation-area--resolved-2026-09-29). This was localized polish rather than part of B-16 or a Web-specific regression.
 - **RESOLVED — separate exit-area polish:** the existing `jendraz1` type `-1` bridge exit hotspot was widened from size `15.0` (~3.87-unit effective radius) to `100.0` (10-unit effective radius) after runtime testing. The underlying exit/progression logic is unchanged; this is a map-local usability adjustment.
 
 ---
 
 ## B-17 — Empire Sky Palace NPCs Receive Fire.jpg as Clothing
 
-**Status:** Fixed; R1 Empire visual regression closed
+**Status:** Fixed; Empire visual regression closed
 **Priority:** Medium
 **Fix:** `6142c73` — `fix: restore Empire Sky Palace NPC clothing`; `bf94eca` — `fix: stop remapping missing Empire fire clothing`
 **Evidence:** VERIFIED SOURCE FINDING + HISTORICAL ASSET VERIFICATION + RUNTIME-VERIFIED controlled A/B
@@ -1088,7 +1088,7 @@ That uncertainty does not affect the demonstrated regression: mapping the unreso
 
 ## B-18 — Dense Web Foliage Causes Severe Slowdown
 
-**Status:** Fixed; R1 Web performance regression closed
+**Status:** Fixed; Web performance regression closed
 **Priority:** High
 **Fix:** `df72be9` — `fix: optimize Web foliage rendering`
 **Evidence:** RUNTIME-VERIFIED controlled A/B + VERIFIED SOURCE FINDING + clean-build validation
@@ -1139,13 +1139,13 @@ The original foliage second pass remains intact.
 
 ### Validation
 
-A completely fresh `build-web-clean` directory was configured using Emscripten 6.0.9.
+A completely fresh build directory was configured using Emscripten 6.0.9.
 
 A subsequent rebuild of the same configured build directory exposed a reproducibility issue in the original CMake patch step: `git apply` attempted to apply the GL4ES patch a second time and failed because the source tree was already patched.
 
 A follow-up build-system fix added `cmake/apply-gl4es-patch.cmake`, which checks whether the alpha-to-coverage change is already present before applying the patch. The patch step is therefore idempotent: fresh dependency trees receive the patch, while already-patched trees are accepted without failure.
 
-Both paths were verified: an existing patched `build-web-clean` tree rebuilt successfully, and a separate fresh `build-web-clean-2` tree automatically received the patch and built successfully.
+Both paths were verified: the existing patched build tree rebuilt successfully, and a separate fresh build tree automatically received the patch and built successfully.
 
 The clean dependency fetch automatically applied `cmake/patches/gl4es-alpha-to-coverage.patch`, producing the expected GL4ES `proxy_GO(GL_SAMPLE_ALPHA_TO_COVERAGE, ...)` path.
 
@@ -1160,7 +1160,7 @@ Runtime QA on `jendraz1` confirmed:
 
 No Empire map objects, leaf models, or textures were removed or simplified.
 
-See [backlog A9c](research-backlog.md#a9c-empire-sky-palace-dense-foliage-web-slowdown--resolved-for-r1-2026-09-30).
+See [backlog A9c](research-backlog.md#a9c-empire-sky-palace-dense-foliage-web-slowdown--resolved-2026-09-30).
 
 ---
 
@@ -1286,7 +1286,7 @@ B-20 intentionally uses a narrow data restoration rather than globally changing 
 ## Release campaign QA fixes (2026-10-05 – 2026-10-06)
 
 **Status:** Fixed; merged into `release/v1.0.0-prep` at `87c182a`
-**Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (project-owner campaign playthroughs and targeted map tests)
+**Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (maintainer campaign playthroughs and targeted map tests)
 **Provenance:** shared game code and inherited campaign data, not WebAssembly-specific. The pre-fix code paths below are present unchanged in `baseline/wasm-b340204`. Like B-16, these were found during Web campaign QA and are recorded here; no B-number was assigned.
 
 Full campaign playthroughs during release QA are complete for Original (27/27 levels), Seven Tasks (18/18) and Temple (31/31). **OPEN:** the full 41-map Empire campaign playthrough has not yet been run. The intended method is to play the real campaign route, record suspicious behavior, avoid changing data mid-run unless progression is blocked, and investigate confirmed issues afterwards. Challenge-map coverage and browser/release edge testing also remain.
@@ -1299,7 +1299,7 @@ Several Temple maps and Empire `jendraz41` contain Persons with scale `0.0` or `
 
 The loop now skips Persons with `scale <= 0.001` or `scale >= 1000.0`. Ordinary actors (bundled scales around `0.2`) and the `2.0`-scale Long-ten Giant in Seven Tasks `task9` are drawn as before. No actor data was changed.
 
-**RUNTIME-VERIFIED — project-owner QA:** after a rebuild, affected maps containing helper/sentinel actors were checked, and `task9` was checked to confirm that the legitimate Long-ten Giant minimap marker remained visible while extreme-scale helper markers were suppressed.
+**RUNTIME-VERIFIED — maintainer QA:** after a rebuild, affected maps containing helper/sentinel actors were checked, and `task9` was checked to confirm that the legitimate Long-ten Giant minimap marker remained visible while extreme-scale helper markers were suppressed.
 
 ### Long-ten Giant encounter, Seven Tasks `task9` (`d997ab3`)
 
@@ -1313,7 +1313,7 @@ The loop now skips Persons with `scale <= 0.001` or `scale >= 1000.0`. Ordinary 
 - `Source/Level/Dialog.cpp`: when the target's scale is between `0.001` and `10`, the squared interaction distance becomes the larger of `6` and `1.5 × ((player scale + target scale) × 2.5)²`. Default-sized pairs keep the historical `6`, and helper-scale targets (`0.0`, `20000.0`) are excluded. In bundled data, the giant is the only dialogue target that this enlarges.
 - `Source/GameDraw.cpp`: dialogue speaker names that would overflow the left edge of the dialogue box are scaled down to fit. Names that already fit are drawn as before.
 
-**RUNTIME-VERIFIED — project-owner QA:** approaching the giant triggers the correct encounter once, the full `LONG-TEN GIANT:` speaker label fits, Wort gives only his level-ending dialogue, and ordinary NPC dialogue interaction is unchanged.
+**RUNTIME-VERIFIED — maintainer QA:** approaching the giant triggers the correct encounter once, the full `LONG-TEN GIANT:` speaker label fits, Wort gives only his level-ending dialogue, and ordinary NPC dialogue interaction is unchanged.
 
 ### Combat music survives Pause → End Game (`d07fea4`)
 
@@ -1323,7 +1323,7 @@ The loop now skips Persons with `scale <= 0.001` or `scale >= 1000.0`. Ordinary 
 
 **Fix:** pausing now also pauses `stream_fighttheme`, and resuming restores whichever stream `musictype` records (fight theme or level theme). End Game pauses both gameplay streams and zeroes their `musicvolume` / `oldmusicvolume` entries before returning to the main menu.
 
-**RUNTIME-VERIFIED — project-owner QA:** combat Pause → Resume through the menu button and through Esc/Back, combat Pause → End Game, peaceful Pause → Resume, and starting another level after End Game all behaved correctly.
+**RUNTIME-VERIFIED — maintainer QA:** combat Pause → Resume through the menu button and through Esc/Back, combat Pause → End Game, peaceful Pause → Resume, and starting another level after End Game all behaved correctly.
 
 ### Campaign map shows final state after completion (`3363eae`)
 
@@ -1341,7 +1341,7 @@ The loop now skips Persons with `scale <= 0.001` or `scale >= 1000.0`. Ordinary 
 - Changed the Empire ending text from `Lugaru's island` to `Lugaru Island`.
 - Replaced the Temple ending text, an OSS placeholder, with a three-line ending.
 
-**VERIFIED SOURCE FINDING (re-checked against the commits):** in every changed map, the JSON parses, all non-dialogue map data is identical, and retained dialogues are unchanged apart from the `svenshan` and `task9` name fixes. Large diff line counts come from deleting whole serialized dialogue objects. **RUNTIME-VERIFIED — project-owner QA:** after a full data rebuild, `svenclimb`, `svenheaven`, `svenchasm`, `sventhrone` and `sventemple2` each loaded directly and played normally. The stale Shan dialogue no longer appeared, and `sventemple2`'s Sven/Silb conversation still played.
+**VERIFIED SOURCE FINDING (re-checked against the commits):** in every changed map, the JSON parses, all non-dialogue map data is identical, and retained dialogues are unchanged apart from the `svenshan` and `task9` name fixes. Large diff line counts come from deleting whole serialized dialogue objects. **RUNTIME-VERIFIED — maintainer QA:** after a full data rebuild, `svenclimb`, `svenheaven`, `svenchasm`, `sventhrone` and `sventemple2` each loaded directly and played normally. The stale Shan dialogue no longer appeared, and `sventemple2`'s Sven/Silb conversation still played.
 
 ---
 
