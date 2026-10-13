@@ -47,14 +47,14 @@ Use git history when authorship, provenance, regressions, or behavioral lineage 
 Use these documents contextually:
 
 * `Docs/architecture.md` — current engine mental model, important couplings, gameplay/source archaeology, and extension seams.
-* `Docs/research-backlog.md` — unresolved technical and historical questions.
+* `Docs/research-backlog.md` — investigation log: open technical and historical questions, plus records of resolved investigations.
 * `Docs/history-and-lineage.md` — project ancestry and historical attribution.
 * `Docs/design-direction.md` — preservation/product principles and Classic/Expanded/Arena direction.
 * `Docs/preservation-and-modding.md` — historical community content, licensing, provenance, and restoration.
 * `Docs/build-provenance.md` — current build ancestry/provenance.
 * `Docs/porting-notes.md` — browser-port implementation and validation notes.
 
-The raw September 2026 research-session notes are no longer part of the current documentation set. Cite maintained findings from the documents above; the original working notes remain recoverable from Git history and do not override current source or the maintained documents.
+Cite maintained findings from the documents above.
 
 Do not reread every document for every task. Read the documents relevant to the work being performed.
 
@@ -93,7 +93,7 @@ For bug fixes:
 
 Do not expand a narrow bug fix into a broad architecture rewrite without explicit authorization.
 
-Temporary instrumentation is acceptable only when the user explicitly authorizes it for the investigation.
+Temporary instrumentation is acceptable only when the maintainer explicitly authorizes it for the investigation.
 
 ## Git and repository safety
 
@@ -109,7 +109,7 @@ Do not:
 
 unless explicitly authorized.
 
-The user normally controls final commits and pushes.
+The maintainer normally controls final commits and pushes.
 
 Generated directories such as `build-native`, `build-web`, and `build-web-debug` should be excluded from broad source searches unless build output itself is relevant.
 

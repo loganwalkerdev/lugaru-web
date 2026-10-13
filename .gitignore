@@ -25,3 +25,4 @@ jsoncpp/
 gl4es/
 lib/
 build-wasm/
+.claude/settings.local.json

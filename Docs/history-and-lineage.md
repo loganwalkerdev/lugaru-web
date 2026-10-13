@@ -30,11 +30,11 @@ Lugaru's lasting strength is not content quantity. It is the way a small number 
 - compact levels whose geometry supports combat movement;
 - emergent interactions that produce stories without heavily scripting every situation.
 
-A useful design principle for Lugaru-Web is therefore:
+**Design note (Lugaru-Web interpretation, not historical fact):** a useful design principle for Lugaru-Web is therefore:
 
 > Add verbs and systems that create situations, rather than building content that only works because a script forces a particular situation to happen.
 
-This is especially relevant to mechanics such as corpse dragging, throwable/noise-producing objects, environmental hazards, new weapon interactions, and Arena maps.
+This would apply to possible future mechanics such as corpse dragging, throwable/noise-producing objects, environmental hazards, new weapon interactions, and Arena maps. These are ideas, not roadmap commitments; see [`design-direction.md`](design-direction.md).
 
 ---
 
@@ -60,7 +60,7 @@ The modern source should therefore not be described as a frozen dump of Rosen's 
 
 **VERIFIED GIT HISTORY:** literal OSS 1.2 is `c7b99378439735c60f84869b05c6ebde53083667`, a release-side-branch child of shared preparation commit `a09b7f8c367dd9dabae2eeac9032217cfc6f901a`. Its release-only commit adds an animation-frame crash workaround. Later master continued separately from the shared parent; do not treat `1.2..master` as a simple linear sequence of post-release changes.
 
-Ryan's inherited OSS fork point is `8edd5eec93285cfe942c6babe036603bac64b33e`. The inspected current OSS checkpoint, `42f148d033358925d1e31cec68ad02ee03ec64c2`, remains a useful living preservation/reference baseline. **RUNTIME-VERIFIED — user comparison:** both official 1.2 and current OSS felt smooth for general character locomotion. This does not make all later OSS changes undesirable or clear Ryan of independently introduced regressions; each mechanism must be checked at the inherited base.
+Ryan's inherited OSS fork point is `8edd5eec93285cfe942c6babe036603bac64b33e`. The inspected current OSS checkpoint, `42f148d033358925d1e31cec68ad02ee03ec64c2`, remains a useful living preservation/reference baseline. **RUNTIME-VERIFIED — maintainer comparison:** both official 1.2 and current OSS felt smooth for general character locomotion. This does not make all later OSS changes undesirable or clear Ryan of independently introduced regressions; each mechanism must be checked at the inherited base.
 
 **VERIFIED GIT HISTORY / preservation decision — rabbit dialogue idle:** `25fd991fca18b740e622d8cf50532f18af1b9711` ("Set forgotten rabbit talk anim") assigns the already-existing `TalkIdle` animation to rabbits. Both the 1.2 preparation and literal release lack that assignment; Ryan's base already includes it, and current OSS retains it. `Idle` and `TalkIdle` assets are byte-identical across all four checkpoints. The more bouncy literal-1.2 dialogue fallback is treated as an omission/quirk, not a restoration target. Canonical later OSS TalkIdle remains; the temporary 1.2 experiment was removed. Literal 1.2 is not automatically preferable to legitimate later fixes.
 
@@ -186,7 +186,7 @@ Release campaign QA (2026-10-05/06) fixed inherited shared behavior in dialogue 
 
 ## 5. Redagito/Lugaru as a reference implementation
 
-The `redagito/Lugaru` repository is useful because it independently attacks some of the same architectural problems we are likely to face.
+The `redagito/Lugaru` repository is useful because it independently attacks some of the same architectural problems Lugaru-Web may face.
 
 Observed characteristics include:
 
@@ -208,6 +208,8 @@ Use the repository as a comparative architecture/reference implementation. When 
 
 The early Lugaru 2 material is valuable because it documents what Wolfire itself thought was worth evolving after Lugaru, including ideas that later changed or disappeared.
 
+Sections 6–13 summarize published Wolfire material. Paragraphs marked **Design note** record how that material might inform possible future Lugaru-Web work. They are interpretation, not historical fact, and not roadmap commitments; current direction is described in [`design-direction.md`](design-direction.md) and [`PROJECT.md`](../PROJECT.md).
+
 ## 6. Lugaru 2 became Overgrowth
 
 Wolfire formally announced Overgrowth on 2008-09-17 with the direct statement:
@@ -226,7 +228,7 @@ David Rosen's 2006 `Lugaru 2 movement` post describes an early Phoenix engine in
 
 The especially important part is the animation philosophy: Phoenix generated or adjusted animation using surface information, physics, personality, and current state, with seamless transitions between movement states. Rosen noted that the animation system had recently been rewritten from scratch at that point.
 
-This is useful to Lugaru-Web not because the old engine should be recreated, but because it shows the direction Rosen wanted to push:
+**Design note:** this is useful to Lugaru-Web not because the old engine should be recreated, but because it shows the direction Rosen wanted to push:
 
 - animation responding to the physical world;
 - transitions rather than hard state snapping;
@@ -244,7 +246,7 @@ He describes Lugaru ragdolls as Newtonian particles linked by rigid stick constr
 
 For Overgrowth, Wolfire explored richer alternatives because the old system could not naturally represent things such as hinge joints and rigid-body collisions.
 
-### Lesson for Lugaru-Web
+### Design note for Lugaru-Web
 
 Do not replace Lugaru's physics merely because a newer physics engine could be more sophisticated.
 
@@ -262,7 +264,7 @@ Separately, Wolfire's early Overgrowth FAQ listed rabbits, wolves, cats, rats, a
 
 This is useful historical context for future Lugaru-Web species work. It supports the idea that expanding beyond rabbits/wolves is compatible with the broader creative lineage, but it should not be presented as canon or as a promise to restore cut content.
 
-For Lugaru-Web, species should initially be treated primarily as identity/model variation rather than as hardcoded classes with unique gameplay. Unique species mechanics can come later if the architecture supports them cleanly.
+**Design note:** for Lugaru-Web, species should initially be treated primarily as identity/model variation rather than as hardcoded classes with unique gameplay. Unique species mechanics can come later if the architecture supports them cleanly.
 
 ---
 
@@ -281,7 +283,7 @@ They also described levels as places where players could choose approaches such 
 
 A recurring Wolfire design principle was to avoid locking the game into a rigid design too early. They preferred implementing systems, playtesting them, preserving what created good gameplay, and cutting/changing what did not.
 
-### Lesson for Lugaru-Web
+### Design note for Lugaru-Web
 
 Expanded content does not need to become script-heavy to gain mission variety. The strongest additions are objective frameworks that sit on top of existing systems:
 
@@ -300,7 +302,7 @@ This is compatible with the existing systemic design and with future challenge/A
 
 Aubrey Serr's 2009 `The ruins of Lugaru` post describes the simple stone structures in Lugaru as both mysterious and mechanically important. The team wanted to preserve the abstraction while making the world more coherent and imaginative.
 
-For Lugaru-Web Arena design, the useful lesson is that compact geometry should primarily serve movement and combat:
+**Design note:** for possible future Lugaru-Web Arena design, the useful lesson is that compact geometry should primarily serve movement and combat:
 
 - sightlines;
 - elevation;
@@ -319,7 +321,7 @@ Realistic decorative clutter should not compromise those functions.
 
 Early Overgrowth material said cooperative multiplayer was planned. Later Overgrowth supported local multiplayer/versus, and Wolfire eventually prototyped online multiplayer as well.
 
-Lugaru-Web should treat this as precedent, not a shortcut: the current Lugaru code still has substantial single-player assumptions.
+**Design note:** Lugaru-Web should treat this as precedent, not a shortcut: the current Lugaru code still has substantial single-player assumptions.
 
 The likely technical progression is:
 
@@ -343,7 +345,7 @@ By 2018, Overgrowth had accumulated several user-facing input features that make
 - dead-zone controls;
 - mouse-button rebinding.
 
-Lugaru-Web does not need to copy Overgrowth's implementation, but these are good examples of where a mature modernized version of this lineage eventually landed.
+**Design note:** Lugaru-Web does not need to copy Overgrowth's implementation, but these are good examples of where a mature modernized version of this lineage eventually landed.
 
 ---
 
@@ -367,7 +369,7 @@ A strange comment in `Person.cpp` may be Rosen-era code, later OSS work, or Ryan
 
 A concise, accurate description is:
 
-> Lugaru-Web is a browser-native continuation of the open-source Lugaru lineage. It builds on Ryan Deering's unmerged Loupgarenne WebAssembly work, preserves the original game and historical community content, modernizes the browser/platform experience, and provides a foundation for new Lugaru-compatible gameplay and multiplayer modes.
+> Lugaru-Web is a browser-native continuation of the open-source Lugaru lineage. It builds on Ryan Deering's unmerged Loupgarenne WebAssembly work, preserves the original game and historical community content, modernizes the browser/platform experience, and provides a foundation for possible future Lugaru-compatible additions.
 
 ---
 
