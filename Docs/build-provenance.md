@@ -11,25 +11,20 @@ It has two parts:
 
 ## Current v1.0 release build
 
-**Last updated:** 2026-10-04
+**Last updated:** 2026-10-13
 
-### Release-candidate source
+### Release source
 
-A fresh pre-tag v1.0.0 release-candidate build was produced from the clean
-`release/v1.0.0-prep` working tree at:
+The final Lugaru-Web v1.0.0 Web artifacts were built on 2026-10-13 from the
+clean `release/v1.0.0-prep` working tree at:
 
 ```text
-917bdbae63c28d91649023e8b374bb4e845d6667
+1b81e1d48b1ad4d681258e04a1696536d794fa3e
 ```
 
-That commit is the exact source for the release-candidate artifacts and hashes
-recorded below.
-
-**OPEN:** this is not yet the final `v1.0.0` tagged source commit. After final
-QA and any remaining release documentation are committed, produce one final
-fresh build from the tag candidate and record its commit/tag and hashes
-separately. Do not treat the release-candidate hashes below as the final
-published artifact hashes until that verification is complete.
+That commit is the exact source for the final v1.0.0 Web artifacts and hashes
+recorded below. A later documentation-only commit that records this provenance
+does not alter these generated artifacts.
 
 ### Toolchain and environment
 
@@ -42,11 +37,12 @@ Emscripten:   6.0.9
 CMake:        4.2.3
 Git:          2.53.0
 Generator:    Unix Makefiles
+EMCC_CFLAGS:  <unset>
 ```
 
 Emscripten 6.0.9 is installed and activated through `emsdk` exactly as described in [Emscripten Setup](#emscripten-setup). Do not use `latest`.
 
-The verified fresh release-candidate build directory is:
+The final v1.0.0 build directory is:
 
 ```text
 build-web-release
@@ -54,8 +50,9 @@ build-web-release
 
 ### Configure and build
 
-From the repository root, with the pinned SDK active, the verified
-release-candidate build was created from a fresh directory with:
+From the repository root, with the pinned SDK active and `EMCC_CFLAGS`
+unset, the final v1.0.0 build was configured and built from a freshly deleted
+`build-web-release` directory with:
 
 ```bash
 source ~/emsdk/emsdk_env.sh
@@ -83,7 +80,7 @@ The GL4ES dependency patch (below) is applied idempotently, so both fresh and re
 
 ### Output
 
-The fresh release-candidate build produced:
+The final v1.0.0 build produced:
 
 ```text
 build-web-release/bin/lugaru.html
@@ -94,33 +91,46 @@ build-web-release/bin/lugaru.data
 
 All four files must be deployed together, from the same directory.
 
-Exact artifact sizes observed from the build of
-`917bdbae63c28d91649023e8b374bb4e845d6667` on 2026-10-04 were:
+Exact artifact sizes of the final v1.0.0 Web artifacts, built from
+`1b81e1d48b1ad4d681258e04a1696536d794fa3e` on 2026-10-13:
 
 ```text
-lugaru.html       7,785 bytes
+lugaru.html       7,783 bytes
 lugaru.js       146,235 bytes
-lugaru.wasm   2,145,378 bytes
-lugaru.data  40,238,437 bytes
+lugaru.wasm   2,145,306 bytes
+lugaru.data  40,057,550 bytes
 ```
 
-Observed SHA-256 values for those exact release-candidate artifacts:
+SHA-256 values for the final v1.0.0 Web artifacts:
 
 ```text
-13f32c91a51964d9daa4bd8fcfe6345dc4ae7506ec955b6adee989fc378720a8  lugaru.html
-69da9a340f7a83bff5135fc152432178e78089acf57ede577c17d69420dc01a8  lugaru.js
-09e0c72eec29435600b41265c436a07e057b32f76d1757b81bb5a29e03bccef5  lugaru.wasm
-f98c7cb096f5787978787f86a2c0e57a3e764eafada916b2bd30db4942fe9e6c  lugaru.data
+8bb851dd9cc20c3230e4e64af1e301167b14503eb69c0525c84171ac7d84c1ea  lugaru.html
+3f8ea58f7dcaa6f175f70fbac2a6472049517d2445512614a7230ef96386e9cc  lugaru.js
+9701db1abc9acb56cc5e35c519122a518c937c5acefa0440dea468ec18313ffb  lugaru.wasm
+17938681b428e1b58216326d4c84f62d4ef9d16130802c9dd4581e3effdfbfa1  lugaru.data
 ```
 
-The generated WebAssembly contains the expected release identity:
+These hashes identify the final v1.0.0 Web artifacts. Rebuilding with a
+different source, toolchain or dependency state may produce different hashes.
+
+### Final artifact smoke test
+
+**RUNTIME-VERIFIED (2026-10-13):** the final artifacts above were served
+locally from `build-web-release/bin` (see [Local testing](#local-testing)) and
+passed a browser smoke test:
 
 ```text
-Lugaru-Web v1.0.0 (Lugaru 1.3)
+title screen shows Lugaru-Web v1.0.0
+red loading UI
+gameplay startup
+audio after first click
+fullscreen enter/exit
+windowed reload
+assets load
 ```
 
-These hashes identify the verified **pre-tag release candidate** only.
-The final tagged/published build will be hashed again after final QA.
+This is a release smoke test, not exhaustive QA. Detailed runtime validation
+belongs in [`porting-notes.md`](porting-notes.md).
 
 ### Same-origin game data
 
@@ -128,11 +138,19 @@ The final tagged/published build will be hashed again after final QA.
 
 The Web release is therefore self-contained: it does not depend on Ryan Deering's server or any other external data host. The game data is packaged from the repository's `Data/` directory at build time.
 
-**VERIFIED RELEASE-CANDIDATE OBSERVATION (2026-10-04):** the generated
-`build-web-release/bin/lugaru.html` and `lugaru.js` contain no
-`dev.ryandeering`, `DATA_CDN_URL`, or `USE_CDN_DATA` references.
+**HISTORICAL EVIDENCE — earlier release-candidate build (2026-10-04):** the
+following same-origin/MIME inspection was performed on an earlier
+release-candidate build from `917bdbae63c28d91649023e8b374bb4e845d6667`, not
+on the final v1.0.0 artifacts. Its sizes therefore differ from the final
+artifacts above. It is retained as evidence for the `36407bd` same-origin
+change. The final artifacts were served locally and smoke-tested separately
+(see [Final artifact smoke test](#final-artifact-smoke-test)).
 
-The release candidate was served locally on port 8785 and opened through the
+The generated `build-web-release/bin/lugaru.html` and `lugaru.js` from that
+earlier build contained no `dev.ryandeering`, `DATA_CDN_URL`, or
+`USE_CDN_DATA` references.
+
+That earlier build was served locally on port 8785 and opened through the
 WSL network address. Browser and HTTP-header inspection confirmed:
 
 ```text
