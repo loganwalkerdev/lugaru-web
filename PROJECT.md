@@ -280,7 +280,7 @@ The original stabilization priorities are complete: build provenance and porting
 
 1. Reconcile release documentation and licensing files with the current source.
 2. Keep v1.0.0 Web packaging and deployment manual for this release. The inherited native release workflow has been retired, retained native CI now uses `lugaru-web-native-*` naming, and no current workflow builds or publishes the Web target.
-3. Build the final release artifacts with Emscripten 6.0.9 from a fresh `build-web-release` directory, and record the source commit and artifact hashes in `Docs/build-provenance.md`. The recorded release-candidate hashes (`917bdba`) predate the release QA fixes.
+3. Final v1.0.0 Web artifact provenance, exact sizes, and SHA-256 hashes are recorded in `Docs/build-provenance.md` from source commit `1b81e1d`.
 4. Smoke-test the public deployment, confirming that `lugaru.data` loads from the same origin.
 5. Physically verify the Triangle tutorial advance and tutorial stage-3 right-stick recognition (B-8), or ship them documented as source/automated-validated only.
 6. Optionally confirm the final Web `Blur Effects: Unavailable on Web` Options row physically (B-6 notes this as a short remaining manual UI check).
