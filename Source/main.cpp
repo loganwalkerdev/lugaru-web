@@ -379,6 +379,14 @@ bool SetUp()
     if (commandLineOptions[FULLSCREEN]) {
         fullscreen = commandLineOptions[FULLSCREEN].last()->type();
     }
+
+#ifdef __EMSCRIPTEN__
+    // Browser fullscreen requires a user gesture and cannot be restored
+    // reliably during startup. Always begin windowed and let the user
+    // enter fullscreen after the page has loaded.
+    fullscreen = 0;
+#endif
+
     if (fullscreen) {
         sdlflags |= SDL_WINDOW_FULLSCREEN;
     }
