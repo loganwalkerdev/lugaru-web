@@ -1,20 +1,20 @@
-# Lugaru Web Project
+# Lugaru-Web Project
 
 ## Overview
 
-Lugaru Web is an effort to maintain and extend a browser-native version of **Lugaru**, based on the open-source Lugaru codebase and Ryan Deering's Loupgarenne WebAssembly work.
+Lugaru-Web is an effort to maintain and extend a browser-native version of **Lugaru**, based on the open-source Lugaru codebase and Ryan Deering's Loupgarenne WebAssembly work.
 
-A functional WebAssembly build already exists and has been verified to run the game in a modern browser. The project is therefore not a ground-up browser port.
+Ryan's WebAssembly build already ran the game in a modern browser before Lugaru-Web began. The project is therefore not a ground-up browser port.
 
-The current objective is to preserve that working baseline, understand and stabilize the inherited WebAssembly changes, improve browser-specific reliability and usability, and establish a maintainable foundation for future development.
+**Lugaru-Web v1.0.0** is the preservation and browser-stabilization release built on that baseline. It concentrates on understanding and stabilizing the inherited WebAssembly changes, restoring historical behavior and content, browser reliability and usability, and documentation, rather than adding a new gameplay layer.
 
 Large feature work should not come at the expense of understanding or maintaining the existing codebase.
 
 ---
 
-## Current Baseline
+## Inherited Baseline
 
-The current browser baseline is:
+The inherited browser baseline is:
 
 ```text
 Loupgarenne feature/wasm-support
@@ -31,7 +31,7 @@ Relevant references:
 
 ```text
 main
-    Current Lugaru Web development branch.
+    Current Lugaru-Web development branch.
 
 loupgarenne-main
     Ryan Deering's Loupgarenne main branch.
@@ -50,9 +50,9 @@ The existing Git history is retained so inherited work remains attributed to its
 
 ---
 
-## Verified Browser Baseline
+## Verified Browser Baseline (historical, 2026-09-16)
 
-The WebAssembly baseline was manually tested on **2026-09-16** in a Chromium-based browser.
+The WebAssembly baseline was manually tested on **2026-09-16** in a Chromium-based browser (Google Chrome 153; see `Docs/build-provenance.md`).
 
 Surface-level testing confirmed:
 
@@ -68,7 +68,7 @@ Surface-level testing confirmed:
 
 This establishes `b340204` as the known-good browser baseline.
 
-It does not imply that every subsystem or campaign has been fully validated.
+It does not imply that every subsystem or campaign has been fully validated. `Docs/build-provenance.md` records that later testing found some gameplay inputs could stop responding after browser focus changes, so combat and full input behavior were not considered fully verified by this smoke test.
 
 ---
 
@@ -83,9 +83,11 @@ The browser build currently uses:
 * GL4ES,
 * browser-compatible audio support,
 * PNG, JPEG, Ogg and Vorbis support,
-* jsoncpp.
+* jsoncpp,
+* IDBFS (IndexedDB) for saved settings and progress,
+* game data preloaded into `lugaru.data` and served from the same origin as the page.
 
-GL4ES provides compatibility for Lugaru's legacy fixed-function OpenGL renderer.
+GL4ES provides compatibility for Lugaru's legacy fixed-function OpenGL renderer. The pinned GL4ES revision is unchanged from the baseline; CMake applies one small local patch so that alpha-to-coverage reaches WebGL (B-18).
 
 Because the renderer is currently functional through GL4ES, replacing or substantially rewriting it is not a project objective unless profiling or compatibility testing demonstrates a concrete need.
 
@@ -130,26 +132,26 @@ Performance changes should be based on reproducible measurements or profiling ra
 Detailed investigation notes belong in:
 
 ```text
-docs/porting-notes.md
+Docs/porting-notes.md
 ```
 
-This file tracks only the current high-level state.
+This file tracks only the current high-level state. Every item marked **Fixed** is committed; fixing commits are recorded in `Docs/porting-notes.md`. Issue IDs are stable; B-21 has not been assigned.
 
 | ID   | Summary                                                                           | Status | Priority |
 | ---- | --------------------------------------------------------------------------------- | ------ | -------- |
-| B-1  | Web settings overridden after configuration load                                  | Fixed  | High     |
-| B-2  | Browser main loop uses timeout scheduling as a consequence of B-1                 | Fixed  | High     |
-| B-3  | Browser persistence migrated from localStorage to IDBFS with safe legacy migration| Fixed  | High     |
-| B-4  | Animation bounds checking removed in shared code                                  | Fixed  | High     |
+| B-1  | Web settings overridden after configuration load (`abb81d7`)                      | Fixed  | High     |
+| B-2  | Browser main loop uses timeout scheduling as a consequence of B-1 (`abb81d7`)     | Fixed  | High     |
+| B-3  | Browser persistence migrated from localStorage to IDBFS with safe legacy migration (`3d747d3`) | Fixed  | High     |
+| B-4  | Animation bounds checking removed in shared code (`b222ddc`)                      | Fixed  | High     |
 | B-5  | Asset case fallback: latent external-content compatibility risk                    | Closed — note retained | Low |
-| B-6  | Web blur intentionally disabled; Options row unavailable                          | Fixed  | Low      |
-| B-7  | Browser key rebinding replaced with Web-only nonblocking capture                  | Fixed  | Medium   |
-| B-8  | Controller gameplay/menu UI Firefox/wired DualSense verified; tutorial physical QA and compatibility/tuning open | Partial | Medium |
+| B-6  | Web blur intentionally disabled; Options row unavailable (`fad80ac`)              | Fixed  | Low      |
+| B-7  | Browser key rebinding replaced with Web-only nonblocking capture (`a7bfd51`)      | Fixed  | Medium   |
+| B-8  | Controller gameplay/camera/menu UI Firefox/wired DualSense verified; tutorial physical QA and compatibility/tuning open | Partial | Medium |
 | B-9  | Web build is optimized primarily for binary size                                  | Open   | Low      |
 | B-10 | Synchronous level loading can block the browser main thread                       | Open   | Low      |
 | B-11 | Account creation behavior was changed globally rather than only for Web builds    | Open   | Medium   |
-| B-12 | WebAssembly runtime crash: memory access out of bounds                            | Fixed  | High     |
-| B-13 | Historical yaw, tilt, and head behavior restored; combined physical QA passed      | Fixed  | Medium   |
+| B-12 | WebAssembly runtime crash: memory access out of bounds (`7d4349b`)                | Fixed  | High     |
+| B-13 | Historical yaw, tilt, and head behavior restored; combined physical QA passed (`0305947`) | Fixed  | Medium   |
 | B-14 | Web NPOT mipmap compatibility fixed; snow and Fire loading-screen QA passed (`eea54f4`) | Fixed | Medium |
 | B-15 | Fire-heavy Seven Tasks task3 Web sprite rendering optimized (`592e158`) | Fixed | High |
 | B-16 | Delayed spatial exit lost Empire campaign progression; shared, not Web-specific (`97121db`) | Fixed | High |
@@ -158,9 +160,9 @@ This file tracks only the current high-level state.
 | B-19 | Jump boost applied too quickly under fixed physics timestep (`21efae8`) | Fixed | High |
 | B-20 | Temple tinted JPEG fur rendered with RGB striping (`85477f5`) | Fixed | Medium |
 
-B-14 preserves native and Web POT behavior; only Web NPOT images requesting mipmaps fall back to `GL_LINEAR` without automatic generation. SnowFlake retains its original mipmap request and assets are unchanged. See [B-14 evidence](Docs/porting-notes.md#b-14--web-npot-textures-render-black-with-mipmapped-sampling). The separate fire/sprite slowdown is [resolved for R1 in backlog A8](Docs/research-backlog.md#a8-dense-fire-spawner-web-slowdown--resolved-for-r1-2026-09-28): B-15 uses client arrays on Web, preserves native rendering and historical particles, and passed project-owner production QA. See [B-15 evidence](Docs/porting-notes.md#b-15--dense-fire-sprite-rendering-slows-web).
+B-14 preserves native and Web POT behavior; only Web NPOT images requesting mipmaps fall back to `GL_LINEAR` without automatic generation. SnowFlake retains its original mipmap request and assets are unchanged. See [B-14 evidence](Docs/porting-notes.md#b-14--web-npot-textures-render-black-with-mipmapped-sampling). The separate fire/sprite slowdown is [resolved in backlog A8](Docs/research-backlog.md#a8-dense-fire-spawner-web-slowdown--resolved-for-r1-2026-09-28): B-15 uses client arrays on Web, preserves native rendering and historical particles, and passed project-owner production QA. See [B-15 evidence](Docs/porting-notes.md#b-15--dense-fire-sprite-rendering-slows-web).
 
-B-16 closes the R1 Empire progression blocker: leaving the Sky Palace bridge exit during the completion delay no longer stalls routing or causes count-based death reloads to skip Rebel Outpost. The defect was inherited shared logic, not WASM-specific. See [B-16 evidence](Docs/porting-notes.md#b-16--delayed-spatial-exit-loses-campaign-progression-empire-sky-palace) and [backlog A9](Docs/research-backlog.md#a9-empire-sky-palace-campaign-progression--resolved-for-r1-2026-09-29).
+B-16 closes the Empire progression blocker found during Web campaign QA: leaving the Sky Palace bridge exit during the completion delay no longer stalls routing or causes count-based death reloads to skip Rebel Outpost. The defect was inherited shared logic, not WASM-specific. See [B-16 evidence](Docs/porting-notes.md#b-16--delayed-spatial-exit-loses-campaign-progression-empire-sky-palace) and [backlog A9](Docs/research-backlog.md#a9-empire-sky-palace-campaign-progression--resolved-for-r1-2026-09-29).
 
 B-17 closes an inherited OSS Empire content-conversion regression: two historically unresolved `fire.png` clothing references in Sky Palace had been remapped to the opaque `Fire.jpg` loading texture, corrupting two NPC appearances. The shipped map now omits those dead clothing layers and the obsolete conversion rule has been removed so the defect cannot be recreated. See [B-17 evidence](Docs/porting-notes.md#b-17--empire-sky-palace-npcs-receive-firejpg-as-clothing) and [backlog A9b](Docs/research-backlog.md#a9b-empire-sky-palace-npc-clothing-corruption--resolved-for-r1-2026-09-30).
 
@@ -172,12 +174,14 @@ B-18 closes a Web-specific dense-foliage performance regression exposed by Empir
 
 ### WebAssembly
 
-A WebAssembly build has been successfully produced using:
+The v1.0 Web release is built with:
 
 ```text
 WSL2
-Ubuntu
+Ubuntu 26.04.1
 Emscripten 6.0.9
+CMake 4.2.3
+Release build directory: build-web-release
 ```
 
 The build produces:
@@ -189,57 +193,105 @@ lugaru.wasm
 lugaru.data
 ```
 
-The resulting build has been manually verified as playable through a local HTTP server.
+The four files must be deployed together. The current source and local build load `lugaru.data` from the same origin and directory as `lugaru.html`, not from Ryan Deering's server (`36407bd`); this has not yet been smoke-tested on the public deployment. The files must be served over HTTP rather than opened through `file://`.
 
-Exact environment information, dependency revisions, build commands, compiler configuration and known warnings should be maintained in:
+Exact environment information, dependency revisions, build commands, compiler configuration, known warnings, and the preserved 2026-09-16 baseline record are maintained in:
 
 ```text
-docs/build-provenance.md
+Docs/build-provenance.md
 ```
+
+Per-issue runtime validation is recorded in `Docs/porting-notes.md`. SHA-256 hashes and the source commit of the final published v1.0.0 artifacts are still to be recorded in `Docs/build-provenance.md` when the release is tagged.
 
 ### Native Builds
 
-Native builds should remain available as comparison targets where practical.
+Native builds should remain available as comparison targets where practical. They are not part of the v1.0 Web release and are not release-validated.
 
 A change to shared game code should not knowingly break a supported native target without a documented reason.
 
-The inherited macOS CI workflow currently fails before compilation because it attempts to install an x86_64 Homebrew environment on an Apple Silicon runner. This is considered a baseline CI configuration issue rather than a source-level regression.
+The retained GitHub Actions build workflow still builds native Linux, macOS and Windows comparison targets only. Its artifact and install names were reconciled for Lugaru-Web as `lugaru-web-native-*`. The inherited tag-driven native release workflow was removed before v1.0.0 because the v1.0 release is Web-only and is packaged and deployed separately. No workflow currently builds or tests the Web target. The inherited macOS workflow was previously observed failing before compilation because it attempts to install an x86_64 Homebrew environment on an Apple Silicon runner; that failure has not been revalidated for v1.0.0. See CI-1 in `Docs/porting-notes.md`.
 
 ---
 
 ## Current Development Phase
 
-### Phase 0 — Baseline Preservation and Stabilization
+### v1.0.0 — Preservation and Browser Stabilization Release
 
-The project is currently focused on understanding, documenting and stabilizing the inherited WebAssembly implementation.
+The baseline-preservation and stabilization work that began from `baseline/wasm-b340204` is complete for v1.0.0:
 
-Major gameplay additions should wait until the browser foundation is sufficiently understood and reliable.
+* inherited Web regressions in settings, frame scheduling, persistence, bounds checking, sprite deletion, key rebinding, and texture handling are fixed;
+* historical character turning, tilt, head behavior, and jump timing are restored;
+* Web sprite and foliage performance regressions are fixed without reducing historical content;
+* Empire progression/clothing and Temple fur/clothing content are repaired or restored, with provenance recorded;
+* the audited PNG/JPEG image-decode and clothing-compositing paths are hardened with size/dimension validation; known unchecked paths outside that audit remain documented, and unfixed, in backlog A11;
+* controller support covers gameplay, camera, menus, campaign/world map, and challenges;
+* the current source and local build are configured to load `lugaru.data` from the same origin as the page (`36407bd`); smoke testing of the public deployment is still pending;
+* full release QA covered all bundled campaigns (Original, Seven Tasks, Temple and Empire) and the challenges, and Chrome and Firefox were separately browser smoke/performance tested; the resulting fixes are summarized in **v1.0.0 Release QA Fixes** below;
+* Web defaults were tuned, and browser fullscreen now starts windowed and stays in sync with the browser.
 
-See **Near-Term Priorities** for the active work sequence.
+The remaining work before publishing is release packaging and verification, not new gameplay. Major gameplay additions continue to wait until after v1.0.0; see **Near-Term Priorities**.
+
+---
+
+## v1.0.0 Release QA Fixes
+
+Found during release QA (2026-10-04 – 2026-10-13) and verified by project-owner testing. These have no B-numbers. Fixes up to `b8ee78d` are recorded in detail in [porting notes](Docs/porting-notes.md#release-campaign-qa-fixes-2026-10-05--2026-10-06) and [preservation 19](Docs/preservation-and-modding.md#19-changing-inherited-campaign-data-v10-campaign-qa-review).
+
+### Shared gameplay and engine fixes (all builds)
+
+* **Knife-catch crash** (`e95844f`, `Weapon::doStuff()`): catching a thrown knife now resets `frameCurrent` to 0 when switching to `removeknifeanim`, instead of carrying over the previous animation's frame index.
+* **Grounded knife finisher hit detection** (`8f25ff1`, `Person::DoAnimations()`): the original single vertical test at 60% along the knife runs first, unchanged. If it misses, the test is repeated at 40%, 80%, 20% and 100%. This only adds hits the original test narrowly missed; it is a deliberate leniency improvement, not a historical restoration.
+* **Long-ten Giant encounter** (`d997ab3`): dialogue interaction distance now scales with character size (default-sized pairs keep the historical `distsq < 6`; helper-scale actors are excluded). Long speaker names are scaled to fit the dialogue box.
+* **Combat music** (`d07fea4`): pausing also pauses the fight theme, resuming restores whichever theme was active, and End Game stops both gameplay streams.
+* **Campaign map after completion** (`3363eae`): the campaign menu is rebuilt after `Account::endGame()` resets progress, so it no longer shows the completed final state.
+* **Minimap** (`f23faa2`): Persons with scale `<= 0.001` or `>= 1000` (cutscene/staging helpers) are no longer drawn; no actor data changed.
+* **Fullscreen toggle** (`09cea07`, shared part): `toggleFullscreen()` updates the fullscreen setting only if SDL actually changes the window state.
+
+### Campaign data and text
+
+* **Empire throne dialogue** (`d51f9d5`): `jendraz11` gains a type-20 dialogue-launch hotspot at the throne, matching the position and size of the existing `jendraz2` trigger.
+* **Temple dialogue cleanup** (`20be11c`, `744c7de`, `488aae6`): stale Original-campaign dialogue copies and unreachable blocks were removed from 13 Temple maps; legitimate Temple dialogue is unchanged apart from one wrong name (`Garett!` → `Shan!` in `svenshan`). Non-dialogue map data is identical.
+* **`task9`** (`d997ab3`): a duplicate giant dialogue attached to Wort was removed; the speaker name was normalized to `Long-ten Giant`.
+* **Campaign labels** (`744c7de`, `4d27256`): first-level labels normalized to `..._start_new_campaign!`; Temple `Ice_Cave_(Last_Level)` → `Ice_Cave`.
+* **Ending text** (`744c7de`): Empire `Lugaru's island` → `Lugaru Island`. The Temple ending is new Lugaru-Web text replacing a 2017 OSS placeholder (`217da32`), not recovered original text.
+
+### Browser-specific fixes (Web build only)
+
+* **Fullscreen sync** (`09cea07`): on every SDL window event, the fullscreen setting is re-read from the actual window state, and the Options menu is refreshed if open, so leaving fullscreen through the browser is reflected in-game.
+* **Fullscreen at startup** (`501e2ef`): the Web build always starts windowed, because browsers require a user gesture to enter fullscreen.
+* **Default settings** (`6e51b9d`): Web defaults are Blood on (low detail) and Unlock FPS off. Combined with existing defaults, a first launch uses 1920×1080, High detail, VSync on, and fullscreen off. Native defaults are unchanged.
+* **Quit and logging** (`e1cfb2e`): Quit is omitted from the Web main menu to avoid terminating the runtime and leaving a dead canvas; End Game remains. Per-event controller diagnostic logging is suppressed on Web.
 
 ---
 
 ## Character restoration milestone — completed (2026-09-27)
 
-**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** bounded yaw, bounded body tilt, and historical head tracking adapted to fresh-simulation/draw ordering are now default behavior. The user reports normal combined gameplay with controller behavior intact and no perceptible remaining player-locomotion problem. No verified remaining player-locomotion regression currently warrants another code change.
+**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** bounded yaw, bounded body tilt, and historical head tracking adapted to fresh-simulation/draw ordering are now default behavior, committed as `0305947` (merged at `d21048e`). The user reports normal combined gameplay with controller behavior intact and no perceptible remaining player-locomotion problem. No verified remaining player-locomotion regression currently warrants another code change.
 
-The default Release build is `build-web-character-final/bin/lugaru.html`; no experiment definitions are needed. Current OSS rabbit TalkIdle is preserved. The unresolved OSS-scheduler experiment is saved separately outside the repository; the normal fixed scheduler is unchanged. See [B-13](Docs/porting-notes.md#b-13--player-direction-changes-snap-instead-of-rotating) for provenance, build evidence, and patch location, and [backlog A2a](Docs/research-backlog.md#a2a-npc-slopeseam-and-scheduler-comparison--open) for the remaining NPC observation. Camera follow is a separate subsystem only to revisit if a meaningful discrepancy is observed. Code and documentation are prepared for manual commits; nothing is committed by this milestone task.
+No experiment definitions are needed in normal builds. Current OSS rabbit TalkIdle is preserved. The unresolved OSS-scheduler experiment is saved separately outside the repository; the normal fixed scheduler is unchanged. See [B-13](Docs/porting-notes.md#b-13--player-direction-changes-snap-instead-of-rotating) for provenance, build evidence, and patch location, and [backlog A2a](Docs/research-backlog.md#a2a-npc-slopeseam-and-scheduler-comparison--open) for the remaining NPC observation. Camera follow is a separate subsystem only to revisit if a meaningful discrepancy is observed.
 
 ## Near-Term Priorities
 
-Current priorities are approximately:
+### Completed stabilization sequence
 
-1. Document reproducible build provenance.
-2. Create detailed WebAssembly porting notes.
-3. Restore inherited shared-code behavior that was unintentionally changed, including animation bounds checking and account creation behavior.
-4. Correct browser settings handling and frame scheduling together.
-5. Investigate and harden browser persistence.
-6. Verify and repair browser key rebinding — completed and Chrome-verified on 2026-09-24.
-7. Asset filename case investigation complete: no confirmed tracked-content case mismatch or shipped-content runtime failure. B-5 is a low-priority compatibility note; no code change justified. Reopen only for a concrete custom/historical-content failure. See [B-5](Docs/porting-notes.md#b-5--asset-filename-case-fallback-is-incomplete).
-8. Controller foundation (`e5939fe`), Classic digital movement (`4b8af1d`), gameplay actions (`2387ebf`), camera look (`ab46b53`), and pause/menu UI (`8d549e4`) completed: Web builds, isolated harness checks, and physical wired DualSense/Firefox verification passed with DS4Windows disabled, including campaign/world-map and challenge/menu flows. Triangle tutorial advance (`bd7b207`) and stage-3 right-stick recognition (`f00ec72`) are source/automated-validated; physical QA is next. Latest user testing also verified wired DualSense input in current Chrome with the final restored build; earlier Chrome exposure failures remain historical observations with unknown cause. Broader browser/Bluetooth compatibility, controller configuration/prompts, and sensitivity/threshold tuning remain open. True analog locomotion is not implemented; Classic digital intent remains unchanged. Character restoration is complete; NPC slope/seam scheduler behavior remains separate. See [B-8](Docs/porting-notes.md#b-8--controller-gameplay-menuui-and-tutorial-support) and [backlog A6](Docs/research-backlog.md#a6-controller-support-completed-scope-and-remaining-work) for evidence and scope exclusions.
-9. Benchmark WebAssembly optimization settings.
-10. Improve browser loading behavior if testing shows it is necessary.
-11. Restore useful native CI coverage where practical.
+The original stabilization priorities are complete: build provenance and porting notes are documented; inherited animation bounds checking is restored; Web settings, frame scheduling, persistence, and key rebinding are fixed; the asset-case investigation is closed as a low-priority compatibility note (B-5); and controller support is implemented — foundation (`e5939fe`), Classic digital movement (`4b8af1d`), gameplay actions (`2387ebf`), camera look (`ab46b53`), pause/menu UI (`8d549e4`), Triangle tutorial advance (`bd7b207`), and stage-3 right-stick recognition (`f00ec72`). See the issue table above and [B-8](Docs/porting-notes.md#b-8--controller-gameplay-menuui-and-tutorial-support) for evidence and limits.
+
+### v1.0.0 release readiness
+
+1. Reconcile release documentation and licensing files with the current source.
+2. Keep v1.0.0 Web packaging and deployment manual for this release. The inherited native release workflow has been retired, retained native CI now uses `lugaru-web-native-*` naming, and no current workflow builds or publishes the Web target.
+3. Final v1.0.0 Web artifact provenance, exact sizes, and SHA-256 hashes are recorded in `Docs/build-provenance.md` from source commit `1b81e1d`.
+4. Smoke-test the public deployment, confirming that `lugaru.data` loads from the same origin.
+5. Physically verify the Triangle tutorial advance and tutorial stage-3 right-stick recognition (B-8), or ship them documented as source/automated-validated only.
+6. Optionally confirm the final Web `Blur Effects: Unavailable on Web` Options row physically (B-6 notes this as a short remaining manual UI check).
+
+### After v1.0.0
+
+1. Isolate the inherited global `"Player"` auto-account behavior to Web builds, or document why it should remain shared (B-11).
+2. Controller compatibility and feel: broader browser/Bluetooth coverage, sensitivity/threshold tuning, settings/prompts (B-8, backlog A6). True analog locomotion remains a separate design question; Classic digital intent is unchanged.
+3. Benchmark WebAssembly optimization settings (B-9).
+4. Improve browser loading behavior if testing shows it is necessary (B-10).
+5. Broader CI modernization beyond the pre-tag workflow audit: restore useful native CI coverage, fix the macOS dependency setup, add a Web build job, and add caching where practical (CI-1, backlog A5).
 
 Items not listed here remain tracked but are not currently scheduled.
 
@@ -299,11 +351,20 @@ Content under `Data/` is distributed under Creative Commons Attribution-ShareAli
 
 GL4ES is distributed under the MIT license and requires its applicable copyright and license notices to be preserved.
 
-Additional dependency and contributor information should be maintained in:
+Licensing, dependency and contributor information is maintained in:
 
 ```text
-ATTRIBUTION.md
-THIRD-PARTY.md
+COPYING.txt
+    GNU GPL version 2 license text for the source code.
+
+CONTENT-LICENSE.txt
+    Game asset licenses, campaign attribution and Lugaru-Web content modifications.
+
+THIRD-PARTY-NOTICES.txt
+    Notices and licenses for third-party software used by the Web build, including GL4ES and jsoncpp.
+
+AUTHORS
+    Original developer, OSS contributors, Loupgarenne and Lugaru-Web authorship and lineage.
 ```
 
 Any public distribution of compiled WebAssembly builds, including hosting them on a public web server, must satisfy the applicable GPL source-distribution requirements.
@@ -325,21 +386,35 @@ The current project name describes its relationship to Lugaru rather than claimi
 Project documentation should remain concise, technical and maintainable.
 
 ```text
+README.md
+    Public overview, play link, controls and known Web limitations.
+
 PROJECT.md
     Stable project direction, current phase and scope.
 
-docs/build-provenance.md
-    Reproducible build environment, dependency versions and commands.
+Docs/README.md
+    Index of the technical, historical, preservation and design documentation.
 
-docs/porting-notes.md
+Docs/build-provenance.md
+    Current release build procedure, dependency versions and commands, and the preserved baseline build record.
+
+Docs/porting-notes.md
     Detailed WebAssembly issues, testing observations and resolutions.
 
-docs/decisions/
-    Significant architectural decisions when additional explanation is useful.
+Docs/architecture.md
+    Current engine mental model, important couplings, source archaeology and extension seams.
 
-CONTRIBUTING.md
-    Contribution and commit practices if outside contribution becomes relevant.
+Docs/research-backlog.md
+    Unresolved technical and historical questions.
+
+COMPILING.md
+    Build entry points for the Web build and inherited native instructions.
+
+RELEASE-NOTES.md
+    Lugaru-Web release notes, followed by inherited OSS Lugaru release history.
 ```
+
+There is no separate contribution guide at present. `AGENTS.md` records the working rules used for automated-assistant contributions.
 
 Documentation should describe the project and its technical reasoning rather than serve as a transcript of development sessions.
 
@@ -347,7 +422,7 @@ Documentation should describe the project and its technical reasoning rather tha
 
 ## Project Direction
 
-The immediate objective is:
+The v1.0.0 objective is:
 
 **Turn the existing working Lugaru WebAssembly port into a documented, reproducible, stable and maintainable browser version of Lugaru.**
 

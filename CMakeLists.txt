@@ -71,14 +71,18 @@ set(LUGARU_VERSION_MAJOR 1)
 set(LUGARU_VERSION_MINOR 3)
 set(LUGARU_VERSION_PATCH 0)
 
+# Lugaru-Web project release version. This is intentionally separate from the
+# inherited Lugaru engine version above.
+set(LUGARU_WEB_VERSION "1.0.0")
+
 # MAJOR.MINOR, or MAJOR.MINOR.PATCH if PATCH != 0
 set(LUGARU_VERSION_NUMBER "${LUGARU_VERSION_MAJOR}.${LUGARU_VERSION_MINOR}")
 if(LUGARU_VERSION_PATCH)
     set(LUGARU_VERSION_NUMBER "${LUGARU_VERSION_NUMBER}.${LUGARU_VERSION_PATCH}")
 endif()
 
-# Set to "" for stable (tagged) builds, "-dev" for dev builds, "-loupgarenne"
-set(LUGARU_VERSION_SUFFIX "-loupgarenne")  # Loupgarenne fork
+# Inherited Lugaru/fork suffix, retained separately from the Lugaru-Web release version.
+set(LUGARU_VERSION_SUFFIX "-lugaru-web")  # Lugaru-Web
 #set(LUGARU_VERSION_SUFFIX "-dev")  # development
 #set(LUGARU_VERSION_SUFFIX "")  # stable
 
@@ -100,9 +104,9 @@ endif()
 
 set(LUGARU_VERSION_RELEASE "" CACHE STRING "Optional release string, e.g. for distro packages release number")
 
-# Final string built from the above constants, following the scheme:
-# MAJOR.MINOR[.PATCH][-dev] [(git HASH)] [[RELEASE]]
-set(LUGARU_VERSION_STRING "${LUGARU_VERSION_NUMBER}${LUGARU_VERSION_SUFFIX}")
+# User-facing Lugaru-Web release identity. The project release version and
+# inherited Lugaru engine version intentionally remain separate.
+set(LUGARU_VERSION_STRING "Lugaru-Web v${LUGARU_WEB_VERSION} (Lugaru ${LUGARU_VERSION_NUMBER})")
 if(NOT LUGARU_VERSION_HASH STREQUAL "")
     set(LUGARU_VERSION_STRING "${LUGARU_VERSION_STRING} (git ${LUGARU_VERSION_HASH})")
 endif()
@@ -243,15 +247,8 @@ endif()
 if(EMSCRIPTEN)
     message(STATUS "Configuring for Emscripten/WebAssembly build with GL4ES")
 
-    # cdn config
-    option(USE_CDN_DATA "Load .data from CDN" OFF)
-    if(USE_CDN_DATA)
-        message(STATUS "Using CDN for data file")
-        file(WRITE ${CMAKE_BINARY_DIR}/pre.js "window['DATA_CDN_URL']='https://dev.ryandeering.ie/lugaru.data';")
-        set(DATA_CDN_FLAG "SHELL:--pre-js ${CMAKE_BINARY_DIR}/pre.js")
-    else()
-        set(DATA_CDN_FLAG "")
-    endif()
+    # Web data is served from the same origin as the generated shell.
+    set(DATA_CDN_FLAG "")
 
     FetchContent_Declare(
     gl4es

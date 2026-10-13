@@ -42,7 +42,9 @@ bool controllerSubsystemReady = false;
 Uint32 nextControllerScan = 0;
 Sint16 controllerAxes[SDL_CONTROLLER_AXIS_MAX] = {};
 bool controllerButtons[SDL_CONTROLLER_BUTTON_MAX] = {};
+#ifndef __EMSCRIPTEN__
 int loggedAxes[SDL_CONTROLLER_AXIS_MAX] = {};
+#endif
 int controllerMoveX = 0;
 int controllerMoveY = 0;
 // Combined action history belongs to the input tick, not controller lifecycle:
@@ -135,7 +137,9 @@ void clearControllerState()
     cursorRemainderX = cursorRemainderY = 0.f;
     for (int i = 0; i < SDL_CONTROLLER_AXIS_MAX; ++i) {
         controllerAxes[i] = 0;
+#ifndef __EMSCRIPTEN__
         loggedAxes[i] = 0;
+#endif
     }
     for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; ++i) {
         controllerButtons[i] = false;
@@ -182,7 +186,9 @@ void Input::UpdateController()
     // Poll independently of event consumers (including native key capture).
     SDL_GameControllerUpdate();
     if (controller && !SDL_GameControllerGetAttached(controller)) {
+#ifndef __EMSCRIPTEN__
         SDL_Log("Controller: disconnected instance %d", int(controllerInstance));
+#endif
         SDL_GameControllerClose(controller);
         controller = nullptr;
         controllerInstance = -1;
@@ -200,16 +206,20 @@ void Input::UpdateController()
             if (!SDL_IsGameController(device)) {
                 continue;
             }
+#ifndef __EMSCRIPTEN__
             const char* name = SDL_GameControllerNameForIndex(device);
             SDL_Log("Controller: detected device %d (%s)", device, name ? name : "unknown");
+#endif
             controller = SDL_GameControllerOpen(device);
             if (!controller) {
                 SDL_Log("Controller: open failed: %s", SDL_GetError());
                 continue;
             }
             controllerInstance = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(controller));
+#ifndef __EMSCRIPTEN__
             SDL_Log("Controller: opened instance %d (%s)", int(controllerInstance),
                     SDL_GameControllerName(controller) ? SDL_GameControllerName(controller) : "unknown");
+#endif
             break;
         }
     }
@@ -218,21 +228,25 @@ void Input::UpdateController()
     }
     for (int i = 0; i < SDL_CONTROLLER_AXIS_MAX; ++i) {
         controllerAxes[i] = SDL_GameControllerGetAxis(controller, SDL_GameControllerAxis(i));
-        // Coarse diagnostics only: retain full raw precision in controllerAxes.
+#ifndef __EMSCRIPTEN__
+        // Coarse native diagnostics only: retain full raw precision in controllerAxes.
         if (SDL_abs(int(controllerAxes[i]) - loggedAxes[i]) >= 8192) {
             loggedAxes[i] = controllerAxes[i];
             SDL_Log("Controller: axis %s = %d", SDL_GameControllerGetStringForAxis(SDL_GameControllerAxis(i)),
                     int(controllerAxes[i]));
         }
+#endif
     }
     controllerMoveX = digitalMovementAxis(controllerAxes[SDL_CONTROLLER_AXIS_LEFTX], controllerMoveX);
     controllerMoveY = digitalMovementAxis(controllerAxes[SDL_CONTROLLER_AXIS_LEFTY], controllerMoveY);
     for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; ++i) {
         const bool down = SDL_GameControllerGetButton(controller, SDL_GameControllerButton(i)) != 0;
+#ifndef __EMSCRIPTEN__
         if (down != controllerButtons[i]) {
             SDL_Log("Controller: button %s %s", SDL_GameControllerGetStringForButton(SDL_GameControllerButton(i)),
                     down ? "down" : "up");
         }
+#endif
         controllerButtons[i] = down;
         if (!down) {
             controllerBlockedButtons[i] = false;

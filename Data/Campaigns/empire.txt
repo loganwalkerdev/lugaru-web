@@ -2,7 +2,7 @@ Campaign Levels: 41
 
 Level 1:
 Name: jendraz1
-Description: Sky_Palace
+Description: Sky_Palace_-_start_new_campaign!
 ChooseNext: 0
 NumNext: 1
 NextLevel: 2
@@ -370,4 +370,4 @@ LocationY: 350
 
 EndText:At last, the Empire is defeated!
 While Ash, avenged, mourns the loss of Leila,
-the reconstruction of Lugaru's island begins...
+the reconstruction of Lugaru Island begins...

@@ -1,12 +1,14 @@
 # WebAssembly Porting Notes
 
-**Last updated:** 2026-09-29
+**Last updated:** 2026-10-06
 
-This document tracks WebAssembly-specific defects, inherited behavior changes, browser compatibility issues, and related implementation notes for Lugaru Web.
+This document tracks WebAssembly-specific defects, inherited behavior changes, browser compatibility issues, and related implementation notes for Lugaru-Web.
 
 `PROJECT.md` contains the high-level issue summary. This file contains the technical detail needed to investigate, test, and resolve each item.
 
-Issue IDs should remain stable once assigned.
+Issue IDs should remain stable once assigned. IDs run from B-1 to B-20 plus CI-1; no B-21 has been assigned.
+
+**v1.0.0 status:** every issue marked **Fixed** below is committed on the development line; fixing commits are recorded in each entry. B-8 (controller support) is partially complete, and B-9, B-10, B-11 and CI-1 remain open. Shared gameplay and campaign-data fixes found during release campaign QA are recorded without new IDs under [Release campaign QA fixes](#release-campaign-qa-fixes-2026-10-05--2026-10-06). Dated validation notes inside each entry are preserved as historical evidence of what was tested at that time, including the local build directories used then. The current release build procedure is in [`build-provenance.md`](build-provenance.md#current-v10-release-build).
 
 ---
 
@@ -37,6 +39,7 @@ Source-derived issues should not be described as runtime-confirmed until they ha
 
 **Status:** Fixed
 **Priority:** High
+**Fix:** `abb81d7` — `fix: respect web settings and initialize loop timing` (together with B-2)
 **Evidence:** Source inspection + browser runtime validation
 
 ### Location
@@ -139,6 +142,7 @@ Saved VSync and resolution preferences are respected, while unsupported motion b
 
 **Status:** Fixed
 **Priority:** High
+**Fix:** `abb81d7` — `fix: respect web settings and initialize loop timing` (together with B-1)
 **Evidence:** Source inspection + browser runtime validation
 **Related:** B-1
 
@@ -236,6 +240,7 @@ Browser frame scheduling now follows the user's VSync preference, with animation
 
 **Status:** Fixed
 **Priority:** High
+**Fix:** `3d747d3` — `fix: migrate web persistence to IDBFS`
 **Evidence:** Source inspection and browser runtime testing
 
 ### Location
@@ -314,6 +319,7 @@ This behavior is currently acceptable, but save timing should be revisited durin
 
 **Status:** Fixed
 **Priority:** High
+**Fix:** `b222ddc` — `fix: restore animation frame bounds checking`
 **Evidence:** Source inspection + native build + WebAssembly build + browser runtime comparison
 
 **Location:** `Source/Objects/Person.hpp`
@@ -352,7 +358,9 @@ Models, skeletons, and animations use `openMandatoryFile()`. Images (`load_image
 
 **VERIFIED SOURCE FINDING / static audit:** current tracked Lugaru-Web content has zero confirmed case-only asset-reference mismatches and no duplicate tracked filenames differing only by case. Audited references include source literals, animation/sound definitions, campaign map names, all 1,874 JSON clothing paths, and generated tutorial/configured challenge names. Optional absent campaign world textures use the existing default-world fallback.
 
-**VERIFIED SOURCE FINDING / package audit:** the inspected local Web package contains exactly the 542 tracked asset filenames, preserving case without aliases. CMake preloads `Data` at `/Data`; packaging does not mask a detected mismatch. CDN selection changes the aggregate data-file URL, not internal lookup semantics. Remote CDN contents were not independently validated.
+**VERIFIED SOURCE FINDING / package audit (2026-09-27):** the inspected local Web package contains exactly the 542 tracked asset filenames, preserving case without aliases. CMake preloads `Data` at `/Data`; packaging does not mask a detected mismatch. CDN selection changes the aggregate data-file URL, not internal lookup semantics. Remote CDN contents were not independently validated.
+
+*Later changes (2026-10-04):* the tracked `Data/` count is now 544. The two additions are `Data/Textures/Fur.png` (B-20, `85477f5`) and `Data/Textures/FurBW.jpg` (Temple FurBW restoration, `fef0364`); both are exact-case references from their maps. CDN data loading was removed in `36407bd`, so the Web release always fetches `lugaru.data` from the same origin; the remote-CDN caveat above no longer applies to current builds. The package audit itself was not re-run.
 
 **RUNTIME-VERIFIED — isolated harnesses:** native Linux and Emscripten builds of the actual `Folders.cpp`, tested with the unchanged tracked `World.png`, confirmed exact-case success, raw wrong-case lookup failure, Web-only basename recovery through `openMandatoryFile()`, and failure to repair parent-directory case. The Emscripten harness ran under Node; this was not a full browser gameplay test. No shipped-content runtime failure was reproduced.
 
@@ -366,6 +374,7 @@ Close the active B-5 investigation as a low-priority compatibility note. No sour
 
 **Status:** Fixed; investigation closed
 **Priority:** Low
+**Fix:** `fad80ac` — `fix: disable unsupported blur option on Web`
 **Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED experimental rendering; final menu guard source-validated
 
 ### Findings
@@ -410,7 +419,7 @@ The Web target built successfully after retrying an Emscripten cache-lock sandbo
 
 Chrome runtime testing confirmed normal capture, disappearance of the thread error, keyboard and mouse rebinding, clean Escape cancellation, subsequent control selection, rebound actions in gameplay, and persistence after leaving Options and reloading. Held-hotkey, focus-transition, and browser-reserved-key coverage remains unverified.
 
-Native SDL event-thread portability remains a separate open question in research backlog A4a. Historical origin and investigation details are recorded in research-session section V.
+Native SDL event-thread portability remains a separate open question in research backlog A4a. Earlier origin and investigation notes were kept in the raw September research-session notes, which are no longer part of the maintained documentation set; they remain recoverable from Git history and do not override the conclusions recorded here.
 
 ---
 
@@ -644,6 +653,8 @@ Acceptable during initial stabilization unless testing shows severe stalls.
 
 Revisit only after higher-priority correctness and persistence issues are resolved.
 
+For v1.0.0 this remains open and is documented as a known Web limitation in the root `README.md`; no Asyncify or asynchronous-loading change was made.
+
 ---
 
 ## B-11 — Account Creation Behavior Was Changed Globally
@@ -684,6 +695,7 @@ If automatic first-run account creation is needed only for Web builds, isolate t
 
 **Status:** Fixed
 **Priority:** High
+**Fix:** `7d4349b` — `fix: prevent invalid sprite access after deletion`
 **Evidence:** Runtime debugging and source inspection
 
 ### Location
@@ -797,8 +809,9 @@ B-12 is considered fixed based on the identified unsafe erase pattern, the match
 
 ## B-13 — Player Direction Changes Snap Instead of Rotating
 
-**Status:** Fixed — finalized default source and physical QA; manual commit pending
+**Status:** Fixed — finalized default source and physical QA
 **Priority:** Medium
+**Fix:** `0305947` — `fix: restore classic character behavior` (documentation `2d28dfe`, merged at `d21048e`)
 **Evidence:** VERIFIED SOURCE FINDING / VERIFIED GIT HISTORY / RUNTIME-VERIFIED
 
 ### Original symptom and provenance
@@ -817,7 +830,7 @@ The final head implementation prepares one per-actor pending update after fresh 
 
 **RUNTIME-VERIFIED — user physical QA:** yaw materially improved turning; tilt substantially improved player locomotion presentation; head restoration worked well and resembled original Lugaru. Holding forward while rotating the camera continuously retargeted physical movement correctly. The combined restored build played normally with controller/gameplay behavior intact and no remaining perceptible player-locomotion problem. No verified remaining player-locomotion regression currently warrants another code change.
 
-**Build/source validation:** isolated historical-law and head-equivalence checks preceded physical QA. The final default Release Web target is `build-web-character-final/bin/lugaru.html`, built without character or scheduler experiment definitions. Rebuilding after scheduler separation and `git diff --check` passed; bundled assets remain unchanged. Source behavior matches the physically validated restored character configuration. No fixing commit is recorded yet because staging/committing is reserved for manual review.
+**Build/source validation:** isolated historical-law and head-equivalence checks preceded physical QA. The physically validated Release Web build at the time was the local `build-web-character-final/bin/lugaru.html`, built without character or scheduler experiment definitions. Rebuilding after scheduler separation and `git diff --check` passed; bundled assets remain unchanged. Source behavior matches the physically validated restored character configuration. The restoration was subsequently committed as `0305947` after manual review. (`build-web-character-final` was a validation directory for this milestone, not the current release build directory; see [build provenance](build-provenance.md#current-v10-release-build).)
 
 ### Scheduler investigation closed: low-priority open observation
 
@@ -872,7 +885,7 @@ The local `useMipmaps` decision preserves the requested `hasMipmap` value. No as
 
 ### Asset Audit
 
-All 136 tracked texture images were inspected; exactly four were NPOT:
+All 136 tracked texture images at the time of the fix were inspected; exactly four were NPOT. (*Later, 2026-10-04:* the two texture images added since, `Fur.png` from B-20 and the restored `FurBW.jpg`, are both 512×512 POT, so the NPOT set below is unchanged.)
 
 | Asset | Dimensions / format | Shipped use and mipmap request |
 | --- | --- | --- |
@@ -1155,6 +1168,7 @@ See [backlog A9c](research-backlog.md#a9c-empire-sky-palace-dense-foliage-web-sl
 
 **Status:** Fixed
 **Priority:** High
+**Fix:** `21efae8` — `fix: restore time-scaled jump boost`
 
 ### Symptom
 
@@ -1204,6 +1218,7 @@ Commit `1db2761` also changed other multiplier-sensitive systems, including ragd
 
 **Status:** Fixed
 **Priority:** Medium
+**Fix:** `85477f5` — `fix: restore Temple tinted fur rendering`
 
 ### Symptom
 
@@ -1268,6 +1283,68 @@ B-20 intentionally uses a narrow data restoration rather than globally changing 
 
 ---
 
+## Release campaign QA fixes (2026-10-05 – 2026-10-06)
+
+**Status:** Fixed; merged into `release/v1.0.0-prep` at `87c182a`
+**Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (project-owner campaign playthroughs and targeted map tests)
+**Provenance:** shared game code and inherited campaign data, not WebAssembly-specific. The pre-fix code paths below are present unchanged in `baseline/wasm-b340204`. Like B-16, these were found during Web campaign QA and are recorded here; no B-number was assigned.
+
+Full campaign playthroughs during release QA are complete for Original (27/27 levels), Seven Tasks (18/18) and Temple (31/31). **OPEN:** the full 41-map Empire campaign playthrough has not yet been run. The intended method is to play the real campaign route, record suspicious behavior, avoid changing data mid-run unless progression is blocked, and investigate confirmed issues afterwards. Challenge-map coverage and browser/release edge testing also remain.
+
+The data-cleanup evidence and the decisions not to change suspicious-looking data are recorded in [preservation and modding section 19](preservation-and-modding.md#19-changing-inherited-campaign-data-v10-campaign-qa-review); the dialogue launch rules involved are in [architecture 20.5](architecture.md#205-dialogue-is-the-games-cutscene-system-and-a-tiny-script-vm).
+
+### Minimap markers for helper actors (`f23faa2`)
+
+Several Temple maps and Empire `jendraz41` contain Persons with scale `0.0` or `20000.0` that appear to serve cutscene/staging roles. The minimap loop in `Game::DrawGLScene()` (`Source/GameDraw.cpp`) drew a marker for every Person, producing misleading markers for these helpers.
+
+The loop now skips Persons with `scale <= 0.001` or `scale >= 1000.0`. Ordinary actors (bundled scales around `0.2`) and the `2.0`-scale Long-ten Giant in Seven Tasks `task9` are drawn as before. No actor data was changed.
+
+**RUNTIME-VERIFIED — project-owner QA:** after a rebuild, affected maps containing helper/sentinel actors were checked, and `task9` was checked to confirm that the legitimate Long-ten Giant minimap marker remained visible while extreme-scale helper markers were suppressed.
+
+### Long-ten Giant encounter, Seven Tasks `task9` (`d997ab3`)
+
+**VERIFIED SOURCE FINDING — data:** `task9` contained three dialogues. D0 (type `31`) is Wort's level-ending dialogue. D2 (type `12`, target Person 2, the `2.0`-scale giant) is the giant encounter. D1 (type `11`) contained the same giant encounter, but its type targets Person 1 (Wort), so it was attached to the wrong actor.
+
+**VERIFIED SOURCE FINDING — mechanism:** `Dialog::tick()` started proximity dialogue only when `distsq` between character centres was below a fixed `6` (about 2.45 units). The giant's size prevented the player from reliably getting close enough to trigger D2.
+
+**Fix:**
+
+- `task9.json`: remove D1; keep D0 and D2 unchanged apart from normalizing D2's speaker name from `Longten Giant` to `Long-ten Giant`. All non-dialogue map data is unchanged.
+- `Source/Level/Dialog.cpp`: when the target's scale is between `0.001` and `10`, the squared interaction distance becomes the larger of `6` and `1.5 × ((player scale + target scale) × 2.5)²`. Default-sized pairs keep the historical `6`, and helper-scale targets (`0.0`, `20000.0`) are excluded. In bundled data, the giant is the only dialogue target that this enlarges.
+- `Source/GameDraw.cpp`: dialogue speaker names that would overflow the left edge of the dialogue box are scaled down to fit. Names that already fit are drawn as before.
+
+**RUNTIME-VERIFIED — project-owner QA:** approaching the giant triggers the correct encounter once, the full `LONG-TEN GIANT:` speaker label fits, Wort gives only his level-ending dialogue, and ordinary NPC dialogue interaction is unchanged.
+
+### Combat music survives Pause → End Game (`d07fea4`)
+
+**Symptom:** after Pause → End Game during combat, the fight theme could continue playing in the menu.
+
+**VERIFIED SOURCE FINDING:** the pause and resume paths in `Game::ProcessInput()` and the Pause-menu Resume button in `Menu::Tick()` paused and resumed only `leveltheme`, not `stream_fighttheme`. End Game also left gameplay music state in place.
+
+**Fix:** pausing now also pauses `stream_fighttheme`, and resuming restores whichever stream `musictype` records (fight theme or level theme). End Game pauses both gameplay streams and zeroes their `musicvolume` / `oldmusicvolume` entries before returning to the main menu.
+
+**RUNTIME-VERIFIED — project-owner QA:** combat Pause → Resume through the menu button and through Esc/Back, combat Pause → End Game, peaceful Pause → Resume, and starting another level after End Game all behaved correctly.
+
+### Campaign map shows final state after completion (`3363eae`)
+
+**Symptom:** after completing a campaign and leaving the ending screen, the campaign map could keep showing the completed final state, even though progress had been reset internally.
+
+**VERIFIED SOURCE FINDING:** `Menu::Tick()` calls `Account::active().endGame()`, which clears campaign progress, but the campaign menu had already been built from the previous state.
+
+**Fix:** `Menu::Load()` is now called immediately after `Account::active().endGame(); endgame = 0;`, so the visible menu reflects the reset state. This is a menu/state synchronization fix. Account data and save format are unchanged.
+
+### Campaign data and text (`20be11c`, `744c7de`, `4d27256`, `488aae6`)
+
+- Removed stale copied dialogue objects from Temple maps (`svenninja`, `svenruins`, `sventemple`, `sventemple2`, `svenfireice`, `svenforest`, `svenfort`, `svenredbwafter`, `svenshan`, `svenclimb`, `svenheaven`, `svenchasm`, `sventhrone`). Legitimate Temple dialogue is retained unchanged, except one wrong name reference (`Garett!` → `Shan!` in `svenshan`).
+- Normalized first campaign-node labels to `..._start_new_campaign!` in `main.txt`, `empire.txt` and `seventasks.txt`; Temple already used that form.
+- Changed the Temple final node label from `Ice_Cave_(Last_Level)` to `Ice_Cave`.
+- Changed the Empire ending text from `Lugaru's island` to `Lugaru Island`.
+- Replaced the Temple ending text, an OSS placeholder, with a three-line ending.
+
+**VERIFIED SOURCE FINDING (re-checked against the commits):** in every changed map, the JSON parses, all non-dialogue map data is identical, and retained dialogues are unchanged apart from the `svenshan` and `task9` name fixes. Large diff line counts come from deleting whole serialized dialogue objects. **RUNTIME-VERIFIED — project-owner QA:** after a full data rebuild, `svenclimb`, `svenheaven`, `svenchasm`, `sventhrone` and `sventemple2` each loaded directly and played normally. The stale Shan dialogue no longer appeared, and `sventemple2`'s Sven/Silb conversation still played.
+
+---
+
 ## CI-1 — macOS CI Fails During Dependency Setup
 
 **Status:** Open
@@ -1304,6 +1381,12 @@ There is no current evidence from this failure that the Lugaru source itself fai
 Update the workflow to use an architecture-compatible dependency setup or an appropriate runner.
 
 Native CI restoration remains lower priority than browser correctness issues.
+
+### Current state (2026-10-04)
+
+**VERIFIED SOURCE FINDING — inherited state:** before the v1.0 release-preparation cleanup, `.github/workflows/` was unchanged since Loupgarenne commit `1db2761`. It built native Linux, macOS and Windows (MinGW cross-compile) targets under `lugaru-loupgarenne-*` names, while the inherited release workflow triggered on `*-loupgarenne` tags.
+
+**CURRENT STATE (2026-10-04):** native comparison artifacts now use `lugaru-web-native-*`, and the inherited tag-driven native release workflow has been removed because v1.0.0 is a Web-only release. The retained workflow still builds only native targets; no workflow currently builds or tests the Web target, so CI provides no evidence about the Web release. The v1.0 Web build is produced locally; see [build provenance](build-provenance.md#current-v10-release-build). Whether the macOS failure above still reproduces was not re-checked for v1.0.
 
 ---
 

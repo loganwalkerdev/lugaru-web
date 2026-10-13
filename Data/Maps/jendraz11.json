@@ -400,6 +400,12 @@
 				"size" : 0.0,
 				"text" : "mapname",
 				"type" : -111
+			},
+			{
+				"position" : [ 747.5931, 156.4028, 987.0439 ],
+				"size" : 6.25,
+				"text" : "",
+				"type" : 20
 			}
 		],
 		"objects" : 

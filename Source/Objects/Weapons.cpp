@@ -266,6 +266,7 @@ void Weapon::doStuff(int i)
                             emit_sound_at(knifedrawsound, Person::players[j]->coords, 128.);
 
                             Person::players[j]->animTarget = removeknifeanim;
+                            Person::players[j]->frameCurrent = 0;
                             Person::players[j]->frameTarget = 1;
                             Person::players[j]->target = 1;
                             Person::players[j]->takeWeapon(i);

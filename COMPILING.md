@@ -1,13 +1,43 @@
-(contents of this are outdated. I'll update later. - RD)
-(if you're that bothered, use the devcontainer. i'll add for Apple later as i'm just building natively on mac)
-
 # Compiling
+
+## Web build (Lugaru-Web v1.0)
+
+The Lugaru-Web release target is the WebAssembly build. It is built with
+**Emscripten 6.0.9** through `emcmake`; the current release build directory
+is `build-web-release`:
+
+```
+emcmake cmake -S . -B build-web-release -DCMAKE_BUILD_TYPE=Release
+cmake --build build-web-release -j$(nproc)
+```
+
+The output in `build-web-release/bin/` (`lugaru.html`, `lugaru.js`,
+`lugaru.wasm`, `lugaru.data`) must be served over HTTP, with all four files
+together. Game data is always loaded from the same origin; there is no CDN
+option.
+
+See [`Docs/build-provenance.md`](Docs/build-provenance.md) for the pinned
+toolchain setup, dependency revisions, the GL4ES patch, and the preserved
+2026-09-16 baseline build record.
+
+## Native builds (inherited instructions)
+
+The rest of this file is inherited from OSS Lugaru, with notes from the
+Loupgarenne fork. Lugaru-Web uses native builds as comparison targets; they are
+not part of the v1.0 release and these instructions have not been revalidated
+for it. The inherited `.devcontainer/` mentioned below is a Fedora-based
+native/MinGW environment and was not used for the Lugaru-Web Web build.
+
+Notes left by Ryan Deering in the Loupgarenne fork:
+
+> (contents of this are outdated. I'll update later. - RD)
+> (if you're that bothered, use the devcontainer. i'll add for Apple later as i'm just building natively on mac)
 
 As it stands, the version of Lugaru in this repository supports Linux, OSX
 and Windows. Not all toolchains are tested, thus we would welcome help from
 new contributors especially regarding MSVC and OSX support.
 
-## Common dependencies
+### Common dependencies
 
 You will need the following development libraries and tools, usually
 available via your package manager (dnf, urpmi, apt, brew, etc.):
@@ -18,8 +48,9 @@ available via your package manager (dnf, urpmi, apt, brew, etc.):
 - LibPNG
 - OpenAL Soft
 - Ogg, Vorbis and Vorbisfile
+- jsoncpp (required by the current `CMakeLists.txt` via `pkg-config`)
 
-## GNU/Linux
+### GNU/Linux
 
 Both GCC and Clang are supported as compilers. Define the `CC` and `CXX` env
 variables according to the compiler you want to use, if not the default one.
@@ -35,7 +66,7 @@ The resulting `lugaru` binary will expect to find the `Data/` folder next to
 it, so either copy `build/lugaru` in the main directory, or create a symbolic
 link to run the game.
 
-### Packaging
+#### Packaging
 
 If you want to package Lugaru for a GNU/Linux distribution, or if you want to
 install it system-wide locally, you need to set the `SYSTEM_INSTALL` CMake
@@ -53,25 +84,25 @@ make
 sudo make install
 ```
 
-## Mac OSX
+### Mac OSX
 
 The instructions are similar to the GNU/Linux ones, provided you have
 installed Xcode and the required dependencies (e.g. via homebrew).
 
-## Windows
+### Windows
 
 As of now, only MinGW32 and MinGW64 are supported, and were only tested by
 cross-compiling from Linux.
 
-### MSVC
+#### MSVC
 
 Help needed :)
 
-### MinGW on Windows
+#### MinGW on Windows
 
 Help needed :)
 
-### Cross-compiling from Linux
+#### Cross-compiling from Linux
 
 Cross-compiling for Windows using MinGW32 and MinGW64 was tested on Fedora
 and Mageia. The instructions may vary for other distros, do not hesitate to
@@ -80,7 +111,7 @@ send a merge request to update them if need be.
 You will need to install the `mingw32-` or `mingw64-` variants of the
 dependencies listed above.
 
-#### MinGW32
+##### MinGW32
 
 First you will need to setup some environment variables:
 ```
@@ -99,7 +130,7 @@ make install
 The `make install` step should copy the `Data/` and required DLLs from the
 system to `build-mingw32/install`.
 
-#### MinGW64
+##### MinGW64
 
 The instructions are similar to those for MinGW32:
 

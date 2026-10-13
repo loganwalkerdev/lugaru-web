@@ -117,7 +117,7 @@ The browser port includes the broad ingredients expected in an Emscripten port o
 - browser filesystem/persistence work;
 - packaged/preloaded game data;
 - custom browser shell behavior;
-- optional CDN-data support;
+- optional CDN-data support, plus a shell redirect that loaded `lugaru.data` from Ryan's server on non-localhost hostnames (both later removed by Lugaru-Web; see section 4);
 - jsoncpp and related dependency configuration.
 
 Lugaru-Web preserves this source point with the annotated tag:
@@ -138,13 +138,13 @@ This framing is more accurate than claiming Lugaru-Web invented the original WAS
 
 ## 4. Lugaru-Web's work after the baseline
 
-The browser branch was playable, but not production-ready. The project has already fixed several important issues discovered during validation.
+The browser branch was playable, but not production-ready. Lugaru-Web v1.0.0 is the preservation and browser-stabilization release built from that baseline. The complete issue table is in [`PROJECT.md`](../PROJECT.md#known-browser-issues), with evidence in [`porting-notes.md`](porting-notes.md); the first fixes are summarized here because they shaped the project's working method.
 
-### Fixed browser issues
+### First browser fixes (2026-09-17)
 
 **Web settings overrides**
 
-The Web build had post-load overrides that defeated user settings. Resolution/VSync handling was corrected while retaining the current forced-off motion blur behavior pending investigation.
+The Web build had post-load overrides that defeated user settings. Resolution/VSync handling was corrected while motion blur stayed force-disabled on Web. The later B-6 investigation confirmed that the historical blur renders incorrectly on Web and closed with the Options row shown as unavailable (`fad80ac`); native blur is unchanged.
 
 **Browser main-loop timing**
 
@@ -162,11 +162,9 @@ Animation access had lost `.at()` bounds checking; Lugaru-Web restored it.
 
 A delete/erase invalidation bug in `Sprite` handling caused a browser out-of-bounds crash. Deletion was deferred safely and iteration behavior corrected.
 
-### Important open regression
+### Player direction regression — resolved (B-13)
 
-**Player direction changes snap instead of rotating**
-
-A reported behavior difference appears at high refresh rates: the player may snap orientation instead of smoothly rotating when reversing direction. This should be traced across:
+Early validation reported that the player could snap orientation instead of smoothly rotating when reversing direction, including at high refresh rates. The investigation plan at the time was to trace it across:
 
 1. original/OSS behavior;
 2. Loupgarenne main;
@@ -174,7 +172,15 @@ A reported behavior difference appears at high refresh rates: the player may sna
 4. current Lugaru-Web;
 5. 60 Hz vs. 120/144+ Hz.
 
-Do not assume the browser is the cause until the lineage is established.
+and not to assume the browser was the cause until the lineage was established.
+
+That lineage comparison located the cause in Loupgarenne commit `1db2761`, which predates the WASM branch (see section 3). Historical bounded yaw, body tilt and head behavior were restored in `0305947` (2026-09-27) with combined physical QA. The same commit was later found to be the source of an unrelated jump-height regression (B-19, `21efae8`). Both cases illustrate why browser-visible differences should not be attributed to WebAssembly by default.
+
+### Later stabilization and restoration
+
+Work completed for v1.0 after the first fixes includes Web key rebinding (B-7), controller support (B-8; tutorial physical QA still open), Web NPOT texture handling (B-14), Web sprite and foliage performance (B-15, B-18), Empire progression and clothing repairs (B-16, B-17), Temple fur restoration (B-20 and the FurBW restoration `fef0364`), image/clothing compositing hardening (backlog A11), and removal of the inherited external data host so the Web release serves `lugaru.data` from its own origin (`36407bd`). Several of these defects were inherited from OSS content conversion or shared game logic rather than introduced by the browser port; each porting-notes entry records its provenance.
+
+Release campaign QA (2026-10-05/06) fixed inherited shared behavior in dialogue interaction, minimap markers, pause/End Game music and the post-completion campaign map, and removed demonstrably stale copied dialogue from Temple maps and Seven Tasks `task9`. Unusual inherited content was deliberately kept, including the Temple-documented fallback map `svenskip`. See [porting notes](porting-notes.md#release-campaign-qa-fixes-2026-10-05--2026-10-06) and [preservation 19](preservation-and-modding.md#19-changing-inherited-campaign-data-v10-campaign-qa-review). For attribution: the current Temple ending is Lugaru-Web-authored text that replaced an explicit 2017 OSS placeholder (`217da32`). It is not recovered original Temple campaign prose.
 
 ---
 
@@ -226,7 +232,7 @@ This is useful to Lugaru-Web not because the old engine should be recreated, but
 - transitions rather than hard state snapping;
 - character motion as part of simulation rather than decoration.
 
-That makes the current high-refresh facing/rotation regression especially worth fixing correctly rather than masking.
+That is why the facing/rotation regression (B-13) was fixed by restoring the historical turning, tilt and head behavior rather than masking it.
 
 ---
 

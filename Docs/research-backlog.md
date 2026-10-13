@@ -33,7 +33,7 @@ For each subsystem record:
 
 ### A2. B-13 character restoration — resolved (2026-09-27)
 
-**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** historical bounded yaw, bounded body tilt, and draw-order-safe historical head tracking are finalized as default behavior. Native OSS 1.2/current OSS comparisons and isolated Web A/Bs led to successful combined normal gameplay QA. Camera-relative movement intent works correctly. No verified remaining player-locomotion regression currently warrants another code change. See [B-13](porting-notes.md#b-13--player-direction-changes-snap-instead-of-rotating); manual code/docs commits are pending.
+**VERIFIED SOURCE FINDING / RUNTIME-VERIFIED:** historical bounded yaw, bounded body tilt, and draw-order-safe historical head tracking are finalized as default behavior. Native OSS 1.2/current OSS comparisons and isolated Web A/Bs led to successful combined normal gameplay QA. Camera-relative movement intent works correctly. No verified remaining player-locomotion regression currently warrants another code change. See [B-13](porting-notes.md#b-13--player-direction-changes-snap-instead-of-rotating). Committed as `0305947` (documentation `2d28dfe`, merged at `d21048e`).
 
 ### A2a. NPC slope/seam and scheduler comparison — OPEN
 
@@ -66,6 +66,8 @@ For each subsystem record:
 ### A5. Native build health
 
 Resolve/understand the current native Linux SDL2 include-path/build issue so behavior can be compared against browser builds more easily.
+
+**Evidence to date (2026-10-04):** native Linux builds have succeeded in this environment at least twice — the B-4 Release build (GCC 15.2.0) and the A11 Debug AddressSanitizer build used for runtime clothing tests on 2026-10-03. The `SDL.h` include-path failure recorded during B-12 has not been re-characterized, so it is unknown whether it was configuration-specific or fixed. Native builds remain comparison targets; they are not part of the v1.0 Web release. Recent results of the inherited native CI workflows were not reviewed for this note (see [porting notes CI-1](porting-notes.md#ci-1--macos-ci-fails-during-dependency-setup)).
 
 ### A6. Controller support: completed scope and remaining work
 

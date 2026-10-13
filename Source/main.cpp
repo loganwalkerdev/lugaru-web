@@ -217,14 +217,19 @@ void initGL()
 
 void toggleFullscreen()
 {
-    fullscreen = !fullscreen;
     Uint32 flags = SDL_GetWindowFlags(sdlwindow);
-    if (flags & SDL_WINDOW_FULLSCREEN) {
-        flags &= ~SDL_WINDOW_FULLSCREEN;
-    } else {
+    const bool enableFullscreen = (flags & SDL_WINDOW_FULLSCREEN) == 0;
+
+    if (enableFullscreen) {
         flags |= SDL_WINDOW_FULLSCREEN;
+    } else {
+        flags &= ~SDL_WINDOW_FULLSCREEN;
     }
-    SDL_SetWindowFullscreen(sdlwindow, flags);
+
+    if (SDL_SetWindowFullscreen(sdlwindow, flags) == 0) {
+        fullscreen = enableFullscreen;
+    }
+
     updateMouseState(true);
 }
 
@@ -235,6 +240,17 @@ SDL_bool sdlEventProc(const SDL_Event& e)
             return SDL_FALSE;
 
         case SDL_WINDOWEVENT:
+#ifdef __EMSCRIPTEN__
+            // Browsers can leave fullscreen independently, such as when the
+            // user switches tabs or applications. Keep the menu setting in
+            // sync with SDL's actual window state.
+            fullscreen = (SDL_GetWindowFlags(sdlwindow) & SDL_WINDOW_FULLSCREEN) != 0;
+
+            if (mainmenu == 3) {
+                Menu::updateSettingsMenu();
+            }
+#endif
+
             if (e.window.event == SDL_WINDOWEVENT_CLOSE) {
                 return SDL_FALSE;
             } else if (e.window.event == SDL_WINDOWEVENT_MINIMIZED ||
@@ -363,6 +379,14 @@ bool SetUp()
     if (commandLineOptions[FULLSCREEN]) {
         fullscreen = commandLineOptions[FULLSCREEN].last()->type();
     }
+
+#ifdef __EMSCRIPTEN__
+    // Browser fullscreen requires a user gesture and cannot be restored
+    // reliably during startup. Always begin windowed and let the user
+    // enter fullscreen after the page has loaded.
+    fullscreen = 0;
+#endif
+
     if (fullscreen) {
         sdlflags |= SDL_WINDOW_FULLSCREEN;
     }
@@ -370,19 +394,19 @@ bool SetUp()
         sdlflags |= SDL_WINDOW_INPUT_GRABBED;
     }
 
-    sdlwindow = SDL_CreateWindow("Loupgarenne", SDL_WINDOWPOS_CENTERED_DISPLAY(0), SDL_WINDOWPOS_CENTERED_DISPLAY(0), kContextWidth, kContextHeight, sdlflags);
+    sdlwindow = SDL_CreateWindow("Lugaru-Web", SDL_WINDOWPOS_CENTERED_DISPLAY(0), SDL_WINDOWPOS_CENTERED_DISPLAY(0), kContextWidth, kContextHeight, sdlflags);
 
     if (!sdlwindow) {
         fprintf(stderr, "SDL_CreateWindow() failed: %s\n", SDL_GetError());
         fprintf(stderr, "forcing 640x480...\n");
         kContextWidth = 640;
         kContextHeight = 480;
-        sdlwindow = SDL_CreateWindow("Loupgarenne", SDL_WINDOWPOS_CENTERED_DISPLAY(0), SDL_WINDOWPOS_CENTERED_DISPLAY(0), kContextWidth, kContextHeight, sdlflags);
+        sdlwindow = SDL_CreateWindow("Lugaru-Web", SDL_WINDOWPOS_CENTERED_DISPLAY(0), SDL_WINDOWPOS_CENTERED_DISPLAY(0), kContextWidth, kContextHeight, sdlflags);
         if (!sdlwindow) {
             fprintf(stderr, "SDL_CreateWindow() failed: %s\n", SDL_GetError());
             fprintf(stderr, "forcing 640x480 windowed mode...\n");
             sdlflags &= ~SDL_WINDOW_FULLSCREEN;
-            sdlwindow = SDL_CreateWindow("Loupgarenne", SDL_WINDOWPOS_CENTERED_DISPLAY(0), SDL_WINDOWPOS_CENTERED_DISPLAY(0), kContextWidth, kContextHeight, sdlflags);
+            sdlwindow = SDL_CreateWindow("Lugaru-Web", SDL_WINDOWPOS_CENTERED_DISPLAY(0), SDL_WINDOWPOS_CENTERED_DISPLAY(0), kContextWidth, kContextHeight, sdlflags);
 
             if (!sdlwindow) {
                 fprintf(stderr, "SDL_CreateWindow() failed: %s\n", SDL_GetError());
@@ -816,10 +840,10 @@ int main(int argc, char** argv)
 
     // Always start by printing the version and info to the stdout
     std::cout << "--------------------------------------------------------------------------\n"
-              << "Loupgarenne - A fork of Lugaru HD / OSS Lugaru\n"
-              << "Based on work by Wolfire Games and the OSS Lugaru project.\n\n"
+              << "Lugaru-Web - Lugaru in the browser\n"
+              << "Based on Wolfire Games, OSS Lugaru, and Ryan Deering's Loupgarenne WebAssembly work.\n\n"
               << "Licensed under the GPL 2.0+ and CC-BY-SA 3.0 and 4.0 licenses.\n"
-              << "Fork: https://github.com/ryandeering/loupgarenne\n"
+              << "Project: https://github.com/loganwalkerdev/lugaru-web\n"
               << "Upstream: https://gitlab.com/osslugaru/lugaru\n"
               << std::endl;
 

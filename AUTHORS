@@ -20,3 +20,11 @@ Vadim Trochinsky
 Loupgarenne fork:
 
 Ryan Deering
+
+Lugaru-Web:
+
+Logan Walker
+
+Lugaru-Web builds on Ryan Deering's Loupgarenne fork and its WebAssembly work,
+which in turn builds on the open-source Lugaru project and the original game
+by David Rosen / Wolfire Games.

@@ -48,12 +48,13 @@ Use these documents contextually:
 
 * `Docs/architecture.md` — current engine mental model, important couplings, gameplay/source archaeology, and extension seams.
 * `Docs/research-backlog.md` — unresolved technical and historical questions.
-* `Docs/research-session-2026-09-18.md` — detailed working archaeology and research notes, including the September 23 continuation.
 * `Docs/history-and-lineage.md` — project ancestry and historical attribution.
 * `Docs/design-direction.md` — preservation/product principles and Classic/Expanded/Arena direction.
 * `Docs/preservation-and-modding.md` — historical community content, licensing, provenance, and restoration.
 * `Docs/build-provenance.md` — current build ancestry/provenance.
 * `Docs/porting-notes.md` — browser-port implementation and validation notes.
+
+The raw September 2026 research-session notes are no longer part of the current documentation set. Cite maintained findings from the documents above; the original working notes remain recoverable from Git history and do not override current source or the maintained documents.
 
 Do not reread every document for every task. Read the documents relevant to the work being performed.
 
