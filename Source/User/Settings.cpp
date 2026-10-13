@@ -48,7 +48,11 @@ void DefaultSettings() {
     autoslomo = 1;
     decalstoggle = true;
     invertmouse = 0;
+#ifdef __EMSCRIPTEN__
+    bloodtoggle = 1;
+#else
     bloodtoggle = 0;
+#endif
     foliage = 1;
     musictoggle = 1;
     trilinear = 1;
@@ -60,7 +64,11 @@ void DefaultSettings() {
     showdamagebar = 0;
     immediate = 0;
     velocityblur = 0;
+#ifdef __EMSCRIPTEN__
+    unlockfps = 0;
+#else
     unlockfps = 1;
+#endif
     disablevsync = 0; // VSync always on
     volume = 0.8f;
     ambientsound = 1;
