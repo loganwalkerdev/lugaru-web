@@ -379,7 +379,9 @@ void Menu::Load() {
 #else
             addButtonImage(3, Mainmenuitems[mainmenu == 1 ? 3 : 6], 18, 480 - 306 - 32, mainmenu == 1 ? 68 : 132, 32);
 #endif
-            // addLabel(-1, VERSION_NUMBER + VERSION_SUFFIX, 640 - 100, 10);
+            if (mainmenu == 1) {
+                addLabel(-1, "Lugaru-Web v" + LUGARU_WEB_VERSION, 455, 10);
+            }
             break;
         case 3:
             addButton(0, "", 10 + 20, 440);
