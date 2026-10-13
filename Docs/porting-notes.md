@@ -14,11 +14,11 @@ Issue IDs remain stable once assigned. Current IDs run from B-1 to B-20, plus CI
 
 ## Status Definitions
 
-* **Open** — confirmed or strongly supported by available evidence and still unresolved.
-* **Investigating** — actively being reproduced, tested, or traced.
-* **Fixed** — corrected in the development branch.
-* **Deferred** — understood but intentionally postponed.
-* **Unable to reproduce** — previously observed but not currently reproducible.
+* **Open**: confirmed or strongly supported by available evidence and still unresolved.
+* **Investigating**: actively being reproduced, tested, or traced.
+* **Fixed**: corrected in the development branch.
+* **Deferred**: understood but intentionally postponed.
+* **Unable to reproduce**: previously observed but not currently reproducible.
 
 An issue should move to **Investigating** when active work begins rather than jumping directly from Open to Fixed.
 
@@ -26,20 +26,20 @@ An issue should move to **Investigating** when active work begins rather than ju
 
 Each issue should identify the strongest evidence currently available:
 
-* **Source inspection** — behavior is supported by code inspection but has not necessarily been reproduced at runtime.
-* **Runtime observation** — behavior has been directly observed in a running local build.
-* **Source inspection + runtime observation** — both code and observed behavior support the issue.
-* **CI observation** — behavior has been directly observed in an automated build or test environment.
+* **Source inspection**: behavior is supported by code inspection but has not necessarily been reproduced at runtime.
+* **Runtime observation**: behavior has been directly observed in a running local build.
+* **Source inspection + runtime observation**: both code and observed behavior support the issue.
+* **CI observation**: behavior has been directly observed in an automated build or test environment.
 
 Source-derived issues should not be described as runtime-confirmed until they have actually been reproduced.
 
 ---
 
-## B-1 — Web Settings Overridden After Configuration Load
+## B-1: Web Settings Overridden After Configuration Load
 
 **Status:** Fixed
 **Priority:** High
-**Fix:** `abb81d7` — `fix: respect web settings and initialize loop timing` (together with B-2)
+**Fix:** `abb81d7` (`fix: respect web settings and initialize loop timing`; together with B-2)
 **Evidence:** Source inspection + browser runtime validation
 
 ### Location
@@ -138,11 +138,11 @@ Saved VSync and resolution preferences are respected, while unsupported motion b
 
 ---
 
-## B-2 — Browser Main Loop Uses Timeout Scheduling Instead of Animation Frames
+## B-2: Browser Main Loop Uses Timeout Scheduling Instead of Animation Frames
 
 **Status:** Fixed
 **Priority:** High
-**Fix:** `abb81d7` — `fix: respect web settings and initialize loop timing` (together with B-1)
+**Fix:** `abb81d7` (`fix: respect web settings and initialize loop timing`; together with B-1)
 **Evidence:** Source inspection + browser runtime validation
 **Related:** B-1
 
@@ -236,11 +236,11 @@ Browser frame scheduling now follows the user's VSync preference, with animation
 
 ---
 
-## B-3 — Browser Save Persistence Can Silently Discard Progress
+## B-3: Browser Save Persistence Can Silently Discard Progress
 
 **Status:** Fixed
 **Priority:** High
-**Fix:** `3d747d3` — `fix: migrate web persistence to IDBFS`
+**Fix:** `3d747d3` (`fix: migrate web persistence to IDBFS`)
 **Evidence:** Source inspection and browser runtime testing
 
 ### Location
@@ -315,11 +315,11 @@ This behavior is currently acceptable, but save timing should be revisited durin
 
 ---
 
-## B-4 — Animation access lost bounds checking
+## B-4: Animation access lost bounds checking
 
 **Status:** Fixed
 **Priority:** High
-**Fix:** `b222ddc` — `fix: restore animation frame bounds checking`
+**Fix:** `b222ddc` (`fix: restore animation frame bounds checking`)
 **Evidence:** Source inspection + native build + WebAssembly build + browser runtime comparison
 
 **Location:** `Source/Objects/Person.hpp`
@@ -341,7 +341,7 @@ Restored `.at()` for both animation and frame lookup, matching upstream checked-
 
 ---
 
-## B-5 — Asset Filename Case Fallback Is Incomplete
+## B-5: Asset Filename Case Fallback Is Incomplete
 
 **Status:** Investigation closed; compatibility note retained
 **Priority:** Low
@@ -362,7 +362,7 @@ Models, skeletons, and animations use `openMandatoryFile()`. Images (`load_image
 
 *Later changes (2026-10-04):* the tracked `Data/` count is now 544. The two additions are `Data/Textures/Fur.png` (B-20, `85477f5`) and `Data/Textures/FurBW.jpg` (Temple FurBW restoration, `fef0364`); both are exact-case references from their maps. CDN data loading was removed in `36407bd`, so the Web release always fetches `lugaru.data` from the same origin; the remote-CDN caveat above no longer applies to current builds. The package audit itself was not re-run.
 
-**RUNTIME-VERIFIED — isolated harnesses:** native Linux and Emscripten builds of the actual `Folders.cpp`, tested with the unchanged tracked `World.png`, confirmed exact-case success, raw wrong-case lookup failure, Web-only basename recovery through `openMandatoryFile()`, and failure to repair parent-directory case. The Emscripten harness ran under Node; this was not a full browser gameplay test. No shipped-content runtime failure was reproduced.
+**RUNTIME-VERIFIED (isolated harnesses):** native Linux and Emscripten builds of the actual `Folders.cpp`, tested with the unchanged tracked `World.png`, confirmed exact-case success, raw wrong-case lookup failure, Web-only basename recovery through `openMandatoryFile()`, and failure to repair parent-directory case. The Emscripten harness ran under Node; this was not a full browser gameplay test. No shipped-content runtime failure was reproduced.
 
 ### Decision
 
@@ -370,11 +370,11 @@ Close the active B-5 investigation as a low-priority compatibility note. No sour
 
 ---
 
-## B-6 — Motion Blur Option Is Exposed but Unsupported on Web
+## B-6: Motion Blur Option Is Exposed but Unsupported on Web
 
 **Status:** Fixed; investigation closed
 **Priority:** Low
-**Fix:** `fad80ac` — `fix: disable unsupported blur option on Web`
+**Fix:** `fad80ac` (`fix: disable unsupported blur option on Web`)
 **Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED experimental rendering; final menu guard source-validated
 
 ### Findings
@@ -383,7 +383,7 @@ Close the active B-5 investigation as a low-priority compatibility note. No sour
 
 `Settings.cpp` defaults Web blur off and forces `ismotionblur = 0` / `alwaysblur = 0` after settings loading. Previously, Options could toggle the live `ismotionblur` value and save it, despite the reload override. The control was therefore misleading, not a universal no-op: some effect paths remained reachable during that session.
 
-**RUNTIME-VERIFIED — maintainer physical A/B:** the experimental Web ON build reproduced visibly malformed slow-motion rendering: an apparent resolution/viewport change and a washed-out gray/white composite. Enabling the historical effect as-is is unacceptable. The precise rendering fault was not isolated further; no unsupported-feature or crash claim is inferred from these symptoms.
+**RUNTIME-VERIFIED (maintainer physical A/B):** the experimental Web ON build reproduced visibly malformed slow-motion rendering: an apparent resolution/viewport change and a washed-out gray/white composite. Enabling the historical effect as-is is unacceptable. The precise rendering fault was not isolated further; no unsupported-feature or crash claim is inferred from these symptoms.
 
 ### Resolution and Preservation Decision
 
@@ -397,12 +397,12 @@ Temporary experiment definitions and BLUR diagnostics were removed; `Source/User
 
 ---
 
-## B-7 — Browser Key Rebinding Failed at SDL Thread Creation
+## B-7: Browser Key Rebinding Failed at SDL Thread Creation
 
 **Status:** Fixed
 **Priority:** Medium
 **Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (Chrome, 2026-09-24)
-**Fix:** `a7bfd51` — `fix: restore web key rebinding`
+**Fix:** `a7bfd51` (`fix: restore web key rebinding`)
 **Verified:** 2026-09-24
 
 ### Root Cause and Previous Behavior
@@ -423,13 +423,13 @@ Native SDL event-thread portability remains a separate open question in the inve
 
 ---
 
-## B-8 — Controller Gameplay, Menu/UI, and Tutorial Support
+## B-8: Controller Gameplay, Menu/UI, and Tutorial Support
 
 **Status:** Milestones 1–5 implemented, Web-built, and physically runtime-verified (Firefox + wired DualSense, DS4Windows disabled). Tutorial additions are source/automated-validated; physical verification is pending. Compatibility, tuning, and scope exclusions remain open.
 **Priority:** Medium
 **Evidence:** Committed source, reported build/check results, isolated native SDL harness, and manual physical-controller runtime testing
 
-### Implementation — Milestone 1 (2026-09-25)
+### Implementation: Milestone 1 (2026-09-25)
 
 **VERIFIED SOURCE FINDING:** Commit `e5939fe` (`feat: add controller input foundation`) on `investigate/controller-support` adds the foundation in `Source/Utils/Input.cpp`, `Source/Utils/Input.hpp`, and `Source/main.cpp`.
 
@@ -446,11 +446,11 @@ At milestone 1, no controller gameplay, camera, menu, or rebinding behavior was 
 
 **Build validation (reported for the source milestone):** `cmake --build build-web -j2` succeeded, and `git diff --check` passed before the source commit.
 
-**RUNTIME-VERIFIED — isolated native SDL virtual-controller harness:** no-controller startup, startup discovery, hot-plug, button/axis state reads, device-index changes, disconnect/reset, reconnect, and shutdown. This was not a full native Lugaru gameplay test.
+**RUNTIME-VERIFIED (isolated native SDL virtual-controller harness):** no-controller startup, startup discovery, hot-plug, button/axis state reads, device-index changes, disconnect/reset, reconnect, and shutdown. This was not a full native Lugaru gameplay test.
 
 ### Milestone 1 physical runtime verification
 
-**RUNTIME-VERIFIED — manual test:** Sony DualSense / PS5 controller, Windows host, Firefox, Lugaru-Web served from localhost, DS4Windows disabled, wired USB connection. Lugaru logged:
+**RUNTIME-VERIFIED (manual test):** Sony DualSense / PS5 controller, Windows host, Firefox, Lugaru-Web served from localhost, DS4Windows disabled, wired USB connection. Lugaru logged:
 
 ```text
 Controller: detected device 0 (Standard Gamepad)
@@ -464,7 +464,7 @@ Controller: opened instance 0 (Standard Gamepad)
 - Physical disconnect and reconnect were detected; the controller reopened and resumed reporting input. No stuck controller state was observed.
 - Existing mouse controls still worked. At milestone 1, controller input remained intentionally unmapped to gameplay/menu behavior.
 
-### Milestone 2 — Digital Classic movement (`4b8af1d`)
+### Milestone 2: Digital Classic movement (`4b8af1d`)
 
 **VERIFIED SOURCE FINDING:** `Input::controllerMovement()` in `Source/Utils/Input.cpp` exposes left-stick directions using independent axis hysteresis: activate at magnitude `10000`, release at `7000`. `clearControllerState()` clears the direction latches on disconnect/reset. In `Game::Tick()` (`Source/GameTick.cpp`), controller directions are ORed with keyboard bindings into `Person::players[0]->forwardkeydown`, `backkeydown`, `leftkeydown`, and `rightkeydown`, under existing gameplay/dialogue guards.
 
@@ -472,11 +472,11 @@ Existing Classic speed, facing, animation, and diagonal logic remain authoritati
 
 **Build validation:** `cmake --build build-web -j2` and `git diff --check` passed.
 
-**RUNTIME-VERIFIED — isolated native SDL harness:** thresholds, hysteresis, diagonals, reversals, keyboard-state preservation, disconnect/reconnect, and lifecycle handling passed. This is not full native Lugaru gameplay validation.
+**RUNTIME-VERIFIED (isolated native SDL harness):** thresholds, hysteresis, diagonals, reversals, keyboard-state preservation, disconnect/reconnect, and lifecycle handling passed. This is not full native Lugaru gameplay validation.
 
-**RUNTIME-VERIFIED — physical manual test:** wired DualSense, Firefox, DS4Windows disabled. Movement worked correctly: center noise caused no unintended movement; threshold/hysteresis start and stop behavior and diagonals worked; keyboard/controller movement coexisted; disconnect/reconnect left no stale movement. Mouse controls remained functional.
+**RUNTIME-VERIFIED (physical manual test):** wired DualSense, Firefox, DS4Windows disabled. Movement worked correctly: center noise caused no unintended movement; threshold/hysteresis start and stop behavior and diagonals worked; keyboard/controller movement coexisted; disconnect/reconnect left no stale movement. Mouse controls remained functional.
 
-### Milestone 3 — Core gameplay actions (`2387ebf`)
+### Milestone 3: Core gameplay actions (`2387ebf`)
 
 **VERIFIED SOURCE FINDING:** fixed mappings in `Source/Utils/Input.cpp`:
 
@@ -494,13 +494,13 @@ Existing Classic speed, facing, animation, and diagonal logic remain authoritati
 
 **Build validation:** Web build and `git diff --check` passed.
 
-**RUNTIME-VERIFIED — isolated SDL harness:** all five mappings, keyboard/controller handoffs, one-tick attack edges, raw-input isolation, unmapped controls, and disconnect/reconnect passed.
+**RUNTIME-VERIFIED (isolated SDL harness):** all five mappings, keyboard/controller handoffs, one-tick attack edges, raw-input isolation, unmapped controls, and disconnect/reconnect passed.
 
-**RUNTIME-VERIFIED — physical Firefox/DualSense test:** all five mappings worked: Cross jump, Circle crouch and related existing contexts, Square draw/sheath, L1 throw/pickup, R1 combat and dialogue interaction/advancement. Held attack did not cause unintended repeated dialogue advancement. Keyboard/mouse and controller actions coexisted, and disconnect/reconnect left no stale action state.
+**RUNTIME-VERIFIED (physical Firefox/DualSense test):** all five mappings worked: Cross jump, Circle crouch and related existing contexts, Square draw/sheath, L1 throw/pickup, R1 combat and dialogue interaction/advancement. Held attack did not cause unintended repeated dialogue advancement. Keyboard/mouse and controller actions coexisted, and disconnect/reconnect left no stale action state.
 
 At milestone 3, right stick, Triangle, triggers, Options/Start, D-pad, and other unused controls remained unmapped. Milestone 4 adds right-stick look; milestone 5 adds Start/D-pad UI behavior; the tutorial follow-up maps Triangle only to tutorial advance. Triggers remain unmapped. The face-button layout is intentional and does not copy the historical Switch layout.
 
-### Milestone 4 — Right-stick camera/look (`ab46b53`)
+### Milestone 4: Right-stick camera/look (`ab46b53`)
 
 **VERIFIED SOURCE FINDING:** `Input::controllerLook()` uses `controllerLookAxis()` with an axial deadzone of `8000` (approximately 24%). Remaining travel is continuously rescaled from zero to full response, avoiding a speed jump at the boundary. `Game::TickOnce()` adds the resulting angular rate alongside mouse input, outside menus and dialogue/directing, before the existing pitch clamp:
 
@@ -510,17 +510,17 @@ At milestone 3, right stick, Triangle, triggers, Options/Start, D-pad, and other
 - Controller scaling is independent of mouse sensitivity and inversion. Mouse and stick look combine without exclusive device selection.
 - Attachment-checked axis reads remove controller-derived look on disconnect; centered reconnect has no retained look state. Triggers are not used for camera rotation.
 
-**VERIFIED SOURCE FINDING — timing:** stick input represents angular velocity, not mouse displacement. The implementation integrates `look rate × realmultiplier` once per outer frame in `TickOnce()`, before physics substeps. `DoUpdate()` in `Source/main.cpp` sets `realmultiplier` from elapsed frame seconds before game-speed, difficulty, loading, and slow-motion modifiers. Sustained deflection therefore yields approximately the same angular rotation per real-world second across render rates. The existing 250 ms stall cap still applies; long stalls are not integrated as unrestricted elapsed time. A fixed increment per rendered frame would be refresh-rate dependent in this loop.
+**VERIFIED SOURCE FINDING (timing):** stick input represents angular velocity, not mouse displacement. The implementation integrates `look rate × realmultiplier` once per outer frame in `TickOnce()`, before physics substeps. `DoUpdate()` in `Source/main.cpp` sets `realmultiplier` from elapsed frame seconds before game-speed, difficulty, loading, and slow-motion modifiers. Sustained deflection therefore yields approximately the same angular rotation per real-world second across render rates. The existing 250 ms stall cap still applies; long stalls are not integrated as unrestricted elapsed time. A fixed increment per rendered frame would be refresh-rate dependent in this loop.
 
 **Build validation:** Web build and `git diff --check` passed. The Web milestones required Emscripten cache access for linking; existing unused-variable warnings in `main.cpp` and `GameDraw.cpp` were not controller failures.
 
-**RUNTIME-VERIFIED — isolated timing/camera harness:** 30, 60, 120, 144, and 240 Hz plus irregular timing; deadzone, signs, pitch limits, mouse combination/inversion, camera guards, disconnect/reconnect, and unmapped triggers passed. Milestone 3 action harness regression checks also passed. These are isolated checks, not physical browser measurements across those refresh rates or full native gameplay tests.
+**RUNTIME-VERIFIED (isolated timing/camera harness):** 30, 60, 120, 144, and 240 Hz plus irregular timing; deadzone, signs, pitch limits, mouse combination/inversion, camera guards, disconnect/reconnect, and unmapped triggers passed. Milestone 3 action harness regression checks also passed. These are isolated checks, not physical browser measurements across those refresh rates or full native gameplay tests.
 
-**RUNTIME-VERIFIED — physical Firefox/DualSense test:** camera control worked and felt mechanically correct. Centered stick and inside-deadzone movement caused no drift; horizontal/vertical look and diagonal/circular motion were smooth; pitch limits held. Mouse look remained functional and coexisted with controller look. Disconnect/reconnect left no stale camera movement. Left-stick movement and all milestone 3 buttons still worked; triggers and other intentionally unmapped controls had no gameplay effect.
+**RUNTIME-VERIFIED (physical Firefox/DualSense test):** camera control worked and felt mechanically correct. Centered stick and inside-deadzone movement caused no drift; horizontal/vertical look and diagonal/circular motion were smooth; pitch limits held. Mouse look remained functional and coexisted with controller look. Disconnect/reconnect left no stale camera movement. Left-stick movement and all milestone 3 buttons still worked; triggers and other intentionally unmapped controls had no gameplay effect.
 
-**OPEN QUESTION — tuning:** physical testing found camera sensitivity somewhat slow for preference, not mechanically incorrect. Values remain `120°/s` yaw and `90°/s` pitch. Future tuning and controller-specific sensitivity configuration remain open.
+**OPEN QUESTION (tuning):** physical testing found camera sensitivity somewhat slow for preference, not mechanically incorrect. Values remain `120°/s` yaw and `90°/s` pitch. Future tuning and controller-specific sensitivity configuration remain open.
 
-### Milestone 5 — Pause and virtual-cursor UI (`8d549e4`)
+### Milestone 5: Pause and virtual-cursor UI (`8d549e4`)
 
 **VERIFIED SOURCE FINDING:** controller UI reuses the existing pointer-oriented menu in `Source/Menu/Menu.cpp`, with no discrete-focus system or controller-specific campaign navigation:
 
@@ -536,39 +536,39 @@ Controller press edges and `syncControllerContext()` consume held buttons throug
 
 **Build validation:** Web build and `git diff --check` passed.
 
-**RUNTIME-VERIFIED — isolated SDL/input harnesses:** cursor scaling, deadzone, 30/60/120/144/240 Hz and irregular timing, D-pad precision/diagonals, boundary clamping and slow movement away from edges; confirm edges; contextual Back destinations; pause/audio transitions; challenge results; modal cancellation; release suppression; raw-input isolation; disconnect/reconnect. Gameplay-action handoff and held-button regression checks also passed. These are not full native gameplay tests or physical browser measurements at those refresh rates.
+**RUNTIME-VERIFIED (isolated SDL/input harnesses):** cursor scaling, deadzone, 30/60/120/144/240 Hz and irregular timing, D-pad precision/diagonals, boundary clamping and slow movement away from edges; confirm edges; contextual Back destinations; pause/audio transitions; challenge results; modal cancellation; release suppression; raw-input isolation; disconnect/reconnect. Gameplay-action handoff and held-button regression checks also passed. These are not full native gameplay tests or physical browser measurements at those refresh rates.
 
-**RUNTIME-VERIFIED — maintainer QA:** Firefox, wired DualSense, DS4Windows disabled. Milestone 5 QA passed: pause/resume, virtual cursor, confirmation/contextual Back, campaign switching, world-map interaction, and challenge/menu flows. Earlier movement, actions/dialogue, camera, simultaneous keyboard/mouse use, and disconnect/reconnect remain physically verified. This report does not extend physical verification to the subsequent tutorial changes.
+**RUNTIME-VERIFIED (maintainer QA):** Firefox, wired DualSense, DS4Windows disabled. Milestone 5 QA passed: pause/resume, virtual cursor, confirmation/contextual Back, campaign switching, world-map interaction, and challenge/menu flows. Earlier movement, actions/dialogue, camera, simultaneous keyboard/mouse use, and disconnect/reconnect remain physically verified. This report does not extend physical verification to the subsequent tutorial changes.
 
-### Tutorial compatibility — source and automated validation; physical QA pending
+### Tutorial compatibility: source and automated validation; physical QA pending
 
 **VERIFIED SOURCE FINDING:** `bd7b207` (`feat: add controller tutorial advance`) adds `Input::controllerTutorialAdvancePressed()` for Triangle / `SDL_CONTROLLER_BUTTON_Y`. It reuses controller press edges, transition suppression, and lifecycle reset, restricted to active tutorial gameplay outside menus, modal/text capture, console, freeze, and results. It joins the existing Tab handler in `Game::ProcessInput()` without global Tab emulation: if stage is not `51`, set `Tutorial::stagetime = Tutorial::maxtime`; preserve the existing sound. Stage 51 remains unskippable, and keyboard Tab semantics are unchanged.
 
 **VERIFIED SOURCE FINDING:** `f00ec72` (`fix: recognize controller look in tutorial`) changes only stage-3 recognition in `Source/Tutorial.cpp`. The existing `deltah || deltav` mouse criterion is ORed with meaningful X or Y from `Input::controllerLook()`, the same post-deadzone signal used by the gameplay camera. There is no new Input helper, second deadzone calculation, synthetic mouse input, or write to mouse deltas. Existing tutorial-call guards exclude menus/pause, console freeze, and results; controller recognition additionally requires active gameplay, no input waiting, and no dialogue/directing. Stage timing, success accumulation, setup, and camera tuning are unchanged.
 
-**Build validation / RUNTIME-VERIFIED — isolated harnesses only:** both changes passed the Web build and `git diff --check`. Triangle tests cover press/hold/release, stage 51 and sound, context guards, held entry/pause/resume, disconnect/reconnect, unchanged Tab and simultaneous input. Stage-3 tests cover mouse, horizontal/vertical stick input, deadzone boundaries, context exclusions, and clean reconnect. Camera timing/response and Triangle/menu regression checks passed. **OPEN QUESTION — physical verification:** neither tutorial addition has yet been reported as physically verified in Firefox/DualSense. Tutorial prompts remain keyboard-oriented.
+**Build validation / RUNTIME-VERIFIED (isolated harnesses only):** both changes passed the Web build and `git diff --check`. Triangle tests cover press/hold/release, stage 51 and sound, context guards, held entry/pause/resume, disconnect/reconnect, unchanged Tab and simultaneous input. Stage-3 tests cover mouse, horizontal/vertical stick input, deadzone boundaries, context exclusions, and clean reconnect. Camera timing/response and Triangle/menu regression checks passed. **OPEN QUESTION (physical verification):** neither tutorial addition has yet been reported as physically verified in Firefox/DualSense. Tutorial prompts remain keyboard-oriented.
 
 ### Browser observations and limits
 
 **RUNTIME-VERIFIED:** Firefox exposed the wired DualSense through the standard Gamepad API; Emscripten/SDL exposed it to Lugaru as `Standard Gamepad`. Fullscreen is not required for controller input once the browser has exposed the device to the page.
 
-**OPEN QUESTION — Bluetooth:** raw Bluetooth DualSense support is not verified. Exposure was inconsistent/not successfully established during the final runtime test.
+**OPEN QUESTION (Bluetooth):** raw Bluetooth DualSense support is not verified. Exposure was inconsistent/not successfully established during the final runtime test.
 
-**RUNTIME-VERIFIED — Chrome, updated 2026-09-27:** earlier tests on this development machine repeatedly returned null `navigator.getGamepads()` entries, including after renderer focus/fullscreen testing. Maintainer QA now confirms working wired DualSense input in current Chrome with the final character-restored Web build. The cause of the discrepancy is unknown: character restoration changed no controller/browser-input code, so no causal link is established. Firefox/wired DualSense remains the most extensively validated setup. This one Chrome result does not establish Bluetooth, other Chromium versions, other operating systems, or other controllers. No WebHID or Chrome-specific workaround was added.
+**RUNTIME-VERIFIED (Chrome, updated 2026-09-27):** earlier tests on this development machine repeatedly returned null `navigator.getGamepads()` entries, including after renderer focus/fullscreen testing. Maintainer QA now confirms working wired DualSense input in current Chrome with the final character-restored Web build. The cause of the discrepancy is unknown: character restoration changed no controller/browser-input code, so no causal link is established. Firefox/wired DualSense remains the most extensively validated setup. This one Chrome result does not establish Bluetooth, other Chromium versions, other operating systems, or other controllers. No WebHID or Chrome-specific workaround was added.
 
 ### Historical context and remaining scope
 
-**HISTORICAL EVIDENCE — prior research:** original/local Lugaru ancestry did not reveal inherited controller support. The 2019 `usineur/lugaru` Switch implementation (reference commit `9af3344`) remains useful historical reference. Its SDL GameController and left-stick digital movement approaches informed the preservation-safe direction; startup-only assumptions, its exact face-button mapping, and trigger-assisted camera rotation were not copied. Its fixed per-frame camera increments are unsuitable for the current Web loop's frame-rate-independent stick integration.
+**HISTORICAL EVIDENCE (prior research):** original/local Lugaru ancestry did not reveal inherited controller support. The 2019 `usineur/lugaru` Switch implementation (reference commit `9af3344`) remains useful historical reference. Its SDL GameController and left-stick digital movement approaches informed the preservation-safe direction; startup-only assumptions, its exact face-button mapping, and trigger-assisted camera rotation were not copied. Its fixed per-frame camera increments are unsuitable for the current Web loop's frame-rate-independent stick integration.
 
-**HISTORICAL EVIDENCE — prior menu investigation:** the 2019 fork's `9af3344` added controller Start to pause handling; `7b81f2f` used cursor emulation and an A-as-mouse-click hack. Its fixed-per-frame cursor/camera increments and trigger-assisted motion are historical behavior, not the timing or binding contract for Lugaru-Web. Current UI reuses the pointer model but uses elapsed-time cursor integration, menu-local confirm, and contextual Back. The inspected historical tutorial handler remained Tab-only. The old face-button layout is reference material, not a requirement for the current mappings.
+**HISTORICAL EVIDENCE (prior menu investigation):** the 2019 fork's `9af3344` added controller Start to pause handling; `7b81f2f` used cursor emulation and an A-as-mouse-click hack. Its fixed-per-frame cursor/camera increments and trigger-assisted motion are historical behavior, not the timing or binding contract for Lugaru-Web. Current UI reuses the pointer model but uses elapsed-time cursor integration, menu-local confirm, and contextual Back. The inspected historical tutorial handler remained Tab-only. The old face-button layout is reference material, not a requirement for the current mappings.
 
-**RUNTIME-VERIFIED — progression:** the earlier observation that mouse clicking changes campaigns motivated pointer-path reuse. Milestone 5 physical QA now verifies controller campaign switching and world-map interaction through that same UI.
+**RUNTIME-VERIFIED (progression):** the earlier observation that mouse clicking changes campaigns motivated pointer-path reuse. Milestone 5 physical QA now verifies controller campaign switching and world-map interaction through that same UI.
 
 **OPEN QUESTION / remaining work:** physical tutorial QA; broader Chrome/Bluetooth compatibility; camera sensitivity and movement-threshold feel tuning; controller settings/inversion and glyphs/prompts; keyboard-only account naming and controller rebinding. True analog locomotion is a separate design problem; multiple-controller ownership, rumble/advanced DualSense features, trigger mappings, stereo decrement from controller, and WebHID remain outside implemented scope. NPC steering and shared character turning have now been investigated; residual slope/seam scheduler behavior remains open separately in B-13. See [backlog A6](research-backlog.md#a6-controller-support-completed-scope-and-remaining-work) for classification and follow-up priorities.
 
 ---
 
-## B-9 — WebAssembly Build Is Optimized Primarily for Size
+## B-9: WebAssembly Build Is Optimized Primarily for Size
 
 **Status:** Open
 **Priority:** Low
@@ -616,7 +616,7 @@ Do not change optimization settings based on assumptions alone.
 
 ---
 
-## B-10 — Synchronous Level Loading Blocks the Browser Main Thread
+## B-10: Synchronous Level Loading Blocks the Browser Main Thread
 
 **Status:** Open
 **Priority:** Low
@@ -657,7 +657,7 @@ For v1.0.0 this remains open and is documented as a known Web limitation in the 
 
 ---
 
-## B-11 — Account Creation Behavior Was Changed Globally
+## B-11: Account Creation Behavior Was Changed Globally
 
 **Status:** Open
 **Priority:** Medium
@@ -691,11 +691,11 @@ If automatic first-run account creation is needed only for Web builds, isolate t
 
 ---
 
-## B-12 — WebAssembly Runtime Crash: Memory Access Out of Bounds
+## B-12: WebAssembly Runtime Crash: Memory Access Out of Bounds
 
 **Status:** Fixed
 **Priority:** High
-**Fix:** `7d4349b` — `fix: prevent invalid sprite access after deletion`
+**Fix:** `7d4349b` (`fix: prevent invalid sprite access after deletion`)
 **Evidence:** Runtime debugging and source inspection
 
 ### Location
@@ -807,11 +807,11 @@ B-12 is considered fixed based on the identified unsafe erase pattern, the match
 
 ---
 
-## B-13 — Player Direction Changes Snap Instead of Rotating
+## B-13: Player Direction Changes Snap Instead of Rotating
 
-**Status:** Fixed — finalized default source and physical QA
+**Status:** Fixed (finalized default source and physical QA)
 **Priority:** Medium
-**Fix:** `0305947` — `fix: restore classic character behavior` (documentation `2d28dfe`, merged at `d21048e`)
+**Fix:** `0305947` (`fix: restore classic character behavior`; documentation `2d28dfe`, merged at `d21048e`)
 **Evidence:** VERIFIED SOURCE FINDING / VERIFIED GIT HISTORY / RUNTIME-VERIFIED
 
 ### Original symptom and provenance
@@ -828,7 +828,7 @@ The final head implementation prepares one per-actor pending update after fresh 
 
 ### Validation
 
-**RUNTIME-VERIFIED — maintainer physical QA:** yaw materially improved turning; tilt substantially improved player locomotion presentation; head restoration worked well and resembled original Lugaru. Holding forward while rotating the camera continuously retargeted physical movement correctly. The combined restored build played normally with controller/gameplay behavior intact and no remaining perceptible player-locomotion problem. No verified remaining player-locomotion regression currently warrants another code change.
+**RUNTIME-VERIFIED (maintainer physical QA):** yaw materially improved turning; tilt substantially improved player locomotion presentation; head restoration worked well and resembled original Lugaru. Holding forward while rotating the camera continuously retargeted physical movement correctly. The combined restored build played normally with controller/gameplay behavior intact and no remaining perceptible player-locomotion problem. No verified remaining player-locomotion regression currently warrants another code change.
 
 **Build/source validation:** isolated historical-law and head-equivalence checks preceded physical QA. The physically validated Release Web build at the time was a local validation build made without character or scheduler experiment definitions. Rebuilding after scheduler separation and `git diff --check` passed; bundled assets remain unchanged. Source behavior matches the physically validated restored character configuration. The restoration was subsequently committed as `0305947` after manual review. That validation build is not the current release build; see [build provenance](build-provenance.md#current-v10-release-build).
 
@@ -838,7 +838,7 @@ The final head implementation prepares one per-actor pending update after fresh 
 
 **VERIFIED SOURCE FINDING:** movement and contact correction run before AI steering within `Game::Tick()`. Corrected NPC coordinates can feed subsequent steering. Terrain/velocity reconstruction, contact projection, pathpoint arrival checks, avoidance-timer ordering, and animation/state transitions are subdivision-sensitive. Ordinary pursuit heading updates are timer-gated; path-following can retarget each tick. Core `Person::doAI()`, `DoStuff()`, `DoAnimations()`, and `SphereCheck()` match OSS `42f148d033358925d1e31cec68ad02ee03ec64c2` ignoring comments/whitespace. Surrounding orchestration differs, including collision/avoidance decay using full-frame time on the first Web tick. These findings identify possible mechanisms, not the cause of a demonstrated runtime failure.
 
-**RUNTIME-VERIFIED — maintainer physical A/B at approximately 60 Hz:** fixed `1 ms` and experimental OSS-style scheduling showed no clear or substantial overall difference. OSS-style scheduling appeared possibly slightly smoother when NPCs traversed slopes/seams, but the maintainer could not reliably distinguish the builds. No reproducible gameplay failure or meaningful player-facing regression was established. No diagnostic trace established causation.
+**RUNTIME-VERIFIED (maintainer physical A/B at approximately 60 Hz):** fixed `1 ms` and experimental OSS-style scheduling showed no clear or substantial overall difference. OSS-style scheduling appeared possibly slightly smoother when NPCs traversed slopes/seams, but the maintainer could not reliably distinguish the builds. No reproducible gameplay failure or meaningful player-facing regression was established. No diagnostic trace established causation.
 
 **Decision / OPEN:** classification remains **no verified causal bug**. Close the active investigation and retain a low-priority open observation, pending a concrete reproduction. Keep the fixed scheduler and NPC gameplay unchanged. Neither scheduler equivalence nor OSS superiority has been established; no scheduler-wide or local gameplay fix is warranted by this evidence.
 
@@ -846,21 +846,21 @@ The final head implementation prepares one per-actor pending update after fresh 
 
 The exact `Source/main.cpp` experiment was kept as a patch outside the repository and is not part of any commit. It used `LUGARU_EXPERIMENT_OSS_SCHEDULER`, selected `max(2, int(T * 200))` before gameplay modifiers, and preserved the current outer-frame/controller integration and `250 ms` stall cap. Its base is `8820f6125030127b1c7e8c328511c72a71d9299b`; patch SHA-256 is `e259a2f61248792b250462923666162b66182c8778dd333178ea4b2f58935448`.
 
-See [backlog A2a](research-backlog.md#a2a-npc-slopeseam-and-scheduler-comparison--open). Camera follow remains separate and is not an unfinished locomotion blocker.
+See [backlog A2a](research-backlog.md#a2a-npc-slopeseam-and-scheduler-comparison-open). Camera follow remains separate and is not an unfinished locomotion blocker.
 
 
 ---
 
-## B-14 — Web NPOT Textures Render Black with Mipmapped Sampling
+## B-14: Web NPOT Textures Render Black with Mipmapped Sampling
 
 **Status:** Fixed; investigation closed
 **Priority:** Medium
-**Fix:** `eea54f4b7e079c27964b7decde3d6c7f56e0a5fd` — `fix: handle NPOT mipmapped textures on Web`
+**Fix:** `eea54f4b7e079c27964b7decde3d6c7f56e0a5fd` (`fix: handle NPOT mipmapped textures on Web`)
 **Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (maintainer QA)
 
 ### Reproduction and Validation
 
-**RUNTIME-VERIFIED — maintainer QA:** the shipped 40×40 RGBA `Data/Textures/SnowFlake.png` rendered as solid black squares when requested with mipmaps. Changing only its load argument from `1` to `0` restored correct snow. Restoring `1` and replacing Web automatic generation with explicit `glGenerateMipmap()` did not fix the black squares. The generic Web-only NPOT fallback then restored correct snow while keeping the original `Sprite::snowflaketexture.load("Textures/SnowFlake.png", 1)` call. Final manual QA also confirmed correct rendering of the 300×300 `Fire.jpg` loading-screen texture.
+**RUNTIME-VERIFIED (maintainer QA):** the shipped 40×40 RGBA `Data/Textures/SnowFlake.png` rendered as solid black squares when requested with mipmaps. Changing only its load argument from `1` to `0` restored correct snow. Restoring `1` and replacing Web automatic generation with explicit `glGenerateMipmap()` did not fix the black squares. The generic Web-only NPOT fallback then restored correct snow while keeping the original `Sprite::snowflaketexture.load("Textures/SnowFlake.png", 1)` call. Final manual QA also confirmed correct rendering of the 300×300 `Fire.jpg` loading-screen texture.
 
 The Release Web build and `git diff --check` passed during implementation. Native preprocessing was equivalent apart from the local boolean alias; extracted policy checks covered 168 dimension/request combinations per native/Web variant. These automated checks supplement, not replace, the maintainer's physical rendering results.
 
@@ -898,15 +898,15 @@ All 13 shipped character skins are POT, as are the 18 shipped skybox faces and r
 
 ### Separate Performance Observation
 
-**RUNTIME-VERIFIED — maintainer observation:** many active fire spawners caused noticeable Web slowdown. This was investigated and fixed separately in [B-15](#b-15--dense-fire-sprite-rendering-slows-web); no causal link to the B-14 NPOT fallback was established.
+**RUNTIME-VERIFIED (maintainer observation):** many active fire spawners caused noticeable Web slowdown. This was investigated and fixed separately in [B-15](#b-15-dense-fire-sprite-rendering-slows-web); no causal link to the B-14 NPOT fallback was established.
 
 ---
 
-## B-15 — Dense Fire Sprite Rendering Slows Web
+## B-15: Dense Fire Sprite Rendering Slows Web
 
 **Status:** Fixed; release blocker for shipped content closed
 **Priority:** High
-**Fix:** `592e158` — `fix: optimize Web sprite rendering with client arrays`
+**Fix:** `592e158` (`fix: optimize Web sprite rendering with client arrays`)
 **Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (manual browser QA)
 
 ### Shipped Reproduction and Mechanism
@@ -936,17 +936,17 @@ The change preserves particle counts, spawn and lifetime behavior, motion, opaci
 
 ### Regression and Final Production QA
 
-**RUNTIME-VERIFIED — manual browser tests:** fire/smoke-heavy task3 looked normal and was dramatically smoother. The no-fire control remained smooth with ~17–25 incidental sprites and ~0.03–0.05 ms draw CPU, showing no pathological fixed overhead. Map1 snow looked normal with ~300 active particles, ~20 snow spawns/s, and ~0.28 ms draw CPU; the prior Web NPOT snow fix remained intact. Mixed combat effects during heavy fire showed cloud, blood, impact, bloodflame, shine, flame, and smoke with normal-looking visuals and ~1.7–2.2 ms draw CPU.
+**RUNTIME-VERIFIED (manual browser tests):** fire/smoke-heavy task3 looked normal and was dramatically smoother. The no-fire control remained smooth with ~17–25 incidental sprites and ~0.03–0.05 ms draw CPU, showing no pathological fixed overhead. Map1 snow looked normal with ~300 active particles, ~20 snow spawns/s, and ~0.28 ms draw CPU; the prior Web NPOT snow fix remained intact. Mixed combat effects during heavy fire showed cloud, blood, impact, bloodflame, shine, flame, and smoke with normal-looking visuals and ~1.7–2.2 ms draw CPU.
 
 The cleaned normal Web build and diagnostic Web build both passed, as did `git diff --check` during implementation. Maintainer QA then ran the production build with no experimental query parameters; it felt good, and the fix was accepted. These are manual scene-specific results, not a cross-browser or native runtime benchmark.
 
 ---
 
-## B-16 — Delayed Spatial Exit Loses Campaign Progression (Empire Sky Palace)
+## B-16: Delayed Spatial Exit Loses Campaign Progression (Empire Sky Palace)
 
 **Status:** Fixed; Empire progression release blocker closed
 **Priority:** High
-**Fix:** `97121db` — `fix: preserve campaign progression across delayed exits` (`Source/GameTick.cpp` only)
+**Fix:** `97121db` (`fix: preserve campaign progression across delayed exits`; `Source/GameTick.cpp` only)
 **Evidence:** VERIFIED SOURCE FINDING + RUNTIME-VERIFIED (controlled diagnostic runs and manual production QA)
 **Provenance:** shared game logic, not WebAssembly-specific. The susceptibility is inherited from upstream/historical completion and death-reload code; it is **not** established as a Web-introduced regression. Tracked here because it was found during Web campaign QA.
 
@@ -960,13 +960,13 @@ The cleaned normal Web build and diagnostic Web build both passed, as did `git d
 | `won` | Generic in-memory "win already recorded" latch; cleared by `ResetBeforeLevelLoad()`. |
 | `actuallevel` | Active campaign node index into `campaignlevels`. |
 | `whichchoice` | Ordinal of the incoming `nextlevel` edge chosen to reach the node. |
-| `Account::getCampaignChoicesMade()` | `choices.size()` — the **count** of saved edge choices, not a node ID. Campaign files allow arbitrary successor indices, so it cannot safely substitute for `actuallevel`. |
+| `Account::getCampaignChoicesMade()` | `choices.size()`, the **count** of saved edge choices, not a node ID. Campaign files allow arbitrary successor indices, so it cannot safely substitute for `actuallevel`. |
 
 `Data/Maps/jendraz1.json` (Empire "Sky Palace") has two type `-1` hotspots on the bridge: a size-`0.0` placeholder and a size-`15.0` exit (effective radius about `3.87` under the squared-distance check; see [backlog H2](research-backlog.md#h2-hotspot-radius-semantics)).
 
 ### Failure mechanism
 
-**RUNTIME-VERIFIED — controlled diagnostics:**
+**RUNTIME-VERIFIED (controlled diagnostics):**
 
 1. Entering the bridge hotspot recorded the campaign win immediately (`winCampaignLevel()`, `won = true`).
 2. `changedelay` then counted down for roughly 0.7 s before routing.
@@ -976,13 +976,13 @@ The cleaned normal Web build and diagnostic Web build both passed, as did `git d
 6. Completing the Emperor scene once routed with node-0 semantics and loaded `jendraz2` again; completing it a second time advanced again.
 7. The accumulated extra choices then skipped `jendraz3` (Rebel Outpost).
 
-**RUNTIME-VERIFIED — control:** remaining inside the bridge trigger until the delay completed behaved correctly (`jendraz1 → jendraz2 →` campaign menu `→ jendraz3`). The hotspot data and position are therefore not the defect; the fragile part is the delayed completion re-checking live occupancy, compounded by count-as-node death reload.
+**RUNTIME-VERIFIED (control):** remaining inside the bridge trigger until the delay completed behaved correctly (`jendraz1 → jendraz2 →` campaign menu `→ jendraz3`). The hotspot data and position are therefore not the defect; the fragile part is the delayed completion re-checking live occupancy, compounded by count-as-node death reload.
 
-**HISTORICAL — separate:** Empire's visible draw-distance/fade pop-in was earlier concluded to be original behavior. It is unrelated to this defect and was not changed.
+**HISTORICAL (separate):** Empire's visible draw-distance/fade pop-in was earlier concluded to be original behavior. It is unrelated to this defect and was not changed.
 
 ### Fix
 
-**VERIFIED SOURCE FINDING** — `97121db`:
+**VERIFIED SOURCE FINDING** (`97121db`):
 
 - Adds file-static `acceptedSpatialWin`, latched when a successful win is recorded while `winhotspot` is true. It survives the player leaving the trigger during the delay and resets in `ResetBeforeLevelLoad()`.
 - Shared completion checks use `winhotspot || acceptedSpatialWin`.
@@ -996,7 +996,7 @@ The cleaned normal Web build and diagnostic Web build both passed, as did `git d
 
 **Independent review:** an AI-assisted review with Claude Code examined the final production diff after runtime QA and found no blocking or high-severity defects; minor residual risk is recorded below. The review confirmed in source that `acceptedSpatialWin` resets through the common load path; campaign wins cannot be recorded twice through the new path; death-before-win and death-after-recorded-win are mutually exclusive; loader state reset makes the cached coords/yaw/targetyaw sufficient for the `ChooseNext == 2` case; non-campaign `loading == 2` handling remains intact; and `changedelay = -999` matches the existing `winfreeze` convention.
 
-**RUNTIME-VERIFIED — production fix, all passed:**
+**RUNTIME-VERIFIED (production fix, all passed):**
 
 1. Fresh Empire fast bridge run: player leaves the hotspot before the old delay expires; the transition to `jendraz2` still occurs.
 2. Fresh Empire stop-inside control: remaining in the hotspot still transitions normally.
@@ -1004,22 +1004,22 @@ The cleaned normal Web build and diagnostic Web build both passed, as did `git d
 4. Ordinary campaign death before win: Sky Palace reloaded normally, NPC conversations still worked, and later bridge → Throne Room → Rebel Outpost progression remained correct.
 5. Main campaign Village: normal completion, campaign/title flow, and next-mission selection behaved normally.
 
-**VERIFIED SOURCE FINDING — not runtime-forced:** a death during the very small window after the win is recorded but before routing. Independent review traced `ChooseNext` `0`, `1`, and `2` and found it correct; temporary instrumentation to manufacture that state was intentionally not added.
+**VERIFIED SOURCE FINDING (not runtime-forced):** a death during the very small window after the win is recorded but before routing. Independent review traced `ChooseNext` `0`, `1`, and `2` and found it correct; temporary instrumentation to manufacture that state was intentionally not added.
 
 ### Residual risk
 
 - **OPEN:** the post-win/pre-route death path is source-verified only.
 - **VERIFIED SOURCE FINDING / OPEN:** campaign menu entry still derives `actuallevel` from `campaignlevels[getCampaignChoicesMade() - 1].nextlevel[whichchoice]` (`Source/Menu/Menu.cpp`), i.e. it treats the choice count as the predecessor node. This is correct for the linear bundled campaigns but unproven for branching campaigns; out of scope for `97121db` and tracked under [backlog H7](research-backlog.md#h7-campaign-branching-testhistory).
-- **RESOLVED — separate polish:** the Throne Room Emperor dialogue activation area was improved with a map-local type `21` hotspot; see [backlog A9a](research-backlog.md#a9a-throne-room-emperor-dialogue-activation-area--resolved-2026-09-29). This was localized polish rather than part of B-16 or a Web-specific regression.
-- **RESOLVED — separate exit-area polish:** the existing `jendraz1` type `-1` bridge exit hotspot was widened from size `15.0` (~3.87-unit effective radius) to `100.0` (10-unit effective radius) after runtime testing. The underlying exit/progression logic is unchanged; this is a map-local usability adjustment.
+- **RESOLVED (separate polish):** the Throne Room Emperor dialogue activation area was improved with a map-local type `21` hotspot; see [backlog A9a](research-backlog.md#a9a-throne-room-emperor-dialogue-activation-area-resolved-2026-09-29). This was localized polish rather than part of B-16 or a Web-specific regression.
+- **RESOLVED (separate exit-area polish):** the existing `jendraz1` type `-1` bridge exit hotspot was widened from size `15.0` (~3.87-unit effective radius) to `100.0` (10-unit effective radius) after runtime testing. The underlying exit/progression logic is unchanged; this is a map-local usability adjustment.
 
 ---
 
-## B-17 — Empire Sky Palace NPCs Receive Fire.jpg as Clothing
+## B-17: Empire Sky Palace NPCs Receive Fire.jpg as Clothing
 
 **Status:** Fixed; Empire visual regression closed
 **Priority:** Medium
-**Fix:** `6142c73` — `fix: restore Empire Sky Palace NPC clothing`; `bf94eca` — `fix: stop remapping missing Empire fire clothing`
+**Fix:** `6142c73` (`fix: restore Empire Sky Palace NPC clothing`); `bf94eca` (`fix: stop remapping missing Empire fire clothing`)
 **Evidence:** VERIFIED SOURCE FINDING + HISTORICAL ASSET VERIFICATION + RUNTIME-VERIFIED controlled A/B
 **Provenance:** inherited OSS content-conversion regression, not WebAssembly-specific. The visible defect came from converted Empire map data and shared clothing compositing behavior.
 
@@ -1069,7 +1069,7 @@ No clothing compositor or renderer behavior was changed.
 
 ### Review and QA
 
-**RUNTIME-VERIFIED — production fix:**
+**RUNTIME-VERIFIED (production fix):**
 
 - Empire Sky Palace loads normally.
 - Both affected NPCs now render with normal clothing.
@@ -1086,11 +1086,11 @@ That uncertainty does not affect the demonstrated regression: mapping the unreso
 
 ---
 
-## B-18 — Dense Web Foliage Causes Severe Slowdown
+## B-18: Dense Web Foliage Causes Severe Slowdown
 
 **Status:** Fixed; Web performance regression closed
 **Priority:** High
-**Fix:** `df72be9` — `fix: optimize Web foliage rendering`
+**Fix:** `df72be9` (`fix: optimize Web foliage rendering`)
 **Evidence:** RUNTIME-VERIFIED controlled A/B + VERIFIED SOURCE FINDING + clean-build validation
 **Provenance:** Web/GL4ES rendering regression. Empire map content and foliage assets were not defective; the comparable native OSS build did not exhibit the same severe slowdown.
 
@@ -1160,15 +1160,15 @@ Runtime QA on `jendraz1` confirmed:
 
 No Empire map objects, leaf models, or textures were removed or simplified.
 
-See [backlog A9c](research-backlog.md#a9c-empire-sky-palace-dense-foliage-web-slowdown--resolved-2026-09-30).
+See [backlog A9c](research-backlog.md#a9c-empire-sky-palace-dense-foliage-web-slowdown-resolved-2026-09-30).
 
 ---
 
-## B-19 — Jump Boost Applied Too Quickly Under Fixed Physics Timestep
+## B-19: Jump Boost Applied Too Quickly Under Fixed Physics Timestep
 
 **Status:** Fixed
 **Priority:** High
-**Fix:** `21efae8` — `fix: restore time-scaled jump boost`
+**Fix:** `21efae8` (`fix: restore time-scaled jump boost`)
 
 ### Symptom
 
@@ -1214,11 +1214,11 @@ Commit `1db2761` also changed other multiplier-sensitive systems, including ragd
 
 ---
 
-## B-20 — Temple Tinted JPEG Fur Renders with RGB Striping
+## B-20: Temple Tinted JPEG Fur Renders with RGB Striping
 
 **Status:** Fixed
 **Priority:** Medium
-**Fix:** `85477f5` — `fix: restore Temple tinted fur rendering`
+**Fix:** `85477f5` (`fix: restore Temple tinted fur rendering`)
 
 ### Symptom
 
@@ -1299,13 +1299,13 @@ Several Temple maps and Empire `jendraz41` contain Persons with scale `0.0` or `
 
 The loop now skips Persons with `scale <= 0.001` or `scale >= 1000.0`. Ordinary actors (bundled scales around `0.2`) and the `2.0`-scale Long-ten Giant in Seven Tasks `task9` are drawn as before. No actor data was changed.
 
-**RUNTIME-VERIFIED — maintainer QA:** after a rebuild, affected maps containing helper/sentinel actors were checked, and `task9` was checked to confirm that the legitimate Long-ten Giant minimap marker remained visible while extreme-scale helper markers were suppressed.
+**RUNTIME-VERIFIED (maintainer QA):** after a rebuild, affected maps containing helper/sentinel actors were checked, and `task9` was checked to confirm that the legitimate Long-ten Giant minimap marker remained visible while extreme-scale helper markers were suppressed.
 
 ### Long-ten Giant encounter, Seven Tasks `task9` (`d997ab3`)
 
-**VERIFIED SOURCE FINDING — data:** `task9` contained three dialogues. D0 (type `31`) is Wort's level-ending dialogue. D2 (type `12`, target Person 2, the `2.0`-scale giant) is the giant encounter. D1 (type `11`) contained the same giant encounter, but its type targets Person 1 (Wort), so it was attached to the wrong actor.
+**VERIFIED SOURCE FINDING (data):** `task9` contained three dialogues. D0 (type `31`) is Wort's level-ending dialogue. D2 (type `12`, target Person 2, the `2.0`-scale giant) is the giant encounter. D1 (type `11`) contained the same giant encounter, but its type targets Person 1 (Wort), so it was attached to the wrong actor.
 
-**VERIFIED SOURCE FINDING — mechanism:** `Dialog::tick()` started proximity dialogue only when `distsq` between character centres was below a fixed `6` (about 2.45 units). The giant's size prevented the player from reliably getting close enough to trigger D2.
+**VERIFIED SOURCE FINDING (mechanism):** `Dialog::tick()` started proximity dialogue only when `distsq` between character centres was below a fixed `6` (about 2.45 units). The giant's size prevented the player from reliably getting close enough to trigger D2.
 
 **Fix:**
 
@@ -1313,7 +1313,7 @@ The loop now skips Persons with `scale <= 0.001` or `scale >= 1000.0`. Ordinary 
 - `Source/Level/Dialog.cpp`: when the target's scale is between `0.001` and `10`, the squared interaction distance becomes the larger of `6` and `1.5 × ((player scale + target scale) × 2.5)²`. Default-sized pairs keep the historical `6`, and helper-scale targets (`0.0`, `20000.0`) are excluded. In bundled data, the giant is the only dialogue target that this enlarges.
 - `Source/GameDraw.cpp`: dialogue speaker names that would overflow the left edge of the dialogue box are scaled down to fit. Names that already fit are drawn as before.
 
-**RUNTIME-VERIFIED — maintainer QA:** approaching the giant triggers the correct encounter once, the full `LONG-TEN GIANT:` speaker label fits, Wort gives only his level-ending dialogue, and ordinary NPC dialogue interaction is unchanged.
+**RUNTIME-VERIFIED (maintainer QA):** approaching the giant triggers the correct encounter once, the full `LONG-TEN GIANT:` speaker label fits, Wort gives only his level-ending dialogue, and ordinary NPC dialogue interaction is unchanged.
 
 ### Combat music survives Pause → End Game (`d07fea4`)
 
@@ -1323,7 +1323,7 @@ The loop now skips Persons with `scale <= 0.001` or `scale >= 1000.0`. Ordinary 
 
 **Fix:** pausing now also pauses `stream_fighttheme`, and resuming restores whichever stream `musictype` records (fight theme or level theme). End Game pauses both gameplay streams and zeroes their `musicvolume` / `oldmusicvolume` entries before returning to the main menu.
 
-**RUNTIME-VERIFIED — maintainer QA:** combat Pause → Resume through the menu button and through Esc/Back, combat Pause → End Game, peaceful Pause → Resume, and starting another level after End Game all behaved correctly.
+**RUNTIME-VERIFIED (maintainer QA):** combat Pause → Resume through the menu button and through Esc/Back, combat Pause → End Game, peaceful Pause → Resume, and starting another level after End Game all behaved correctly.
 
 ### Campaign map shows final state after completion (`3363eae`)
 
@@ -1341,11 +1341,11 @@ The loop now skips Persons with `scale <= 0.001` or `scale >= 1000.0`. Ordinary 
 - Changed the Empire ending text from `Lugaru's island` to `Lugaru Island`.
 - Replaced the Temple ending text, an OSS placeholder, with a three-line ending.
 
-**VERIFIED SOURCE FINDING (re-checked against the commits):** in every changed map, the JSON parses, all non-dialogue map data is identical, and retained dialogues are unchanged apart from the `svenshan` and `task9` name fixes. Large diff line counts come from deleting whole serialized dialogue objects. **RUNTIME-VERIFIED — maintainer QA:** after a full data rebuild, `svenclimb`, `svenheaven`, `svenchasm`, `sventhrone` and `sventemple2` each loaded directly and played normally. The stale Shan dialogue no longer appeared, and `sventemple2`'s Sven/Silb conversation still played.
+**VERIFIED SOURCE FINDING (re-checked against the commits):** in every changed map, the JSON parses, all non-dialogue map data is identical, and retained dialogues are unchanged apart from the `svenshan` and `task9` name fixes. Large diff line counts come from deleting whole serialized dialogue objects. **RUNTIME-VERIFIED (maintainer QA):** after a full data rebuild, `svenclimb`, `svenheaven`, `svenchasm`, `sventhrone` and `sventemple2` each loaded directly and played normally. The stale Shan dialogue no longer appeared, and `sventemple2`'s Sven/Silb conversation still played.
 
 ---
 
-## CI-1 — macOS CI Fails During Dependency Setup
+## CI-1: macOS CI Fails During Dependency Setup
 
 **Status:** Open
 **Priority:** Low
@@ -1384,7 +1384,7 @@ Native CI restoration remains lower priority than browser correctness issues.
 
 ### Current state (2026-10-04)
 
-**VERIFIED SOURCE FINDING — inherited state:** before the v1.0 release-preparation cleanup, `.github/workflows/` was unchanged since Loupgarenne commit `1db2761`. It built native Linux, macOS and Windows (MinGW cross-compile) targets under `lugaru-loupgarenne-*` names, while the inherited release workflow triggered on `*-loupgarenne` tags.
+**VERIFIED SOURCE FINDING (inherited state):** before the v1.0 release-preparation cleanup, `.github/workflows/` was unchanged since Loupgarenne commit `1db2761`. It built native Linux, macOS and Windows (MinGW cross-compile) targets under `lugaru-loupgarenne-*` names, while the inherited release workflow triggered on `*-loupgarenne` tags.
 
 **CURRENT STATE (2026-10-04):** native comparison artifacts now use `lugaru-web-native-*`, and the inherited tag-driven native release workflow has been removed because v1.0.0 is a Web-only release. The retained workflow still builds only native targets; no workflow currently builds or tests the Web target, so CI provides no evidence about the Web release. The v1.0 Web build is produced locally; see [build provenance](build-provenance.md#current-v10-release-build). Whether the macOS failure above still reproduces was not re-checked for v1.0.
 

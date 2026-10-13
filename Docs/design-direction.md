@@ -53,9 +53,9 @@ Which mechanics are available?
 
 Conceptual rulesets:
 
-- **Classic** — historical gameplay behavior except for correctness/platform fixes.
-- **Expanded** — new single-player/co-op mechanics and AI/system extensions.
-- **Arena** — multiplayer-focused rules/scoring/round behavior built on the same core systems.
+- **Classic**: historical gameplay behavior except for correctness/platform fixes.
+- **Expanded**: new single-player/co-op mechanics and AI/system extensions.
+- **Arena**: multiplayer-focused rules/scoring/round behavior built on the same core systems.
 
 ### Presentation
 Which UI/visual presentation is being used?
@@ -274,10 +274,10 @@ Avoid generic SaaS panels.
 Campaign cards can make historical provenance visible:
 
 ```text
-Original Lugaru — Wolfire — 2005
-Temple — Silb — 2006
-Empire — Jendraz — 2008
-The Seven Tasks — Philtron R. — 2009
+Original Lugaru (Wolfire, 2005)
+Temple (Silb, 2006)
+Empire (Jendraz, 2008)
+The Seven Tasks (Philtron R., 2009)
 ...
 ```
 

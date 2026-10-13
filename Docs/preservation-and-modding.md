@@ -136,18 +136,18 @@ The postmortem itself is valuable design documentation because it explains how t
 
 The Wolfire Wiki's mod list documents a wider ecosystem including:
 
-- Ninja Lugaru — Wouter
-- Matrix — Zip
-- China — Miro
-- Space Lugaru — Levbot
-- New School Samurai — skr
-- Dumb T-shirts — Silb
-- Various Hi-Res Textures — Maxis
-- Long-haired Rabbit Skins — Jesse
-- Alternate Leather Armor — Jesse
-- Alternate Music — Ledood
-- Custom Made Music — DJ Sick Nick
-- Weapon Shop — Lotus Wolf
+- Ninja Lugaru (Wouter)
+- Matrix (Zip)
+- China (Miro)
+- Space Lugaru (Levbot)
+- New School Samurai (skr)
+- Dumb T-shirts (Silb)
+- Various Hi-Res Textures (Maxis)
+- Long-haired Rabbit Skins (Jesse)
+- Alternate Leather Armor (Jesse)
+- Alternate Music (Ledood)
+- Custom Made Music (DJ Sick Nick)
+- Weapon Shop (Lotus Wolf)
 
 Some links were already dead by 2009. That makes web archaeology and filename recovery important.
 
@@ -169,8 +169,8 @@ Historical context matters because before the source release, Wolfire documentat
 
 For Lugaru-Web, a recovered historical weapon could eventually have two clearly different forms:
 
-- **Historical** — behaves as it did in classic Lugaru.
-- **Expanded** — optionally gains new mechanics while retaining the historical model/identity.
+- **Historical**: behaves as it did in classic Lugaru.
+- **Expanded**: optionally gains new mechanics while retaining the historical model/identity.
 
 Do not silently rewrite the historical behavior.
 
@@ -590,9 +590,9 @@ The only text change inside retained Temple dialogue fixes a wrong name. In `sve
 
 | Maps | Removed dialogue | Evidence |
 | --- | --- | --- |
-| `svenninja`, `svenruins` (five each); `sventemple`, `sventemple2` (one each) — `20be11c` | Turner's village conversations with April, Sarah, Skipper, Clover and Jack | Original-campaign characters in Temple maps. The Clover conversation is identical to one in `Lugaru1`, and the April conversation is identical in `svenninja`, `sventemple` and `sventemple2`. |
-| `svenfireice`, `svenforest`, `svenfort` (two each); `svenredbwafter`, `svenshan` (one each) — `744c7de` | Turner/Ray, Skipper/Turner and Jack/Turner conversations | `svenfort`, `svenshan`, `svenredbwafter` and `svenfireice` blocks are identical to dialogues in Original `Lugaru5` and `Lugaru12`. `svenforest` carries the same conversations (same speakers and opening lines) but is not byte-identical. |
-| `svenclimb`, `svenheaven`, `svenchasm`, `sventhrone` (two each) — `488aae6` | Turner/Ray `Where's Shan? I must speak with him.` and Skipper/Turner `Where did Shan go?` | Identical blocks in four different normal Temple maps. `svenclimb` is a combat map (`hostile = 1`, six armed enemies) with none of the friendly-NPC setup the conversation implies, and ordinary `Dialog::tick()` only starts these types while `hostile == 0`. |
+| `svenninja`, `svenruins` (five each); `sventemple`, `sventemple2` (one each); commit `20be11c` | Turner's village conversations with April, Sarah, Skipper, Clover and Jack | Original-campaign characters in Temple maps. The Clover conversation is identical to one in `Lugaru1`, and the April conversation is identical in `svenninja`, `sventemple` and `sventemple2`. |
+| `svenfireice`, `svenforest`, `svenfort` (two each); `svenredbwafter`, `svenshan` (one each); commit `744c7de` | Turner/Ray, Skipper/Turner and Jack/Turner conversations | `svenfort`, `svenshan`, `svenredbwafter` and `svenfireice` blocks are identical to dialogues in Original `Lugaru5` and `Lugaru12`. `svenforest` carries the same conversations (same speakers and opening lines) but is not byte-identical. |
+| `svenclimb`, `svenheaven`, `svenchasm`, `sventhrone` (two each); commit `488aae6` | Turner/Ray `Where's Shan? I must speak with him.` and Skipper/Turner `Where did Shan go?` | Identical blocks in four different normal Temple maps. `svenclimb` is a combat map (`hostile = 1`, six armed enemies) with none of the friendly-NPC setup the conversation implies, and ordinary `Dialog::tick()` only starts these types while `hostile == 0`. |
 
 Legitimate Temple dialogue in these maps, such as the Sven/Niels conversation in `svenredbwafter` and the Sven/Shan conversation in `svenshan`, was retained.
 
@@ -639,7 +639,7 @@ Unusual scale alone does not mean an actor is a helper. The `2.0`-scale Long-ten
 - Structural labels were normalized: first-node `..._start_new_campaign!` labels in `main.txt`, `empire.txt` and `seventasks.txt` (Temple already used this form), and Temple's final node `Ice_Cave_(Last_Level)` → `Ice_Cave` (`4d27256`). The parenthetical had been in the campaign file since it was added to OSS in `200ab5f` (2011).
 - Seven Tasks `Bonus_Level_-_ZOMBIES!` was deliberately kept. It reads as authored presentation, and `README.SevenTasks.txt` describes the "Bonus Zombie Level". Not every unusual campaign label was normalized.
 - Empire's ending wording `Lugaru's island` became `Lugaru Island`.
-- **VERIFIED GIT HISTORY — Temple ending:** the previous Temple `EndText` was an explicit OSS placeholder added in `217da32` (Rémi Verschelde, 2017-02-11, "Improve end texts for existing campaigns"), inviting players to "propose a cool ending text upstream". `744c7de` replaced it with three lines beginning `Sven has slain the Water Temple master.` This is newly authored Lugaru-Web completion text, not recovered original Temple campaign prose.
+- **VERIFIED GIT HISTORY (Temple ending):** the previous Temple `EndText` was an explicit OSS placeholder added in `217da32` (Rémi Verschelde, 2017-02-11, "Improve end texts for existing campaigns"), inviting players to "propose a cool ending text upstream". `744c7de` replaced it with three lines beginning `Sven has slain the Water Temple master.` This is newly authored Lugaru-Web completion text, not recovered original Temple campaign prose.
 
 ## Editing method for map JSON
 
