@@ -6,7 +6,7 @@ These documents capture the technical, historical, preservation, and design unde
 
 Lugaru-Web v1.0.0 is the preservation and browser-stabilization release. The issue summary is in [`PROJECT.md`](../PROJECT.md#known-browser-issues), with fixing commits, evidence and validation limits in [`porting-notes.md`](porting-notes.md). The complete list of v1.0.0 changes is in [`RELEASE-NOTES.md`](../RELEASE-NOTES.md).
 
-The final v1.0.0 Web artifacts were built on 2026-10-13 from source commit `1b81e1d` with Emscripten 6.0.9; their sizes, SHA-256 hashes and local smoke test are recorded in [`build-provenance.md`](build-provenance.md#current-v10-release-build). The release has not yet been tagged, and the public deployment has not yet been smoke-tested. Open items are summarized in [`PROJECT.md`](../PROJECT.md#near-term-priorities).
+The final v1.0.0 Web artifacts were built on 2026-10-13 from source commit `1b81e1d` with Emscripten 6.0.9; their sizes, SHA-256 hashes and local smoke test are recorded in [`build-provenance.md`](build-provenance.md#current-v10-release-build). The public GitHub Pages deployment was verified on 2026-10-13 (see [`build-provenance.md`](build-provenance.md#public-deployment-verification-2026-10-13)). Open items are summarized in [`PROJECT.md`](../PROJECT.md#near-term-priorities).
 
 ## Documents in this directory
 

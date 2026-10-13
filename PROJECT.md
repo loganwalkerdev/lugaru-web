@@ -185,7 +185,7 @@ lugaru.wasm
 lugaru.data
 ```
 
-The four files must be deployed together. The Web build loads `lugaru.data` from the same origin and directory as `lugaru.html`, not from Ryan Deering's server (`36407bd`); the public deployment has not yet been smoke-tested. The files must be served over HTTP rather than opened through `file://`.
+The four files must be deployed together. The Web build loads `lugaru.data` from the same origin and directory as `lugaru.html`, not from Ryan Deering's server (`36407bd`). The public GitHub Pages deployment at https://loganwalkerdev.github.io/lugaru-web/ was verified on 2026-10-13: all four files return HTTP 200 with the expected types from the same origin. See [build provenance](Docs/build-provenance.md#public-deployment-verification-2026-10-13). The files must be served over HTTP rather than opened through `file://`.
 
 Exact environment information, dependency revisions, build commands, compiler configuration, known warnings, and the preserved 2026-09-16 baseline record are maintained in:
 
@@ -229,12 +229,13 @@ Major gameplay additions continue to wait until after v1.0.0; see **Near-Term Pr
 
 ## Near-Term Priorities
 
-### Remaining v1.0.0 publication steps
+### v1.0.0 deployment and validation follow-ups
 
-1. Deploy the Web build to GitHub Pages and smoke-test it there, confirming that `lugaru.data` loads from the same origin with the expected MIME types. This has not yet been done.
-2. Tag the v1.0.0 release. The final Web artifacts were built from source commit `1b81e1d`; the release has not yet been tagged.
-3. Physically verify the Triangle tutorial advance and tutorial stage-3 right-stick recognition (B-8), or keep them documented as source/automated-validated only.
-4. Optionally confirm the final Web `Blur Effects: Unavailable on Web` Options row physically (B-6).
+The v1.0.0 Web release is live. The open items below are validation follow-ups, not blockers to publication.
+
+1. **Complete (2026-10-13):** the Web build is deployed to GitHub Pages (`gh-pages` commit `6238a50`), and the public same-origin/MIME check passed. See [build provenance](Docs/build-provenance.md#public-deployment-verification-2026-10-13).
+2. Physically verify the Triangle tutorial advance and tutorial stage-3 right-stick recognition (B-8), or keep them documented as source/automated-validated only.
+3. Optionally confirm the final Web `Blur Effects: Unavailable on Web` Options row physically (B-6).
 
 ### After v1.0.0
 

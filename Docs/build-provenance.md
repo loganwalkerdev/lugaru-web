@@ -132,6 +132,42 @@ assets load
 This is a release smoke test, not exhaustive QA. Detailed runtime validation
 belongs in [`porting-notes.md`](porting-notes.md).
 
+### Public deployment verification (2026-10-13)
+
+The final v1.0.0 Web artifacts are deployed on GitHub Pages at:
+
+```text
+https://loganwalkerdev.github.io/lugaru-web/
+```
+
+The deployment is `gh-pages` commit `6238a50` (`deploy: Lugaru-Web v1.0.0`).
+It contains the final artifacts built from source commit
+`1b81e1d48b1ad4d681258e04a1696536d794fa3e`; deployment does not rebuild or
+modify them.
+
+`index.html` is the deployment copy of the verified `lugaru.html`, so the site
+root serves the game page. **VERIFIED (deployment commit contents):** in
+`6238a50`, `index.html` and `lugaru.html` are the same Git blob, and the
+SHA-256 values of `index.html`, `lugaru.js`, `lugaru.wasm` and `lugaru.data`
+match the final artifact hashes above.
+
+**RUNTIME-VERIFIED (public HTTP check, 2026-10-13):** every request was made
+under `https://loganwalkerdev.github.io/lugaru-web/`:
+
+```text
+index.html    HTTP 200   text/html; charset=utf-8                   7,783 bytes
+lugaru.js     HTTP 200   application/javascript; charset=utf-8    146,235 bytes
+lugaru.wasm   HTTP 200   application/wasm                       2,145,306 bytes
+lugaru.data   HTTP 200   application/octet-stream              40,057,550 bytes
+```
+
+All four sizes match the final artifacts. Browser Network inspection also
+showed the document, JS, WASM and data requests returning HTTP 200. The game
+data is therefore served from the same origin and path as the page, with no
+external data host. This closes the public same-origin/MIME check left open
+before deployment. It is a deployment and HTTP verification, not additional
+gameplay QA.
+
 ### Same-origin game data
 
 **VERIFIED SOURCE FINDING:** commit `36407bd` (`fix: make Web release self-contained`) removed the inherited `USE_CDN_DATA` CMake option and the production-hostname redirect in `Misc/shell.html` that loaded `lugaru.data` from `https://dev.ryandeering.ie/lugaru.data`. `Module.locateFile()` now returns the requested path unchanged, so `lugaru.data` is fetched from the same origin and directory as `lugaru.html`.
@@ -166,8 +202,9 @@ The browser requested `lugaru.data` from the same host and port as
 Version Lugaru-Web v1.0.0 (Lugaru 1.3) -- Release build
 ```
 
-**OPEN:** repeat the same-origin/MIME smoke test against the final public
-deployment after GitHub Pages is configured.
+**CLOSED (2026-10-13):** the same-origin/MIME check was repeated against the
+final public GitHub Pages deployment and passed; see
+[Public deployment verification](#public-deployment-verification-2026-10-13).
 
 Commit `36407bd` also renamed the shell title, SDL window title and startup
 banner from Loupgarenne to Lugaru-Web, and set `LUGARU_VERSION_SUFFIX` to
@@ -240,7 +277,8 @@ Windows comparison targets only. Before v1.0.0, its inherited
 
 The inherited tag-driven native release workflow, which triggered on
 `*-loupgarenne` tags, was removed in `8ba1cc6` because v1.0.0 is a Web-only
-release and is being packaged and deployed separately.
+release and is packaged and deployed separately (see
+[Public deployment verification](#public-deployment-verification-2026-10-13)).
 
 No current workflow builds or tests the Web target. The v1.0 Web release is
 therefore built and verified locally using the procedure above. Web CI and
