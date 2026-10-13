@@ -111,14 +111,14 @@
     }
     #progress-bar {
       height: 100%;
-      background: linear-gradient(90deg, #0f0, #0a0);
+      background: linear-gradient(90deg, #f00, #a00);
       width: 0%;
       transition: width 0.3s ease;
     }
     #status-text {
       margin-top: 10px;
       font-size: 14px;
-      color: #0f0;
+      color: #f00;
     }
   </style>
 </head>
@@ -206,7 +206,7 @@
         fpsCounter.textContent = 'FPS: ' + fps;
 
         if (fps >= 60) {
-          fpsCounter.style.color = '#0f0';
+          fpsCounter.style.color = '#f00';
         } else if (fps >= 30) {
           fpsCounter.style.color = '#ff0';
         } else {
