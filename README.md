@@ -10,7 +10,17 @@ OSS Lugaru codebase and Ryan Deering's Loupgarenne WebAssembly work.
 The goal of the project is to preserve the original Lugaru experience while making
 it reliable, maintainable, and easy to play in a modern browser.
 
-Version **1.0.0** is the project's preservation-focused first release. It concentrates
+Lugaru-Web is a separate fork. It is not an official release of OSS Lugaru,
+Loupgarenne, or Wolfire Games. The browser build runs the same C++ Lugaru engine
+compiled to WebAssembly; it is not a rewrite. Web-specific behavior is isolated behind
+Emscripten-specific paths where appropriate, while shared gameplay fixes remain
+cross-platform.
+
+The current release is **Lugaru-Web v1.0.0 (Lugaru 1.3)**. `1.0.0` is the Lugaru-Web
+release number. `Lugaru 1.3` is the engine version inherited from the OSS Lugaru
+development line, kept separate from Lugaru-Web's own numbering.
+
+v1.0.0 is the project's preservation-focused first public release. It concentrates
 on browser compatibility, historical behavior, campaign reliability, rendering and
 performance fixes, persistence, controls, and documentation rather than adding a new
 gameplay layer.
@@ -39,6 +49,21 @@ controller through the browser Gamepad API.
 Other modern browsers may work, but they have not received the same level of release
 validation. Safari has not yet been release-tested.
 
+### Default Web settings
+
+On first launch, before any settings have been saved, the Web build uses:
+
+| Setting | Default |
+| --- | --- |
+| Resolution | 1920×1080 |
+| Detail | High |
+| Blood | On, low detail |
+| VSync | On |
+| Unlock FPS | Off |
+
+Changed settings are saved in the browser and reused on later visits. The game always
+starts windowed; see [Known Web limitations](#known-web-limitations).
+
 ## Included content
 
 Lugaru-Web includes the open-source Lugaru game and its bundled campaign and challenge content:
@@ -53,6 +78,10 @@ Lugaru-Web includes the open-source Lugaru game and its bundled campaign and cha
 The project also restores and repairs historical content where repository archaeology
 showed that later changes had unintentionally altered its intended appearance or
 behavior.
+
+The Temple campaign's ending text is **new text written for Lugaru-Web**. It is not
+recovered original Temple campaign text: it replaces a placeholder that OSS Lugaru
+added in 2017. See [`CONTENT-LICENSE.txt`](CONTENT-LICENSE.txt).
 
 ## What v1.0 adds
 
@@ -72,6 +101,10 @@ Highlights include:
 - major Web performance fixes for dense fire effects and foliage
 - campaign progression and map-content repairs
 - restored historical Temple clothing/fur assets and behavior
+- fixes found during full release QA of every bundled campaign and the challenges,
+  covering dialogue, combat, music, minimap and campaign-map problems
+  (see [`RELEASE-NOTES.md`](RELEASE-NOTES.md))
+- tuned default Web settings and browser fullscreen that stays in sync with the browser
 - safer image and clothing compositing
 - self-contained Web deployment with game data served from the same origin
 - extensive preservation, architecture, and browser-port documentation
@@ -121,6 +154,12 @@ Lugaru-Web intentionally documents remaining browser limitations instead of hidi
   inherited implementation does not render correctly through the current WebGL path.
 - Level loading remains synchronous and can briefly block the browser while a level is
   being loaded.
+- Browsers only allow fullscreen after a user action, so the game always starts
+  windowed. Turn fullscreen on from **Options** after the game loads. The browser can
+  also leave fullscreen on its own (for example, when you switch tabs); the Options
+  menu reflects the actual state.
+- The Web main menu has no **Quit** button; close the tab to exit. **End Game** remains
+  available from the pause menu.
 - Controller support has not yet been exhaustively tested across browsers, operating
   systems, Bluetooth configurations, and controller models.
 - Some controller-oriented UI polish, including controller-specific prompts and
@@ -164,6 +203,8 @@ The repository contains extensive documentation for both development and preserv
 work:
 
 - [`PROJECT.md`](PROJECT.md) — project scope, principles, status, and development direction
+- [`RELEASE-NOTES.md`](RELEASE-NOTES.md) — Lugaru-Web release notes and inherited OSS Lugaru release history
+- [`COMPILING.md`](COMPILING.md) — Web build commands and inherited native build instructions
 - [`Docs/README.md`](Docs/README.md) — documentation index
 - [`Docs/build-provenance.md`](Docs/build-provenance.md) — reproducible Web build environment and dependency provenance
 - [`Docs/porting-notes.md`](Docs/porting-notes.md) — browser defects, fixes, runtime evidence, and compatibility notes
@@ -182,7 +223,9 @@ build information, see:
 
 **[`Docs/build-provenance.md`](Docs/build-provenance.md)**
 
-[`COMPILING.md`](COMPILING.md) also contains inherited/native compilation information.
+[`COMPILING.md`](COMPILING.md) contains the Web build commands, followed by the inherited
+native compilation instructions. Native builds are kept as comparison targets and were
+not release-tested for v1.0.0.
 
 ## Licensing
 

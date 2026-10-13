@@ -181,7 +181,7 @@ WSL2
 Ubuntu 26.04.1
 Emscripten 6.0.9
 CMake 4.2.3
-Release build directory: build-web-clean
+Release build directory: build-web-release
 ```
 
 The build produces:
@@ -225,9 +225,42 @@ The baseline-preservation and stabilization work that began from `baseline/wasm-
 * Empire progression/clothing and Temple fur/clothing content are repaired or restored, with provenance recorded;
 * the audited PNG/JPEG image-decode and clothing-compositing paths are hardened with size/dimension validation; known unchecked paths outside that audit remain documented, and unfixed, in backlog A11;
 * controller support covers gameplay, camera, menus, campaign/world map, and challenges;
-* the current source and local build are configured to load `lugaru.data` from the same origin as the page (`36407bd`); smoke testing of the public deployment is still pending.
+* the current source and local build are configured to load `lugaru.data` from the same origin as the page (`36407bd`); smoke testing of the public deployment is still pending;
+* full release QA covered all bundled campaigns (Original, Seven Tasks, Temple and Empire) and the challenges, and Chrome and Firefox were separately browser smoke/performance tested; the resulting fixes are summarized in **v1.0.0 Release QA Fixes** below;
+* Web defaults were tuned, and browser fullscreen now starts windowed and stays in sync with the browser.
 
 The remaining work before publishing is release packaging and verification, not new gameplay. Major gameplay additions continue to wait until after v1.0.0; see **Near-Term Priorities**.
+
+---
+
+## v1.0.0 Release QA Fixes
+
+Found during release QA (2026-10-04 – 2026-10-13) and verified by project-owner testing. These have no B-numbers. Fixes up to `b8ee78d` are recorded in detail in [porting notes](Docs/porting-notes.md#release-campaign-qa-fixes-2026-10-05--2026-10-06) and [preservation 19](Docs/preservation-and-modding.md#19-changing-inherited-campaign-data-v10-campaign-qa-review).
+
+### Shared gameplay and engine fixes (all builds)
+
+* **Knife-catch crash** (`e95844f`, `Weapon::doStuff()`): catching a thrown knife now resets `frameCurrent` to 0 when switching to `removeknifeanim`, instead of carrying over the previous animation's frame index.
+* **Grounded knife finisher hit detection** (`8f25ff1`, `Person::DoAnimations()`): the original single vertical test at 60% along the knife runs first, unchanged. If it misses, the test is repeated at 40%, 80%, 20% and 100%. This only adds hits the original test narrowly missed; it is a deliberate leniency improvement, not a historical restoration.
+* **Long-ten Giant encounter** (`d997ab3`): dialogue interaction distance now scales with character size (default-sized pairs keep the historical `distsq < 6`; helper-scale actors are excluded). Long speaker names are scaled to fit the dialogue box.
+* **Combat music** (`d07fea4`): pausing also pauses the fight theme, resuming restores whichever theme was active, and End Game stops both gameplay streams.
+* **Campaign map after completion** (`3363eae`): the campaign menu is rebuilt after `Account::endGame()` resets progress, so it no longer shows the completed final state.
+* **Minimap** (`f23faa2`): Persons with scale `<= 0.001` or `>= 1000` (cutscene/staging helpers) are no longer drawn; no actor data changed.
+* **Fullscreen toggle** (`09cea07`, shared part): `toggleFullscreen()` updates the fullscreen setting only if SDL actually changes the window state.
+
+### Campaign data and text
+
+* **Empire throne dialogue** (`d51f9d5`): `jendraz11` gains a type-20 dialogue-launch hotspot at the throne, matching the position and size of the existing `jendraz2` trigger.
+* **Temple dialogue cleanup** (`20be11c`, `744c7de`, `488aae6`): stale Original-campaign dialogue copies and unreachable blocks were removed from 13 Temple maps; legitimate Temple dialogue is unchanged apart from one wrong name (`Garett!` → `Shan!` in `svenshan`). Non-dialogue map data is identical.
+* **`task9`** (`d997ab3`): a duplicate giant dialogue attached to Wort was removed; the speaker name was normalized to `Long-ten Giant`.
+* **Campaign labels** (`744c7de`, `4d27256`): first-level labels normalized to `..._start_new_campaign!`; Temple `Ice_Cave_(Last_Level)` → `Ice_Cave`.
+* **Ending text** (`744c7de`): Empire `Lugaru's island` → `Lugaru Island`. The Temple ending is new Lugaru-Web text replacing a 2017 OSS placeholder (`217da32`), not recovered original text.
+
+### Browser-specific fixes (Web build only)
+
+* **Fullscreen sync** (`09cea07`): on every SDL window event, the fullscreen setting is re-read from the actual window state, and the Options menu is refreshed if open, so leaving fullscreen through the browser is reflected in-game.
+* **Fullscreen at startup** (`501e2ef`): the Web build always starts windowed, because browsers require a user gesture to enter fullscreen.
+* **Default settings** (`6e51b9d`): Web defaults are Blood on (low detail) and Unlock FPS off. Combined with existing defaults, a first launch uses 1920×1080, High detail, VSync on, and fullscreen off. Native defaults are unchanged.
+* **Quit and logging** (`e1cfb2e`): Quit is omitted from the Web main menu to avoid terminating the runtime and leaving a dead canvas; End Game remains. Per-event controller diagnostic logging is suppressed on Web.
 
 ---
 
@@ -247,7 +280,7 @@ The original stabilization priorities are complete: build provenance and porting
 
 1. Reconcile release documentation and licensing files with the current source.
 2. Keep v1.0.0 Web packaging and deployment manual for this release. The inherited native release workflow has been retired, retained native CI now uses `lugaru-web-native-*` naming, and no current workflow builds or publishes the Web target.
-3. Build the final release artifacts with Emscripten 6.0.9 from a clean `build-web-clean` configuration, and record the source commit and artifact hashes in `Docs/build-provenance.md`.
+3. Build the final release artifacts with Emscripten 6.0.9 from a fresh `build-web-release` directory, and record the source commit and artifact hashes in `Docs/build-provenance.md`. The recorded release-candidate hashes (`917bdba`) predate the release QA fixes.
 4. Smoke-test the public deployment, confirming that `lugaru.data` loads from the same origin.
 5. Physically verify the Triangle tutorial advance and tutorial stage-3 right-stick recognition (B-8), or ship them documented as source/automated-validated only.
 6. Optionally confirm the final Web `Blur Effects: Unavailable on Web` Options row physically (B-6 notes this as a short remaining manual UI check).

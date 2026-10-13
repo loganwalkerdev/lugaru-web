@@ -93,6 +93,38 @@ release number from the inherited Lugaru engine version.
   implemented and validated by source review and automated harnesses; they
   have not yet been reported as physically verified.
 
+**Release QA fixes (shared, also affect native builds):**
+
+- Crash when catching a thrown knife fixed (`e95844f`)
+- Grounded knife finisher hit detection made more reliable; the original test
+  still runs first (`8f25ff1`)
+- Long-ten Giant encounter (Seven Tasks `task9`) triggers reliably; long
+  speaker names fit the dialogue box (`d997ab3`)
+- Fight music no longer continues after Pause → End Game, and resume restores
+  the correct track (`d07fea4`)
+- Campaign map shows the reset state after completing a campaign (`3363eae`)
+- Cutscene helper actors no longer appear on the minimap (`f23faa2`)
+
+**Release QA fixes (game content):**
+
+- Empire `jendraz11` throne dialogue triggers reliably (`d51f9d5`)
+- Stale copied dialogue removed from Temple maps; one wrong name fixed
+  (`20be11c`, `744c7de`, `488aae6`)
+- Duplicate giant dialogue removed from `task9` (`d997ab3`)
+- Campaign start labels normalized; Temple final label is `Ice_Cave`
+  (`744c7de`, `4d27256`)
+- New Temple ending text written for Lugaru-Web, replacing an OSS placeholder;
+  this is not recovered original text (`744c7de`)
+
+**Release QA fixes (Web-specific):**
+
+- Fullscreen setting stays in sync when the browser exits fullscreen
+  (`09cea07`)
+- The game always starts windowed in the browser (`501e2ef`)
+- Web defaults: 1920×1080, High detail, Blood low, VSync on, Unlock FPS off
+  (`6e51b9d`)
+- Quit removed from the Web main menu; End Game remains (`e1cfb2e`)
+
 **Project:**
 
 - Project, attribution and licensing documentation for public release:
@@ -105,6 +137,9 @@ release number from the inherited Lugaru engine version.
 
 - Motion blur is unavailable in the Web build (B-6).
 - Level loading is synchronous and can briefly block the browser (B-10).
+- The Web build always starts windowed; fullscreen must be entered after the
+  page loads.
+- The Web main menu has no Quit button; close the browser tab to exit.
 - A default `"Player"` account is auto-created in all builds, a behavior
   inherited from the WebAssembly baseline (B-11).
 - Controller support has not been exhaustively tested across browsers,
